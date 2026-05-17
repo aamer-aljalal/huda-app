@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:huda/Routes/AppRoutes.dart';
 import 'package:huda/Routes/RouteGenerator.dart';
 import 'package:huda/core/database/hive_database.dart';
+import 'package:huda/core/services/adhan_notification_service.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -16,6 +17,7 @@ void main() async {
   await Hive.initFlutter();
   // await Hive.deleteBoxFromDisk('dhikrBox');
   await HiveDatabase.init();
+  await AdhanNotificationService.initialize();
   runApp(
     MultiProvider(
       providers: [

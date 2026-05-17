@@ -1,6 +1,9 @@
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter/material.dart';
+import 'package:huda/core/providers/prayer_provider.dart';
+import 'package:huda/core/services/adhan_notification_service.dart';
 import 'package:huda/core/widgets/appbars/huda_app_bar.dart';
+import 'package:provider/provider.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -10,24 +13,23 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-  // Visual-only state for UI demonstration (no actual functionality)
   bool _soundEnabled = true;
   bool _notificationsPrayer = true;
   bool _notificationsAzkar = false;
   bool _notificationsCustom = false;
   bool _smartAudioEnabled = false;
   int _smartAudioInterval = 2; // hours
-  String _selectedReciter = 'مشاري راشد';
+  AdhanMuezzin _selectedMuezzin = AdhanNotificationService.defaultMuezzin;
   double _volume = 0.7;
   String _themeMode = 'تلقائي';
 
-  final List<String> _reciters = [
-    'مشاري راشد',
-    'عبد الرحمن السديس',
-    'سعد الغامدي',
-    'محمود خليل الحصري',
-  ];
   final List<int> _intervals = [1, 2, 3, 4, 6];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadAdhanSettings();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -47,15 +49,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 _buildSwitchTile(
                   title: 'تشغيل الصوت',
                   value: _soundEnabled,
-                  onChanged: (_) => _visualOnlyToggle(),
+                  onChanged: (value) => _updateSoundEnabled(value),
                 ),
                 if (_soundEnabled) ...[
                   Divider(height: 1.h, indent: 16, endIndent: 16),
-                  _buildDropdownTile(
-                    title: 'اختيار القارئ',
-                    value: _selectedReciter,
-                    items: _reciters,
-                    onChanged: (_) => _visualOnlyToggle(),
+                  _buildDropdownTile<AdhanMuezzin>(
+                    title: 'اختيار المؤذن',
+                    value: _selectedMuezzin,
+                    items: AdhanNotificationService.muezzins,
+                    itemLabelBuilder: (muezzin) => muezzin.name,
+                    onChanged: (muezzin) => _updateSelectedMuezzin(muezzin),
                   ),
                   _buildSliderTile(
                     title: 'مستوى الصوت',
@@ -74,7 +77,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 _buildSwitchTile(
                   title: 'إشعارات الصلاة',
                   value: _notificationsPrayer,
-                  onChanged: (_) => _visualOnlyToggle(),
+                  onChanged: (value) => _updatePrayerNotifications(value),
                 ),
                 _buildSwitchTile(
                   title: 'أذكار الصباح والمساء',
@@ -162,10 +165,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
             SizedBox(height: 24.h),
 
-            // Hint text
             Text(
-              '⚠️ هذه الواجهة للعرض فقط — لا توجد وظائف حقيقية',
+              'سيتم تشغيل الأذان المختار مباشرة عند دخول وقت الصلاة.',
               style: TextStyle(fontSize: 12.sp, color: Colors.grey.shade500),
+              textAlign: TextAlign.center,
             ),
           ],
         ),
@@ -173,9 +176,57 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  // Visual-only feedback
+  Future<void> _loadAdhanSettings() async {
+    final selected = await AdhanNotificationService.selectedMuezzin();
+    final notificationsEnabled =
+        await AdhanNotificationService.arePrayerNotificationsEnabled();
+
+    if (!mounted) return;
+    setState(() {
+      _selectedMuezzin = selected;
+      _notificationsPrayer = notificationsEnabled;
+      _soundEnabled = notificationsEnabled;
+    });
+  }
+
   void _visualOnlyToggle() {
     setState(() {});
+  }
+
+  Future<void> _updateSoundEnabled(bool enabled) async {
+    setState(() {
+      _soundEnabled = enabled;
+      _notificationsPrayer = enabled;
+    });
+
+    await _updatePrayerNotifications(enabled);
+  }
+
+  Future<void> _updatePrayerNotifications(bool enabled) async {
+    setState(() {
+      _notificationsPrayer = enabled;
+      _soundEnabled = enabled;
+    });
+
+    await AdhanNotificationService.setPrayerNotificationsEnabled(enabled);
+
+    if (!mounted) return;
+    final prayerProvider = context.read<PrayerProvider>();
+    if (enabled) {
+      await prayerProvider.scheduleAdhanNotifications();
+    } else {
+      await AdhanNotificationService.cancelPrayerAdhan();
+    }
+  }
+
+  Future<void> _updateSelectedMuezzin(AdhanMuezzin? muezzin) async {
+    if (muezzin == null) return;
+
+    setState(() => _selectedMuezzin = muezzin);
+    await AdhanNotificationService.setSelectedMuezzin(muezzin);
+
+    if (!mounted) return;
+    await context.read<PrayerProvider>().scheduleAdhanNotifications();
   }
 
   void _showDummyDialog(String action) {

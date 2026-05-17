@@ -2,12 +2,16 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:adhan/adhan.dart';
 import 'package:intl/intl.dart';
+import 'package:huda/core/services/adhan_notification_service.dart';
 
 class PrayerProvider extends ChangeNotifier {
   // موقع مكة المكرمة الثابت
   final String _cityName = 'مكة المكرمة';
   final double _lat = 21.4225;
   final double _lng = 39.8262;
+  late final Coordinates _coordinates = Coordinates(_lat, _lng);
+  late final CalculationParameters _calculationParameters =
+      CalculationMethod.umm_al_qura.getParameters();
 
   // بيانات أوقات الصلاة
   PrayerTimes? _prayerTimes;
@@ -35,6 +39,7 @@ class PrayerProvider extends ChangeNotifier {
     try {
       // حساب المواقيت فوراً بناءً على مكة المكرمة بدون إنترنت أو GPS
       _calculatePrayerTimes();
+      await scheduleAdhanNotifications();
       _startTimer();
     } catch (e) {
       _errorMessage = 'حدث خطأ أثناء جلب البيانات: $e';
@@ -45,13 +50,15 @@ class PrayerProvider extends ChangeNotifier {
   }
 
   void _calculatePrayerTimes() {
-    final coordinates = Coordinates(_lat, _lng);
-
-    // استخدام طريقة أم القرى لحساب المواقيت
-    final params = CalculationMethod.umm_al_qura.getParameters();
-
-    _prayerTimes = PrayerTimes.today(coordinates, params);
+    _prayerTimes = PrayerTimes.today(_coordinates, _calculationParameters);
     _updateNextPrayer();
+  }
+
+  Future<void> scheduleAdhanNotifications() {
+    return AdhanNotificationService.schedulePrayerAdhan(
+      coordinates: _coordinates,
+      calculationParameters: _calculationParameters,
+    );
   }
 
   void _updateNextPrayer() {
@@ -82,6 +89,7 @@ class PrayerProvider extends ChangeNotifier {
         if (now.isAfter(nextPrayerTime)) {
           // إذا حان وقت الصلاة، نعيد حساب الصلاة التي تليها
           _updateNextPrayer();
+          scheduleAdhanNotifications();
           notifyListeners();
         } else {
           _timeUntilNextPrayer = nextPrayerTime.difference(now);
