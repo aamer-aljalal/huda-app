@@ -1,0 +1,75 @@
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter/material.dart';
+import 'package:huda/Model/AccessListModel.dart';
+import 'package:huda/core/widgets/appbars/huda_app_bar.dart';
+import 'package:huda/features/Azkar/services/azkar_service.dart';
+import 'package:huda/core/widgets/grids/access_list_grid.dart';
+
+/// UI ONLY — No navigation, no logic, only visual design.
+/// Displays a grid of azkar categories with animations.
+class AzkarCategoriesScreen extends StatefulWidget {
+  const AzkarCategoriesScreen({super.key});
+
+  @override
+  State<AzkarCategoriesScreen> createState() => _AzkarCategoriesScreenState();
+}
+
+class _AzkarCategoriesScreenState extends State<AzkarCategoriesScreen>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _animationController;
+
+  @override
+  void initState() {
+    super.initState();
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 600),
+      vsync: this,
+    );
+    _animationController.forward();
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
+  }
+
+  // List of categories (UI only)
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+
+      appBar: HudaAppBar(
+        titleText: 'الأذكار',
+        elevation: 0,
+        // We already listen to the controller in initState, so onSearchChanged is optional
+      ),
+
+      body: FutureBuilder<List<AccessListModel>>(
+        future: AzkarService.loadAzkarAsActions(),
+
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          if (snapshot.hasError) {
+            return Center(child: Text(snapshot.error.toString()));
+          }
+
+          return Padding(
+            padding: EdgeInsets.all(16.w),
+
+            child: AccessListGrid(
+              actions: snapshot.data!,
+
+              controller: _animationController,
+            ),
+          );
+        },
+      ),
+    );
+  }
+}

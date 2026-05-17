@@ -1,0 +1,232 @@
+lib/
+│
+├── core/                             => أشياء عامة يستخدمها كامل التطبيق
+│   │
+│   ├── constants/                    => الثوابت
+│   │   ├── colors/                   => الألوان الثابتة
+│   │   ├── strings/                  => النصوص الثابتة
+│   │   ├── assets/                   => مسارات الصور والأصوات
+│   │   ├── sizes/                    => الأحجام والمسافات
+│   │   └── keys/                     => مفاتيح التخزين والثوابت العامة
+│   │
+│   ├── theme/                        => الثيمات والخطوط
+│   │   ├── light/                    => إعدادات الثيم الفاتح
+│   │   ├── dark/                     => إعدادات الثيم الداكن
+│   │   ├── fonts/                    => إعدادات الخطوط
+│   │   └── styles/                   => TextStyles وDecorations
+│   │
+│   ├── services/                     => الخدمات العامة
+│   │   ├── audio/                    => تشغيل الصوتيات
+│   │   ├── notification/             => الإشعارات
+│   │   ├── storage/                  => التخزين المحلي
+│   │   ├── download/                 => تحميل الملفات
+│   │   ├── share/                    => مشاركة المحتوى
+│   │   └── internet/                 => التحقق من الإنترنت
+│   │
+│   ├── database/                     => قواعد البيانات المحلية
+│   │   ├── hive/                     => إعدادات Hive
+│   │   ├── sqlite/                   => إعدادات SQLite
+│   │   ├── tables/                   => الجداول
+│   │   └── migrations/               => تحديثات الجداول
+│   │
+│   ├── network/                      => الإنترنت و API
+│   │   ├── api/                      => إعداد API
+│   │   ├── dio/                      => إعداد dio
+│   │   ├── headers/                  => Headers
+│   │   ├── interceptors/             => مراقبة الطلبات
+│   │   └── endpoints/                => روابط الـ API
+│   │
+│   ├── utils/                        => دوال وأدوات مساعدة
+│   │   ├── formatters/               => تنسيق النصوص والأوقات
+│   │   ├── converters/               => تحويل البيانات
+│   │   ├── validators/               => التحقق من القيم
+│   │   ├── generators/               => توليد IDs وغيره
+│   │   └── helpers/                  => دوال عامة
+│   │
+│   ├── extensions/                   => Extensions للكلاسات
+│   │   ├── string/                   => إضافات على String
+│   │   ├── context/                  => إضافات على BuildContext
+│   │   ├── widget/                   => إضافات على Widgets
+│   │   └── date/                     => إضافات على التاريخ
+│   │
+│   ├── errors/                       => معالجة الأخطاء
+│   │   ├── exceptions/               => Exceptions مخصصة
+│   │   ├── failures/                 => أنواع الفشل
+│   │   ├── handlers/                 => معالجات الأخطاء
+│   │   └── logs/                     => تسجيل الأخطاء
+│   │
+│   ├── widgets/                      => Widgets عامة
+│   │   ├── buttons/                  => الأزرار
+│   │   ├── dialogs/                  => النوافذ المنبثقة
+│   │   ├── appbars/                  => AppBars
+│   │   ├── loaders/                  => مؤشرات التحميل
+│   │   ├── cards/                    => الكروت العامة
+│   │   ├── textfields/               => حقول الإدخال
+│   │   └── states/                   => empty/loading/error
+│   │
+│   └── config/                       => إعدادات التطبيق
+│       ├── env/                      => البيئة
+│       ├── routes/                   => الإعدادات العامة للتنقل
+│       ├── localization/             => اللغات
+│       └── permissions/              => الصلاحيات
+│
+│
+├── features/                         => ميزات التطبيق الرئيسية
+│   │
+│   ├── splash/                       => شاشة البداية
+│   │   │
+│   │   ├── data/                     => البيانات
+│   │   ├── presentation/             => الواجهة
+│   │   └── logic/                    => المنطق
+│   │
+│   ├── onboarding/                   => صفحات التعريف
+│   │   │
+│   │   ├── data/
+│   │   ├── presentation/
+│   │   └── logic/
+│   │
+│   ├── home/                         => الصفحة الرئيسية
+│   │   │
+│   │   ├── data/
+│   │   ├── presentation/
+│   │   └── logic/
+│   │
+│   ├── quran/                        => قسم القرآن
+│   │   │
+│   │   ├── data/                     => التعامل مع البيانات
+│   │   │   │
+│   │   │   ├── models/               => موديلات السور والآيات
+│   │   │   ├── datasources/          => مصادر البيانات
+│   │   │   ├── repositories/         => تنفيذ جلب البيانات
+│   │   │   └── mappers/              => تحويل البيانات
+│   │   │
+│   │   ├── domain/                   => منطق القرآن
+│   │   │   │
+│   │   │   ├── entities/             => الكيانات الأساسية
+│   │   │   ├── repositories/         => Abstract repositories
+│   │   │   ├── usecases/             => العمليات
+│   │   │   └── services/             => خدمات خاصة بالقرآن
+│   │   │
+│   │   ├── presentation/             => الواجهة
+│   │   │   │
+│   │   │   ├── pages/                => الشاشات
+│   │   │   ├── widgets/              => Widgets خاصة بالقرآن
+│   │   │   ├── controllers/          => إدارة الحالة
+│   │   │   ├── states/               => حالات الواجهة
+│   │   │   └── bindings/             => ربط الكنترولرات
+│   │   │
+│   │   └── assets/                   => صور وأصوات خاصة بالقرآن
+│   │
+│   ├── azkar/                        => قسم الأذكار
+│   │   │
+│   │   ├── data/
+│   │   ├── domain/
+│   │   ├── presentation/
+│   │   └── assets/
+│   │
+│   ├── dua/                          => قسم الأدعية
+│   │   │
+│   │   ├── data/
+│   │   ├── domain/
+│   │   ├── presentation/
+│   │   └── assets/
+│   │
+│   ├── tasbeeh/                      => السبحة الإلكترونية
+│   │   │
+│   │   ├── data/
+│   │   ├── presentation/
+│   │   └── logic/
+│   │
+│   ├── favorites/                    => المفضلة
+│   │   │
+│   │   ├── data/
+│   │   ├── presentation/
+│   │   └── logic/
+│   │
+│   ├── search/                       => البحث
+│   │   │
+│   │   ├── data/
+│   │   ├── presentation/
+│   │   └── logic/
+│   │
+│   ├── settings/                     => الإعدادات
+│   │   │
+│   │   ├── data/
+│   │   ├── presentation/
+│   │   └── logic/
+│   │
+│   └── notifications/                => الإشعارات
+│       │
+│       ├── data/
+│       ├── presentation/
+│       └── logic/
+│
+│
+├── shared/                           => أشياء مشتركة بين الـ Features
+│   │
+│   ├── models/                       => موديلات عامة
+│   │
+│   ├── widgets/                      => Widgets مشتركة
+│   │   ├── audio_player/             => مشغل صوت مشترك
+│   │   ├── list_tiles/               => عناصر القوائم
+│   │   ├── bottom_sheets/            => BottomSheets
+│   │   └── animations/               => الأنيميشنات
+│   │
+│   ├── enums/                        => Enums عامة
+│   │
+│   ├── mixins/                       => Mixins مشتركة
+│   │
+│   └── providers/                    => Providers عامة
+│
+│
+├── routes/                           => التنقلات
+│   │
+│   ├── app_routes/                   => أسماء المسارات
+│   │
+│   ├── route_generator/              => توليد الصفحات
+│   │
+│   ├── middlewares/                  => حمايات التنقل
+│   │
+│   └── observers/                    => مراقبة التنقل
+│
+│
+├── assets/                           => ملفات المشروع
+│   │
+│   ├── images/                       => الصور
+│   │
+│   ├── icons/                        => الأيقونات
+│   │
+│   ├── audio/                        => الملفات الصوتية
+│   │
+│   ├── fonts/                        => الخطوط
+│   │
+│   ├── json/                         => ملفات JSON
+│   │
+│   ├── translations/                 => ملفات الترجمة
+│   │
+│   ├── animations/                   => ملفات Lottie
+│   │
+│   └── temp/                         => ملفات مؤقتة
+│
+│
+├── localization/                     => إدارة اللغات
+│   │
+│   ├── ar/                           => اللغة العربية
+│   │
+│   ├── en/                           => الإنجليزية
+│   │
+│   └── generated/                    => ملفات مولدة تلقائيًا
+│
+│
+├── tests/                            => الاختبارات
+│   │
+│   ├── unit/                         => اختبار الدوال
+│   │
+│   ├── widget/                       => اختبار الواجهات
+│   │
+│   └── integration/                  => اختبار التطبيق كامل
+│
+│
+├── main.dart                         => نقطة تشغيل التطبيق
+│
+└── app.dart                          => MaterialApp والثيم والتنقلات

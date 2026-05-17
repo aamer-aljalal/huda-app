@@ -1,0 +1,203 @@
+lib/
+│
+├── core/
+│   ├── services/
+│   │   ├── audio_manager.dart
+│   │   ├── time_engine.dart
+│   │   ├── notification_service.dart
+│   │
+│   ├── utils/
+│   │   ├── constants.dart
+│   │   ├── helpers.dart
+│
+├── data/
+│   ├── models/
+│   │   ├── ayah_model.dart
+│   │   ├── hadith_model.dart
+│   │   ├── zekr_model.dart
+│   │
+│   ├── local/
+│   │   ├── hive_service.dart
+│   │   ├── json_loader.dart
+│
+├── features/
+│   ├── quran/
+│   ├── azkar/
+│   ├── hadith/
+│   ├── tasbeeh/
+│   ├── prayer/
+│   ├── settings/
+│
+├── providers/
+│   ├── tasbeeh_provider.dart
+│   ├── quran_provider.dart
+│
+├── ui/
+│   ├── screens/
+│   ├── widgets/
+│
+└── main.dart
+
+
+
+
+lib/
+│
+├── main.dart
+│   → نقطة تشغيل التطبيق
+│   → تهيئة Hive + تحميل JSON + تشغيل Provider
+│
+├── core/
+│   ├── services/
+│   │   ├── audio_manager.dart
+│   │   → تشغيل الصوت (قرآن / أذكار / TTS)
+│   │   → يمنع تعارض الصوت
+│   │
+│   │   ├── time_engine.dart
+│   │   → تحديد: صباح / مساء / كل X ساعة
+│   │   → يستخدم للتذكيرات
+│   │
+│   │   ├── notification_service.dart
+│   │   → إنشاء Notifications
+│   │   → ربطها مع time_engine
+│   │
+│   │   ├── search_service.dart
+│   │   → البحث في القرآن / الأحاديث
+│   │
+│   ├── utils/
+│   │   ├── constants.dart
+│   │   → ثوابت (ألوان، أسماء، مفاتيح)
+│   │
+│   │   ├── helpers.dart
+│   │   → دوال مساعدة (تاريخ، تنسيق نص)
+│
+├── data/
+│   ├── models/
+│   │   ├── ayah_model.dart
+│   │   → نموذج الآية (id + text + surah)
+│   │
+│   │   ├── hadith_model.dart
+│   │   → الحديث (text + grade)
+│   │
+│   │   ├── zekr_model.dart
+│   │   → الذكر (text + count)
+│   │
+│   │   ├── tasbeeh_model.dart
+│   │   → إحصائيات التسبيح
+│   │
+│   ├── local/
+│   │   ├── hive_service.dart
+│   │   → حفظ:
+│   │     - الإحصائيات
+│   │     - المفضلة
+│   │     - الإعدادات
+│   │
+│   │   ├── json_loader.dart
+│   │   → تحميل:
+│   │     - القرآن
+│   │     - الأذكار
+│   │     - الأحاديث
+│
+├── features/
+│   ├── quran/
+│   │   ├── quran_screen.dart
+│   │   → قائمة السور
+│   │
+│   │   ├── surah_screen.dart
+│   │   → عرض الآيات داخل السورة
+│   │
+│   │   ├── quran_controller.dart
+│   │   → تشغيل الصوت + Bookmark + مفضلة
+│
+│   ├── azkar/
+│   │   ├── azkar_screen.dart
+│   │   → Tabs (صباح / مساء / نوم)
+│   │
+│   │   ├── zekr_details_screen.dart
+│   │   → عرض الذكر + عدّاد
+│   │
+│   │   ├── azkar_controller.dart
+│   │   → التحكم في العداد + التقدم
+│
+│   ├── hadith/
+│   │   ├── hadith_screen.dart
+│   │   → قائمة الأحاديث
+│   │
+│   │   ├── hadith_details_screen.dart
+│   │   → عرض الحديث + مشاركة
+│   │
+│   │   ├── hadith_controller.dart
+│   │   → البحث + المفضلة
+│
+│   ├── tasbeeh/
+│   │   ├── tasbeeh_screen.dart
+│   │   → العداد الكبير
+│   │
+│   │   ├── custom_zekr_screen.dart
+│   │   → إضافة ذكر مخصص
+│   │
+│   │   ├── tasbeeh_controller.dart
+│   │   → increment + الإحصائيات
+│   │
+│   │   ├── reset_manager.dart
+│   │   → تصفير (يومي/أسبوعي/شهري/سنوي)
+│
+│   ├── prayer/
+│   │   ├── prayer_screen.dart
+│   │   → عرض أوقات الصلاة
+│   │
+│   │   ├── qibla_screen.dart
+│   │   → اتجاه القبلة
+│   │
+│   │   ├── prayer_controller.dart
+│   │   → حساب الأوقات + التنبيهات
+│
+│   ├── settings/
+│   │   ├── settings_screen.dart
+│   │   → إعدادات عامة
+│   │
+│   │   ├── backup_screen.dart
+│   │   → تصدير / استيراد backup
+│   │
+│   │   ├── audio_settings_screen.dart
+│   │   → إعدادات الصوت
+│
+├── providers/
+│   ├── tasbeeh_provider.dart
+│   │   → يربط UI مع tasbeeh_controller
+│   │
+│   ├── quran_provider.dart
+│   │   → إدارة حالة القرآن
+│   │
+│   ├── settings_provider.dart
+│   │   → إعدادات المستخدم
+│
+├── ui/
+│   ├── screens/
+│   │   ├── home_screen.dart
+│   │   → الصفحة الرئيسية
+│   │
+│   │   ├── splash_screen.dart
+│   │   → شاشة البداية
+│   │
+│   ├── widgets/
+│   │   ├── custom_button.dart
+│   │   → زر عام
+│   │
+│   │   ├── zekr_card.dart
+│   │   → تصميم الذكر
+│   │
+│   │   ├── ayah_card.dart
+│   │   → تصميم الآية
+
+
+
+
+
+| المجلد    | ماذا تضع فيه           |
+| --------- | ---------------------- |
+| core      | أشياء عامة لكل التطبيق |
+| data      | البيانات (قراءة + حفظ) |
+| features  | كل ميزة مستقلة         |
+| providers | ربط المنطق مع الواجهة  |
+| ui        | التصميم فقط            |
