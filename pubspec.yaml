@@ -46,6 +46,8 @@ dependencies:
   flutter_local_notifications: ^21.0.0
   timezone: ^0.11.0
   flutter_timezone: ^5.0.2
+  just_audio: ^0.10.5
+  hijri: ^3.0.0
 
 dev_dependencies:
   flutter_test:
@@ -74,7 +76,10 @@ flutter:
     - assets/json/quran.json
     - assets/json/metadata.json
     - assets/json/azkar.json
+    - assets/json/hadith.json
+    - assets/json/names_of_allah.json
     - assets/img/
+    - assets/audio/adhan/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

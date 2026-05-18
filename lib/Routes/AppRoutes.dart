@@ -12,15 +12,17 @@ class AppRoutes {
   static const tasbeeh = '/tasbeeh';
   // ========================= الأحاديث =========================
   static const hadith = '/hadith';
+  // ========================= أسماء الله الحسنى =========================
+  static const namesOfAllah = '/names-of-allah';
   // ========================= القبلة =========================
   static const qibla = '/qibla';
   // ========================= الإعدادات =========================
   static const settings = '/settings';
+  static const adhanMuezzin = '/adhan-muezzin';
   // ========================= الإحصائيات =========================
   static const stats = '/stats';
   // ========================= الأخطاء =========================
   static const notFound = '/not-found';
 
   static const tasbeehTow = '/tasbeehTow';
-
 }

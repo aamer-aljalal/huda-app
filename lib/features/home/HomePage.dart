@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:huda/features/home/data/home_actions.dart';
+import 'package:huda/features/home/widgets/home_azkar_prompt_card.dart';
 import 'package:huda/features/home/widgets/home_header.dart';
-import 'package:huda/features/home/widgets/home_progress_card.dart';
-import 'package:huda/features/home/widgets/home_section_title.dart';
 import 'package:huda/core/widgets/grids/access_list_grid.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
@@ -51,8 +50,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
-    final brightness = MediaQuery.platformBrightnessOf(context);
-
     return Scaffold(
       body: CustomScrollView(
         slivers: [
@@ -63,24 +60,12 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  HomeSectionTitle(
-                    icon: Icons.dashboard_outlined,
-                    title: 'الوصول السريع',
-                  ),
+                  const HomeAzkarPromptCard(),
                   // ================== أزرار الوصول السريع بشكل عصري ==================4
                   AccessListGrid(
                     actions: HomeActions.quickActionsList,
                     controller: _gridAnimationController,
                   ),
-
-                  SizedBox(height: 24.h),
-                  HomeSectionTitle(
-                    icon: Icons.insights_outlined,
-                    title: 'تقدمك اليومي',
-                  ),
-                  SizedBox(height: 10.h),
-
-                  HomeProgressCard(),
                 ],
               ),
             ),

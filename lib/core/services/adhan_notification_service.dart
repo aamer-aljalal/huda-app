@@ -1,5 +1,6 @@
 import 'package:adhan/adhan.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
@@ -10,11 +11,13 @@ class AdhanMuezzin {
     required this.id,
     required this.name,
     required this.rawResourceName,
+    required this.assetPath,
   });
 
   final String id;
   final String name;
   final String rawResourceName;
+  final String assetPath;
 }
 
 class AdhanNotificationService {
@@ -28,32 +31,38 @@ class AdhanNotificationService {
       FlutterLocalNotificationsPlugin();
 
   static bool _initialized = false;
+  static bool _notificationsAvailable = true;
 
   static const List<AdhanMuezzin> muezzins = [
     AdhanMuezzin(
       id: 'adhan_mevlan_kurtishi',
       name: 'مولانا كورتشي',
       rawResourceName: 'adhan_mevlan_kurtishi',
+      assetPath: 'assets/audio/adhan/adhan_mevlan_kurtishi.m4a',
     ),
     AdhanMuezzin(
       id: 'adhan_islam_sobhi',
       name: 'إسلام صبحي',
       rawResourceName: 'adhan_islam_sobhi',
+      assetPath: 'assets/audio/adhan/adhan_islam_sobhi.m4a',
     ),
     AdhanMuezzin(
       id: 'adhan_abdul_rahman',
       name: 'عبد الرحمن',
       rawResourceName: 'adhan_abdul_rahman',
+      assetPath: 'assets/audio/adhan/adhan_abdul_rahman.m4a',
     ),
     AdhanMuezzin(
       id: 'adhan_mohammad_marwan',
       name: 'محمد مروان',
       rawResourceName: 'adhan_mohammad_marwan',
+      assetPath: 'assets/audio/adhan/adhan_mohammad_marwan.m4a',
     ),
     AdhanMuezzin(
       id: 'adhan_nasser_alqatami',
       name: 'ناصر القطامي',
       rawResourceName: 'adhan_nasser_alqatami',
+      assetPath: 'assets/audio/adhan/adhan_nasser_alqatami.m4a',
     ),
   ];
 
@@ -63,10 +72,11 @@ class AdhanNotificationService {
     if (_initialized) return;
 
     tz.initializeTimeZones();
-    final localTimezone = await FlutterTimezone.getLocalTimezone();
-    tz.setLocalLocation(tz.getLocation(localTimezone.identifier));
+    await _configureLocalTimezone();
 
-    const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
+    const androidSettings = AndroidInitializationSettings(
+      '@mipmap/ic_launcher',
+    );
     const darwinSettings = DarwinInitializationSettings();
     const initializationSettings = InitializationSettings(
       android: androidSettings,
@@ -74,10 +84,27 @@ class AdhanNotificationService {
       macOS: darwinSettings,
     );
 
-    await _notifications.initialize(initializationSettings);
-    await _requestPermissions();
+    try {
+      await _notifications.initialize(settings: initializationSettings);
+      await _requestPermissions();
+    } on MissingPluginException {
+      _notificationsAvailable = false;
+    } on PlatformException {
+      _notificationsAvailable = false;
+    }
 
     _initialized = true;
+  }
+
+  static Future<void> _configureLocalTimezone() async {
+    try {
+      final localTimezone = await FlutterTimezone.getLocalTimezone();
+      tz.setLocalLocation(tz.getLocation(localTimezone.identifier));
+    } on MissingPluginException {
+      tz.setLocalLocation(tz.getLocation('Asia/Riyadh'));
+    } on PlatformException {
+      tz.setLocalLocation(tz.getLocation('Asia/Riyadh'));
+    }
   }
 
   static Future<void> _requestPermissions() async {
@@ -126,6 +153,7 @@ class AdhanNotificationService {
     required CalculationParameters calculationParameters,
   }) async {
     await initialize();
+    if (!_notificationsAvailable) return;
 
     final enabled = await arePrayerNotificationsEnabled();
     await cancelPrayerAdhan();
@@ -172,8 +200,10 @@ class AdhanNotificationService {
   }
 
   static Future<void> cancelPrayerAdhan() async {
+    if (!_notificationsAvailable) return;
+
     for (var index = 0; index < 5; index++) {
-      await _notifications.cancel(_notificationBaseId + index);
+      await _notifications.cancel(id: _notificationBaseId + index);
     }
   }
 

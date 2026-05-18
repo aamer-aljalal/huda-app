@@ -1,21 +1,8 @@
-import 'package:flutter_screenutil/flutter_screenutil.dart';
-// ================== صفحة قائمة السور (ثابتة) ==================
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:huda/core/widgets/appbars/huda_app_bar.dart';
-
-class Surah {
-  final int id;
-  final String nameArabic;
-  final String nameEnglish;
-  final int versesCount;
-
-  Surah({
-    required this.id,
-    required this.nameArabic,
-    required this.nameEnglish,
-    required this.versesCount,
-  });
-}
+import 'package:huda/features/quran/services/quran_service.dart';
+import 'package:huda/features/quran/views/surah_detail_page.dart';
 
 class SurahListPage extends StatefulWidget {
   const SurahListPage({super.key});
@@ -25,15 +12,17 @@ class SurahListPage extends StatefulWidget {
 }
 
 class _SurahListPageState extends State<SurahListPage> {
-  late List<Surah> allSurahs;
-  List<Surah> filteredSurahs = [];
-  TextEditingController searchController = TextEditingController();
+  final TextEditingController searchController = TextEditingController();
+
+  List<QuranSurah> allSurahs = [];
+  List<QuranSurah> filteredSurahs = [];
+  bool isLoading = true;
+  String? errorMessage;
 
   @override
   void initState() {
     super.initState();
-    allSurahs = _generateSurahsList();
-    filteredSurahs = allSurahs;
+    _loadSurahs();
     searchController.addListener(_filterSurahs);
   }
 
@@ -43,8 +32,26 @@ class _SurahListPageState extends State<SurahListPage> {
     super.dispose();
   }
 
+  Future<void> _loadSurahs() async {
+    try {
+      final surahs = await QuranService.loadSurahs();
+      if (!mounted) return;
+      setState(() {
+        allSurahs = surahs;
+        filteredSurahs = surahs;
+        isLoading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        errorMessage = 'تعذر تحميل سور القرآن';
+        isLoading = false;
+      });
+    }
+  }
+
   void _filterSurahs() {
-    String query = searchController.text.trim().toLowerCase();
+    final query = searchController.text.trim().toLowerCase();
     setState(() {
       if (query.isEmpty) {
         filteredSurahs = allSurahs;
@@ -52,202 +59,178 @@ class _SurahListPageState extends State<SurahListPage> {
         filteredSurahs = allSurahs.where((surah) {
           return surah.nameArabic.contains(query) ||
               surah.nameEnglish.toLowerCase().contains(query) ||
-              surah.id.toString().contains(query);
+              surah.transliteration.toLowerCase().contains(query) ||
+              surah.number.toString().contains(query);
         }).toList();
       }
     });
   }
 
-  // قائمة أول 20 سورة (يمكنك إكمال الباقي حتى 114)
-  List<Surah> _generateSurahsList() {
-    return [
-      Surah(
-        id: 1,
-        nameArabic: 'الفاتحة',
-        nameEnglish: 'Al-Fatihah',
-        versesCount: 7,
+  Future<void> _openSurah(QuranSurah surah) async {
+    final ayahs = await QuranService.loadAyahs(surah.number);
+    if (!mounted) return;
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => SurahDetailPage(surah: surah, ayahs: ayahs),
       ),
-      Surah(
-        id: 2,
-        nameArabic: 'البقرة',
-        nameEnglish: 'Al-Baqarah',
-        versesCount: 286,
-      ),
-      Surah(
-        id: 3,
-        nameArabic: 'آل عمران',
-        nameEnglish: "Aal-e-Imran",
-        versesCount: 200,
-      ),
-      Surah(
-        id: 4,
-        nameArabic: 'النساء',
-        nameEnglish: "An-Nisa'",
-        versesCount: 176,
-      ),
-      Surah(
-        id: 5,
-        nameArabic: 'المائدة',
-        nameEnglish: "Al-Ma'idah",
-        versesCount: 120,
-      ),
-      Surah(
-        id: 6,
-        nameArabic: 'الأنعام',
-        nameEnglish: "Al-An'am",
-        versesCount: 165,
-      ),
-      Surah(
-        id: 7,
-        nameArabic: 'الأعراف',
-        nameEnglish: "Al-A'raf",
-        versesCount: 206,
-      ),
-      Surah(
-        id: 8,
-        nameArabic: 'الأنفال',
-        nameEnglish: "Al-Anfal",
-        versesCount: 75,
-      ),
-      Surah(
-        id: 9,
-        nameArabic: 'التوبة',
-        nameEnglish: "At-Tawbah",
-        versesCount: 129,
-      ),
-      Surah(id: 10, nameArabic: 'يونس', nameEnglish: "Yunus", versesCount: 109),
-      Surah(id: 11, nameArabic: 'هود', nameEnglish: "Hud", versesCount: 123),
-      Surah(id: 12, nameArabic: 'يوسف', nameEnglish: "Yusuf", versesCount: 111),
-      Surah(
-        id: 13,
-        nameArabic: 'الرعد',
-        nameEnglish: "Ar-Ra'd",
-        versesCount: 43,
-      ),
-      Surah(
-        id: 14,
-        nameArabic: 'إبراهيم',
-        nameEnglish: "Ibrahim",
-        versesCount: 52,
-      ),
-      Surah(
-        id: 15,
-        nameArabic: 'الحجر',
-        nameEnglish: "Al-Hijr",
-        versesCount: 99,
-      ),
-      Surah(
-        id: 16,
-        nameArabic: 'النحل',
-        nameEnglish: "An-Nahl",
-        versesCount: 128,
-      ),
-      Surah(
-        id: 17,
-        nameArabic: 'الإسراء',
-        nameEnglish: "Al-Isra",
-        versesCount: 111,
-      ),
-      Surah(
-        id: 18,
-        nameArabic: 'الكهف',
-        nameEnglish: "Al-Kahf",
-        versesCount: 110,
-      ),
-      Surah(id: 19, nameArabic: 'مريم', nameEnglish: "Maryam", versesCount: 98),
-      Surah(id: 20, nameArabic: 'طه', nameEnglish: "Taha", versesCount: 135),
-      // أضف باقي السور حسب الحاجة
-    ];
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: HudaAppBar(
-        titleText: 'قائمة السور',
-        showSearch: true,
-        searchController: searchController,
-        searchHint: 'ابحث عن سورة...',
-        centerTitle: true,
-        elevation: 0,
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: Scaffold(
+        backgroundColor: theme.scaffoldBackgroundColor,
+        appBar: HudaAppBar(
+          titleText: 'القرآن الكريم',
+          showSearch: true,
+          searchController: searchController,
+          searchHint: 'ابحث عن سورة...',
+          centerTitle: true,
+          elevation: 0,
+        ),
+        body: _buildBody(),
       ),
+    );
+  }
 
-      body: filteredSurahs.isEmpty
-          ? Center(
-              child: Text(
-                'لا توجد نتائج',
-                style: TextStyle(fontSize: 18.sp, color: Colors.grey),
+  Widget _buildBody() {
+    if (isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (errorMessage != null) {
+      return Center(
+        child: Text(
+          errorMessage!,
+          style: TextStyle(fontSize: 16.sp, color: Colors.red.shade700),
+        ),
+      );
+    }
+
+    if (filteredSurahs.isEmpty) {
+      return Center(
+        child: Text(
+          'لا توجد نتائج',
+          style: TextStyle(fontSize: 18.sp, color: Colors.grey),
+        ),
+      );
+    }
+
+    return ListView.builder(
+      padding: EdgeInsets.all(16.w),
+      itemCount: filteredSurahs.length,
+      itemBuilder: (context, index) {
+        final surah = filteredSurahs[index];
+        return _SurahTile(surah: surah, onTap: () => _openSurah(surah));
+      },
+    );
+  }
+}
+
+class _SurahTile extends StatelessWidget {
+  const _SurahTile({required this.surah, required this.onTap});
+
+  final QuranSurah surah;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return Padding(
+      padding: EdgeInsets.only(bottom: 12.h),
+      child: Material(
+        color: colorScheme.surface,
+        borderRadius: BorderRadius.circular(8.r),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(8.r),
+          child: Container(
+            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(8.r),
+              border: Border.all(
+                color: colorScheme.outline.withValues(alpha: 0.14),
               ),
-            )
-          : ListView.builder(
-              padding: EdgeInsets.all(16.w),
-              itemCount: filteredSurahs.length,
-              itemBuilder: (context, index) {
-                final surah = filteredSurahs[index];
-                return GestureDetector(
-                  onTap: () {
-                    // سيتم ربطها لاحقاً من قبلك
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('تم اختيار سورة ${surah.nameArabic}'),
-                        behavior: SnackBarBehavior.floating,
-                      ),
-                    );
-                  },
-                  child: Container(
-                    margin: EdgeInsets.only(bottom: 12),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(20.r),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.grey.withOpacity(0.1),
-                          blurRadius: 8,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: ListTile(
-                      contentPadding: EdgeInsets.symmetric(
-                        horizontal: 20.w,
-                        vertical: 8.h,
-                      ),
-                      leading: CircleAvatar(
-                        backgroundColor: const Color(
-                          0xFF1A6B58,
-                        ).withOpacity(0.1),
-                        child: Text(
-                          '${surah.id}',
-                          style: TextStyle(
-                            color: Color(0xFF1A6B58),
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                      title: Text(
-                        surah.nameArabic,
-                        style: TextStyle(
-                          fontSize: 18.sp,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF1E2A32),
-                        ),
-                      ),
-                      subtitle: Text(
-                        '${surah.nameEnglish} • ${surah.versesCount} آية',
-                        style: TextStyle(fontSize: 13.sp, color: Colors.grey),
-                      ),
-                      trailing: Icon(
-                        Icons.chevron_left,
-                        color: Color(0xFF1A6B58),
-                      ),
-                    ),
-                  ),
-                );
-              },
+              boxShadow: [
+                BoxShadow(
+                  color: theme.shadowColor.withValues(alpha: 0.05),
+                  blurRadius: 8,
+                  offset: const Offset(0, 3),
+                ),
+              ],
             ),
+            child: Row(
+              children: [
+                _SurahNumber(number: surah.number),
+                SizedBox(width: 14.w),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        surah.nameArabic,
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontSize: 18.sp,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      SizedBox(height: 4.h),
+                      Text(
+                        '${surah.revelationPlace} • ${surah.versesCount} آية • ${surah.transliteration}',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: colorScheme.onSurfaceVariant,
+                          fontSize: 12.sp,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Icon(Icons.chevron_left, color: colorScheme.primary),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SurahNumber extends StatelessWidget {
+  const _SurahNumber({required this.number});
+
+  final int number;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Container(
+      width: 42.w,
+      height: 42.w,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: colorScheme.primary.withValues(alpha: 0.1),
+        border: Border.all(color: colorScheme.primary.withValues(alpha: 0.45)),
+      ),
+      child: Text(
+        '$number',
+        style: TextStyle(
+          color: colorScheme.primary,
+          fontWeight: FontWeight.w800,
+          fontSize: 14.sp,
+        ),
+      ),
     );
   }
 }

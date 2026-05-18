@@ -19,8 +19,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool _notificationsCustom = false;
   bool _smartAudioEnabled = false;
   int _smartAudioInterval = 2; // hours
-  AdhanMuezzin _selectedMuezzin = AdhanNotificationService.defaultMuezzin;
-  double _volume = 0.7;
   String _themeMode = 'تلقائي';
 
   final List<int> _intervals = [1, 2, 3, 4, 6];
@@ -44,28 +42,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
           children: [
             // 1. Sound Section
             _buildSection(
-              title: '🎵 الصوت',
+              title: '🎙️ الأذان',
               children: [
                 _buildSwitchTile(
-                  title: 'تشغيل الصوت',
+                  title: 'تشغيل أذان الصلاة',
                   value: _soundEnabled,
                   onChanged: (value) => _updateSoundEnabled(value),
                 ),
-                if (_soundEnabled) ...[
-                  Divider(height: 1.h, indent: 16, endIndent: 16),
-                  _buildDropdownTile<AdhanMuezzin>(
-                    title: 'اختيار المؤذن',
-                    value: _selectedMuezzin,
-                    items: AdhanNotificationService.muezzins,
-                    itemLabelBuilder: (muezzin) => muezzin.name,
-                    onChanged: (muezzin) => _updateSelectedMuezzin(muezzin),
-                  ),
-                  _buildSliderTile(
-                    title: 'مستوى الصوت',
-                    value: _volume,
-                    onChanged: (_) => _visualOnlyToggle(),
-                  ),
-                ],
               ],
             ),
             SizedBox(height: 16.h),
@@ -166,7 +149,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             SizedBox(height: 24.h),
 
             Text(
-              'سيتم تشغيل الأذان المختار مباشرة عند دخول وقت الصلاة.',
+              'اختيار صوت المؤذن من صفحة المؤذن في الواجهة الرئيسية.',
               style: TextStyle(fontSize: 12.sp, color: Colors.grey.shade500),
               textAlign: TextAlign.center,
             ),
@@ -177,13 +160,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Future<void> _loadAdhanSettings() async {
-    final selected = await AdhanNotificationService.selectedMuezzin();
     final notificationsEnabled =
         await AdhanNotificationService.arePrayerNotificationsEnabled();
 
     if (!mounted) return;
     setState(() {
-      _selectedMuezzin = selected;
       _notificationsPrayer = notificationsEnabled;
       _soundEnabled = notificationsEnabled;
     });
@@ -217,16 +198,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     } else {
       await AdhanNotificationService.cancelPrayerAdhan();
     }
-  }
-
-  Future<void> _updateSelectedMuezzin(AdhanMuezzin? muezzin) async {
-    if (muezzin == null) return;
-
-    setState(() => _selectedMuezzin = muezzin);
-    await AdhanNotificationService.setSelectedMuezzin(muezzin);
-
-    if (!mounted) return;
-    await context.read<PrayerProvider>().scheduleAdhanNotifications();
   }
 
   void _showDummyDialog(String action) {
@@ -324,35 +295,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
         style: TextStyle(color: Colors.teal.shade800, fontSize: 16.sp),
       ),
       contentPadding: EdgeInsets.symmetric(horizontal: 16.w),
-    );
-  }
-
-  Widget _buildSliderTile({
-    required String title,
-    required double value,
-    required Function(double) onChanged,
-  }) {
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(title, style: TextStyle(fontSize: 16.sp)),
-          Row(
-            children: [
-              Icon(Icons.volume_down, size: 20.sp, color: Colors.grey.shade600),
-              Expanded(
-                child: Slider(
-                  value: value,
-                  onChanged: onChanged,
-                  activeColor: Colors.teal.shade600,
-                ),
-              ),
-              Icon(Icons.volume_up, size: 20.sp, color: Colors.grey.shade600),
-            ],
-          ),
-        ],
-      ),
     );
   }
 

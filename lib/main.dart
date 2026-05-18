@@ -6,6 +6,7 @@ import 'package:huda/core/services/adhan_notification_service.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'core/theme/app_theme.dart';
 
 import 'package:provider/provider.dart';
@@ -16,12 +17,24 @@ void main() async {
   await initializeDateFormatting('ar', null);
   await Hive.initFlutter();
   // await Hive.deleteBoxFromDisk('dhikrBox');
+  // final prefs = await SharedPreferences.getInstance();
+  // await prefs.remove(
+  //   'home_azkar_prompt_أذكار الصباح_${DateTime.now().year}-${DateTime.now().month}-${DateTime.now().day}',
+  // );
+  // await prefs.remove(
+  //   'home_azkar_prompt_أذكار المساء_${DateTime.now().year}-${DateTime.now().month}-${DateTime.now().day}',
+  // );
+  // await prefs.remove(
+  //   'home_azkar_prompt_أذكار النوم_${DateTime.now().year}-${DateTime.now().month}-${DateTime.now().day}',
+  // );
   await HiveDatabase.init();
   await AdhanNotificationService.initialize();
   runApp(
     MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => PrayerProvider()..initializeData()),
+        ChangeNotifierProvider(
+          create: (_) => PrayerProvider()..initializeData(),
+        ),
       ],
       child: const Huda(),
     ),
@@ -34,7 +47,10 @@ class Huda extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ScreenUtilInit(
-      designSize: const Size(375, 812), // Default design size, can be adjusted according to your UI design (Figma/AdobeXD)
+      designSize: const Size(
+        375,
+        812,
+      ), // Default design size, can be adjusted according to your UI design (Figma/AdobeXD)
       minTextAdapt: true,
       splitScreenMode: true,
       builder: (context, child) {

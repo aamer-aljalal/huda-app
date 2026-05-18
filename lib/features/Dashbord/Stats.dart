@@ -1,6 +1,6 @@
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter/material.dart';
-// import 'dart:math' as math;
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:huda/core/widgets/appbars/huda_app_bar.dart';
 
 class StatsScreen extends StatefulWidget {
   const StatsScreen({super.key});
@@ -11,46 +11,51 @@ class StatsScreen extends StatefulWidget {
 
 class _StatsScreenState extends State<StatsScreen>
     with SingleTickerProviderStateMixin {
-  late TabController _tabController;
+  late final TabController _tabController;
 
-  // Static dummy data for each tab (UI only)
   final Map<String, StatsData> _statsData = {
-    'اليوم': StatsData(azkar: 42, readingPages: 3, khatma: 0, progress: 0.12),
-    'الأسبوع': StatsData(
+    'اليوم': const StatsData(
+      azkar: 42,
+      readingPages: 3,
+      tasbeeh: 120,
+      khatma: 0,
+      progress: 0.38,
+      streak: 4,
+      chartValues: [0.2, 0.5, 0.35, 0.7, 0.6, 0.85, 0.45],
+    ),
+    'الأسبوع': const StatsData(
       azkar: 287,
       readingPages: 21,
+      tasbeeh: 760,
       khatma: 0,
-      progress: 0.35,
+      progress: 0.56,
+      streak: 6,
+      chartValues: [0.4, 0.55, 0.62, 0.48, 0.78, 0.66, 0.9],
     ),
-    'الشهر': StatsData(
+    'الشهر': const StatsData(
       azkar: 1150,
       readingPages: 87,
+      tasbeeh: 3240,
       khatma: 1,
-      progress: 0.68,
+      progress: 0.71,
+      streak: 18,
+      chartValues: [0.5, 0.64, 0.58, 0.72, 0.81, 0.76, 0.92],
     ),
-    'السنة': StatsData(
+    'السنة': const StatsData(
       azkar: 12480,
       readingPages: 945,
+      tasbeeh: 35100,
       khatma: 12,
       progress: 0.82,
+      streak: 41,
+      chartValues: [0.52, 0.6, 0.7, 0.68, 0.78, 0.83, 0.88],
     ),
   };
-
-  // For chart animation (visual only)
-  double _chartAnimationValue = 0.0;
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 4, vsync: this);
-    // Simulate chart load animation
-    Future.delayed(const Duration(milliseconds: 100), () {
-      if (mounted) {
-        setState(() {
-          _chartAnimationValue = 1.0;
-        });
-      }
-    });
+    _tabController = TabController(length: _statsData.length, vsync: this);
   }
 
   @override
@@ -61,204 +66,144 @@ class _StatsScreenState extends State<StatsScreen>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF5F9F0),
-      appBar: AppBar(
-        title: Text(
-          'الإحصائيات',
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
-        centerTitle: true,
-        backgroundColor: Colors.green.shade700,
-        foregroundColor: Colors.white,
-        elevation: 0,
-      ),
-      
-      body: Column(
-        children: [
-          // Tabs
-          Container(
-            margin: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(40.r),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.grey.shade200,
-                  blurRadius: 6,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: TabBar(
-              controller: _tabController,
-              indicator: BoxDecoration(
-                color: Colors.green.shade600,
-                borderRadius: BorderRadius.circular(40.r),
-              ),
-              labelColor: Colors.white,
-              unselectedLabelColor: Colors.grey.shade700,
-              dividerColor: Colors.transparent,
-              tabs: [
-                Tab(text: 'اليوم'),
-                Tab(text: 'الأسبوع'),
-                Tab(text: 'الشهر'),
-                Tab(text: 'السنة'),
-              ],
-            ),
-          ),
-          // Content
-          Expanded(
-            child: TabBarView(
-              controller: _tabController,
-              children: [
-                _buildStatsContent(_statsData['اليوم']!),
-                _buildStatsContent(_statsData['الأسبوع']!),
-                _buildStatsContent(_statsData['الشهر']!),
-                _buildStatsContent(_statsData['السنة']!),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStatsContent(StatsData data) {
-    return SingleChildScrollView(
-      physics: const BouncingScrollPhysics(),
-      padding: EdgeInsets.all(20.w),
-      child: Column(
-        children: [
-          // Stats cards row
-          Row(
-            children: [
-              Expanded(
-                child: _buildStatCard(
-                  'الأذكار',
-                  data.azkar,
-                  Icons.bookmark,
-                  Colors.green,
-                ),
-              ),
-              SizedBox(width: 16.w),
-              Expanded(
-                child: _buildStatCard(
-                  'القراءة (صفحة)',
-                  data.readingPages,
-                  Icons.menu_book,
-                  Colors.blue,
-                ),
-              ),
-              SizedBox(width: 16.w),
-              Expanded(
-                child: _buildStatCard(
-                  'الختمات',
-                  data.khatma,
-                  Icons.star,
-                  Colors.amber,
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: 24.h),
-
-          // Progress section
-          _buildProgressSection(data.progress),
-          SizedBox(height: 24.h),
-
-          // Chart (visual only)
-          _buildChart(),
-          SizedBox(height: 16.h),
-
-          // Tap hint
-          Text(
-            '👆 اضغط على أي بطاقة لرؤية التفاصيل (تأثير بصري فقط)',
-            style: TextStyle(fontSize: 12.sp, color: Colors.grey.shade600),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStatCard(
-    String title,
-    int value,
-    IconData icon,
-    MaterialColor color,
-  ) {
-    return GestureDetector(
-      onTap: () {
-        // Visual only: show dummy dialog
-        showDialog(
-          context: context,
-          builder: (context) => AlertDialog(
-            title: Text(title),
-            content: Text('إجمالي $title: $value\n(هذا عرض تجريبي فقط)'),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: Text('إغلاق'),
-              ),
-            ],
-          ),
-        );
-      },
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: EdgeInsets.symmetric(vertical: 20.h, horizontal: 12.w),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(24.r),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.grey.shade200,
-              blurRadius: 8,
-              offset: const Offset(0, 3),
-            ),
-          ],
-        ),
-        child: Column(
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: Scaffold(
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        appBar: const HudaAppBar(titleText: 'الإحصائيات', elevation: 0),
+        body: Column(
           children: [
-            Icon(icon, size: 36.sp, color: color.shade600),
-            SizedBox(height: 12.h),
-            TweenAnimationBuilder<double>(
-              tween: Tween(begin: 0.0, end: value.toDouble()),
-              duration: const Duration(milliseconds: 800),
-              curve: Curves.easeOutCubic,
-              builder: (context, animatedValue, child) {
-                return Text(
-                  animatedValue.toInt().toString(),
-                  style: TextStyle(
-                    fontSize: 28.sp,
-                    fontWeight: FontWeight.bold,
-                    color: color.shade800,
-                  ),
-                );
-              },
-            ),
-            SizedBox(height: 8.h),
-            Text(
-              title,
-              style: TextStyle(fontSize: 14.sp, color: Colors.grey.shade600),
+            _StatsTabs(controller: _tabController, tabs: _statsData.keys),
+            Expanded(
+              child: TabBarView(
+                controller: _tabController,
+                children: _statsData.values.map((data) {
+                  return _StatsContent(data: data);
+                }).toList(),
+              ),
             ),
           ],
         ),
       ),
     );
   }
+}
 
-  Widget _buildProgressSection(double progress) {
+class _StatsTabs extends StatelessWidget {
+  const _StatsTabs({required this.controller, required this.tabs});
+
+  final TabController controller;
+  final Iterable<String> tabs;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Container(
-      padding: EdgeInsets.all(20.w),
+      margin: EdgeInsets.fromLTRB(16.w, 14.h, 16.w, 4.h),
+      padding: EdgeInsets.all(4.w),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24.r),
+        color: colorScheme.surface,
+        borderRadius: BorderRadius.circular(8.r),
+        border: Border.all(color: colorScheme.outline.withValues(alpha: 0.12)),
+      ),
+      child: TabBar(
+        controller: controller,
+        indicatorSize: TabBarIndicatorSize.tab,
+        indicator: BoxDecoration(
+          color: colorScheme.primary,
+          borderRadius: BorderRadius.circular(7.r),
+        ),
+        labelColor: Colors.white,
+        unselectedLabelColor: colorScheme.onSurfaceVariant,
+        dividerColor: Colors.transparent,
+        labelStyle: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.w700),
+        unselectedLabelStyle: TextStyle(
+          fontSize: 12.sp,
+          fontWeight: FontWeight.w600,
+        ),
+        tabs: tabs.map((label) => Tab(text: label)).toList(),
+      ),
+    );
+  }
+}
+
+class _StatsContent extends StatelessWidget {
+  const _StatsContent({required this.data});
+
+  final StatsData data;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      physics: const BouncingScrollPhysics(),
+      padding: EdgeInsets.all(16.w),
+      children: [
+        _OverviewCard(data: data),
+        SizedBox(height: 14.h),
+        GridView.count(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          crossAxisCount: 2,
+          crossAxisSpacing: 10.w,
+          mainAxisSpacing: 10.h,
+          childAspectRatio: 1.55,
+          children: [
+            _MetricCard(
+              title: 'الأذكار',
+              value: data.azkar.toString(),
+              icon: Icons.bookmark_border,
+              color: const Color(0xFF1A8C6E),
+            ),
+            _MetricCard(
+              title: 'صفحات القرآن',
+              value: data.readingPages.toString(),
+              icon: Icons.menu_book_outlined,
+              color: const Color(0xFF3D6FB6),
+            ),
+            _MetricCard(
+              title: 'التسبيح',
+              value: data.tasbeeh.toString(),
+              icon: Icons.radio_button_checked,
+              color: const Color(0xFF8B6FC6),
+            ),
+            _MetricCard(
+              title: 'الختمات',
+              value: data.khatma.toString(),
+              icon: Icons.workspace_premium_outlined,
+              color: const Color(0xFFB7791F),
+            ),
+          ],
+        ),
+        SizedBox(height: 14.h),
+        _ChartCard(values: data.chartValues),
+        SizedBox(height: 105.h),
+      ],
+    );
+  }
+}
+
+class _OverviewCard extends StatelessWidget {
+  const _OverviewCard({required this.data});
+
+  final StatsData data;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final percent = (data.progress * 100).round();
+
+    return Container(
+      padding: EdgeInsets.all(16.w),
+      decoration: BoxDecoration(
+        color: colorScheme.primary,
+        borderRadius: BorderRadius.circular(8.r),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.shade200,
-            blurRadius: 8,
-            offset: const Offset(0, 3),
+            color: theme.shadowColor.withValues(alpha: 0.12),
+            blurRadius: 12,
+            offset: const Offset(0, 5),
           ),
         ],
       ),
@@ -266,109 +211,201 @@ class _StatsScreenState extends State<StatsScreen>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                'التقدم العام',
-                style: TextStyle(
-                  fontSize: 16.sp,
-                  fontWeight: FontWeight.w500,
-                  color: Colors.grey.shade700,
+              Icon(Icons.insights_outlined, color: Colors.white, size: 24.sp),
+              SizedBox(width: 8.w),
+              Expanded(
+                child: Text(
+                  'ملخص نشاطك',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 16.sp,
+                  ),
                 ),
               ),
               Text(
-                '${(progress * 100).toInt()}%',
-                style: TextStyle(
-                  fontSize: 18.sp,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.green.shade800,
+                '$percent%',
+                style: theme.textTheme.titleLarge?.copyWith(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w900,
+                  fontSize: 22.sp,
                 ),
               ),
             ],
           ),
           SizedBox(height: 12.h),
           ClipRRect(
-            borderRadius: BorderRadius.circular(12.r),
+            borderRadius: BorderRadius.circular(20.r),
             child: LinearProgressIndicator(
-              value: progress,
-              minHeight: 12,
-              backgroundColor: Colors.green.shade100,
-              valueColor: AlwaysStoppedAnimation<Color>(Colors.green.shade600),
+              value: data.progress,
+              minHeight: 9.h,
+              backgroundColor: Colors.white.withValues(alpha: 0.22),
+              valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
+            ),
+          ),
+          SizedBox(height: 12.h),
+          Row(
+            children: [
+              Icon(
+                Icons.local_fire_department_outlined,
+                color: Colors.white,
+                size: 20.sp,
+              ),
+              SizedBox(width: 6.w),
+              Text(
+                'سلسلة الالتزام: ${data.streak} أيام',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: Colors.white.withValues(alpha: 0.9),
+                  fontSize: 12.sp,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MetricCard extends StatelessWidget {
+  const _MetricCard({
+    required this.title,
+    required this.value,
+    required this.icon,
+    required this.color,
+  });
+
+  final String title;
+  final String value;
+  final IconData icon;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return Container(
+      padding: EdgeInsets.all(12.w),
+      decoration: BoxDecoration(
+        color: colorScheme.surface,
+        borderRadius: BorderRadius.circular(8.r),
+        border: Border.all(color: colorScheme.outline.withValues(alpha: 0.12)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 38.w,
+            height: 38.w,
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.12),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, color: color, size: 21.sp),
+          ),
+          SizedBox(width: 10.w),
+          Expanded(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  value,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    color: colorScheme.onSurface,
+                    fontWeight: FontWeight.w900,
+                    fontSize: 20.sp,
+                  ),
+                ),
+                SizedBox(height: 2.h),
+                Text(
+                  title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
+                    fontSize: 11.sp,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
             ),
           ),
         ],
       ),
     );
   }
+}
 
-  Widget _buildChart() {
-    // Dummy data for 7 days
-    final List<double> dailyValues = [0.3, 0.45, 0.5, 0.7, 0.65, 0.8, 0.9];
-    final List<String> days = ['س', 'م', 'ت', 'أ', 'خ', 'ج', 'س'];
+class _ChartCard extends StatelessWidget {
+  const _ChartCard({required this.values});
+
+  final List<double> values;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final days = ['س', 'ح', 'ن', 'ث', 'ر', 'خ', 'ج'];
 
     return Container(
-      padding: EdgeInsets.all(20.w),
+      padding: EdgeInsets.all(16.w),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24.r),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.shade200,
-            blurRadius: 8,
-            offset: const Offset(0, 3),
-          ),
-        ],
+        color: colorScheme.surface,
+        borderRadius: BorderRadius.circular(8.r),
+        border: Border.all(color: colorScheme.outline.withValues(alpha: 0.12)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(Icons.show_chart, size: 24.sp, color: Colors.green.shade700),
+              Icon(Icons.bar_chart, color: colorScheme.primary, size: 22.sp),
               SizedBox(width: 8.w),
               Text(
-                'النشاط اليومي',
-                style: TextStyle(
-                  fontSize: 16.sp,
-                  fontWeight: FontWeight.w500,
-                  color: Colors.grey.shade700,
+                'النشاط خلال الفترة',
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w800,
+                  fontSize: 15.sp,
                 ),
               ),
             ],
           ),
-          SizedBox(height: 20.h),
+          SizedBox(height: 18.h),
           SizedBox(
-            height: 160.h,
+            height: 150.h,
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.end,
-              children: List.generate(7, (index) {
+              children: List.generate(values.length, (index) {
                 return Expanded(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
-                      AnimatedContainer(
-                        duration: const Duration(milliseconds: 500),
+                      TweenAnimationBuilder<double>(
+                        tween: Tween(begin: 0, end: values[index]),
+                        duration: Duration(milliseconds: 500 + index * 70),
                         curve: Curves.easeOutCubic,
-                        height: 120.h * dailyValues[index] * _chartAnimationValue,
-                        width: 30.w,
-                        decoration: BoxDecoration(
-                          color: Colors.green.shade400,
-                          borderRadius: BorderRadius.circular(12.r),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.green.shade200,
-                              blurRadius: 4,
-                              offset: const Offset(0, -2),
+                        builder: (context, value, child) {
+                          return Container(
+                            width: 24.w,
+                            height: 112.h * value,
+                            decoration: BoxDecoration(
+                              color: colorScheme.primary,
+                              borderRadius: BorderRadius.circular(6.r),
                             ),
-                          ],
-                        ),
+                          );
+                        },
                       ),
                       SizedBox(height: 8.h),
                       Text(
                         days[index],
-                        style: TextStyle(
-                          fontSize: 12.sp,
-                          color: Colors.grey.shade600,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: colorScheme.onSurfaceVariant,
+                          fontWeight: FontWeight.w700,
                         ),
                       ),
                     ],
@@ -383,17 +420,22 @@ class _StatsScreenState extends State<StatsScreen>
   }
 }
 
-/// Simple data class for static stats
 class StatsData {
-  final int azkar;
-  final int readingPages;
-  final int khatma;
-  final double progress;
-
-  StatsData({
+  const StatsData({
     required this.azkar,
     required this.readingPages,
+    required this.tasbeeh,
     required this.khatma,
     required this.progress,
+    required this.streak,
+    required this.chartValues,
   });
+
+  final int azkar;
+  final int readingPages;
+  final int tasbeeh;
+  final int khatma;
+  final double progress;
+  final int streak;
+  final List<double> chartValues;
 }

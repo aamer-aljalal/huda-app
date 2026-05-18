@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:huda/core/theme/app_theme.dart';
 import 'package:huda/core/widgets/Text/Auto_text.dart';
 import 'dart:math' as math;
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:huda/core/services/recent_actions_service.dart';
 
 import 'package:huda/core/widgets/appbars/huda_app_bar.dart';
 import 'package:huda/features/azkar/model/zekr_category.dart';
@@ -59,12 +61,50 @@ class _AzkarDetailsScreenState extends State<AzkarDetailsScreen>
 
   void _onCopy() {}
 
-  late PageController _pageController;
+  late final PageController _pageController;
   @override
   void initState() {
     super.initState();
-
     _pageController = PageController();
+    _loadSavedIndex();
+  }
+
+  Future<void> _loadSavedIndex() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final savedIndex =
+          prefs.getInt('zekr_index_${widget.category.title}') ?? 0;
+      if (savedIndex > 0 && savedIndex < widget.category.azkar.length) {
+        setState(() {
+          currentZekrIndex = savedIndex;
+        });
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (_pageController.hasClients) {
+            _pageController.jumpToPage(savedIndex);
+          }
+        });
+      }
+    } catch (_) {}
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _saveRecentAzkarAction();
+    });
+  }
+
+  Future<void> _saveRecentAzkarAction() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setInt(
+        'zekr_index_${widget.category.title}',
+        currentZekrIndex,
+      );
+      await RecentActionsManager.addAction(
+        category: 'azkar',
+        title: widget.category.title,
+        subtitle: 'ذكر ${currentZekrIndex + 1}/${widget.category.azkar.length}',
+        extraData: {'category_title': widget.category.title},
+      );
+    } catch (_) {}
   }
 
   @override
@@ -102,6 +142,7 @@ class _AzkarDetailsScreenState extends State<AzkarDetailsScreen>
                           setState(() {
                             currentZekrIndex = index;
                           });
+                          _saveRecentAzkarAction();
                         },
 
                         itemBuilder: (context, index) {
@@ -120,7 +161,7 @@ class _AzkarDetailsScreenState extends State<AzkarDetailsScreen>
                     _buildCounterButton(),
                     SizedBox(height: 24.h),
                     Text(
-                      'اضغط على الزر (تأثير بصري فقط)',
+                      'اضغط على الزر)',
                       style: TextStyle(
                         fontSize: 13.sp,
                         color: Colors.grey.shade500,
@@ -314,11 +355,7 @@ class _AzkarDetailsScreenState extends State<AzkarDetailsScreen>
               Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(
-                    Icons.touch_app,
-                    size: 20.sp,
-                    color: Color(0xFF2E7D32),
-                  ),
+                  Icon(Icons.touch_app, size: 20.sp, color: Color(0xFF2E7D32)),
                   SizedBox(height: 8.h),
                   Text(
                     '${currentZekr.currentCount}',

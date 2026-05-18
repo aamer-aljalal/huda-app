@@ -1,397 +1,251 @@
-import 'package:flutter_screenutil/flutter_screenutil.dart';
-// صفحة عرض السورة (مطابقة للصورة مع تفاعلات كاملة)
 import 'package:flutter/material.dart';
-
-class Ayah {
-  final int number;
-  final String text;
-  final String? tafsir; // تفسير الآية (يمكن تمريره من المصدر)
-  Ayah({required this.number, required this.text, this.tafsir});
-}
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:huda/features/quran/services/quran_service.dart';
+import 'package:huda/features/quran/widgets/ayah_footer.dart';
+import 'package:huda/features/quran/widgets/ayah_number.dart';
+import 'package:huda/features/quran/widgets/ayah_top_bar.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:huda/core/services/recent_actions_service.dart';
 
 class SurahDetailPage extends StatefulWidget {
-  final int surahId;
-  final String surahName;
-  final List<Ayah> verses; // يجب تمرير الآيات من المصدر مع تفاسيرها
-  const SurahDetailPage({
-    super.key,
-    required this.surahId,
-    required this.surahName,
-    required this.verses,
-  });
+  const SurahDetailPage({super.key, required this.surah, required this.ayahs});
+
+  final QuranSurah surah;
+  final List<QuranAyah> ayahs;
 
   @override
   State<SurahDetailPage> createState() => _SurahDetailPageState();
 }
 
 class _SurahDetailPageState extends State<SurahDetailPage> {
-  bool isPlaying = false;
-  Set<int> favoriteAyahs = {}; // تخزين أرقام الآيات المفضلة محلياً
+  late final PageController _pageController;
+  late final List<List<QuranAyah>> _pages;
+  int _currentPage = 0;
 
-  // دالة لإظهار النافذة العائمة عند الضغط على آية
-  void _showAyahOptions(Ayah ayah) {
-    showModalBottomSheet(
-      context: context,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(25.r)),
-      ),
-      backgroundColor: Colors.white,
-      builder: (context) {
-        final isFav = favoriteAyahs.contains(ayah.number);
-        return Padding(
-          padding: EdgeInsets.all(20.w),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 50.w,
-                  height: 4.h,
-                  decoration: BoxDecoration(
-                    color: Colors.grey[300],
-                    borderRadius: BorderRadius.circular(10.r),
-                  ),
-                ),
-              ),
-              SizedBox(height: 20.h),
-              Text(
-                'الآية ${ayah.number}',
-                style: TextStyle(
-                  fontSize: 20.sp,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF1A6B58),
-                ),
-                textAlign: TextAlign.center,
-              ),
-              SizedBox(height: 16.h),
-              Container(
-                padding: EdgeInsets.all(12.w),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF0F7F5),
-                  borderRadius: BorderRadius.circular(20.r),
-                ),
-                child: Text(
-                  ayah.text,
-                  style: TextStyle(fontSize: 18.sp, height: 1.5.h),
-                  textAlign: TextAlign.center,
-                ),
-              ),
-              SizedBox(height: 20.h),
-              Text(
-                'التفسير:',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16.sp),
-              ),
-              SizedBox(height: 8.h),
-              Text(
-                ayah.tafsir ?? 'لا يوجد تفسير متاح حالياً.',
-                style: TextStyle(fontSize: 14.sp, height: 1.4.h),
-              ),
-              SizedBox(height: 24.h),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  _buildBottomSheetButton(
-                    icon: Icons.save_alt,
-                    label: 'حفظ الآية',
-                    onTap: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('تم حفظ الآية ${ayah.number}')),
-                      );
-                      Navigator.pop(context);
-                    },
-                  ),
-                  _buildBottomSheetButton(
-                    icon: isFav ? Icons.favorite : Icons.favorite_border,
-                    label: isFav ? 'أزل من المفضلة' : 'أضف للمفضلة',
-                    onTap: () {
-                      setState(() {
-                        if (isFav) {
-                          favoriteAyahs.remove(ayah.number);
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                'تمت إزالة الآية ${ayah.number} من المفضلة',
-                              ),
-                            ),
-                          );
-                        } else {
-                          favoriteAyahs.add(ayah.number);
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                'تمت إضافة الآية ${ayah.number} إلى المفضلة',
-                              ),
-                            ),
-                          );
-                        }
-                      });
-                      Navigator.pop(context);
-                    },
-                  ),
-                ],
-              ),
-              SizedBox(height: 20.h),
-            ],
-          ),
-        );
-      },
-    );
+  @override
+  void initState() {
+    super.initState();
+    _pages = _splitIntoMushafPages(widget.ayahs);
+    _pageController = PageController();
+    _loadSavedPage();
   }
 
-  Widget _buildBottomSheetButton({
-    required IconData icon,
-    required String label,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Column(
-        children: [
-          Container(
-            padding: EdgeInsets.all(12.w),
-            decoration: BoxDecoration(
-              color: const Color(0xFF1A6B58).withOpacity(0.1),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(icon, color: const Color(0xFF1A6B58), size: 28.sp),
-          ),
-          SizedBox(height: 6.h),
-          Text(label, style: TextStyle(fontSize: 12.sp)),
-        ],
-      ),
-    );
+  Future<void> _loadSavedPage() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final savedPage = prefs.getInt('quran_page_${widget.surah.number}') ?? 0;
+      if (savedPage > 0 && savedPage < _pages.length) {
+        setState(() {
+          _currentPage = savedPage;
+        });
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (_pageController.hasClients) {
+            _pageController.jumpToPage(savedPage);
+          }
+        });
+      }
+    } catch (_) {}
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _saveRecentQuranAction();
+    });
+  }
+
+  Future<void> _saveRecentQuranAction() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setInt('quran_page_${widget.surah.number}', _currentPage);
+      await RecentActionsManager.addAction(
+        category: 'quran',
+        title: 'سورة ${widget.surah.nameArabic}',
+        subtitle: 'صفحة ${_currentPage + 1}',
+        extraData: {
+          'surah_number': widget.surah.number,
+        },
+      );
+    } catch (_) {}
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  List<List<QuranAyah>> _splitIntoMushafPages(List<QuranAyah> ayahs) {
+    final pages = <List<QuranAyah>>[];
+    var current = <QuranAyah>[];
+    var currentLength = 0;
+
+    for (final ayah in ayahs) {
+      final nextLength = currentLength + ayah.text.length;
+      final maxLength = current.isEmpty ? 980 : 920;
+
+      if (current.isNotEmpty && nextLength > maxLength) {
+        pages.add(current);
+        current = <QuranAyah>[];
+        currentLength = 0;
+      }
+
+      current.add(ayah);
+      currentLength += ayah.text.length;
+    }
+
+    if (current.isNotEmpty) pages.add(current);
+    return pages;
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFE),
-      appBar: AppBar(
-        title: Text(
-          widget.surahName,
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: Color(0xFF1E2A32),
-            fontSize: 22.sp,
-          ),
-        ),
-        centerTitle: true,
-        backgroundColor: Colors.white,
-        elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios_new, color: Color(0xFF1A6B58)),
-          onPressed: () => Navigator.pop(context),
-        ),
-        actions: [
-          IconButton(
-            icon: Icon(
-              isPlaying ? Icons.pause_circle_filled : Icons.play_circle_filled,
-              color: const Color(0xFF1A6B58),
-              size: 30.sp,
-            ),
-            onPressed: () {
-              setState(() => isPlaying = !isPlaying);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(isPlaying ? 'تشغيل التلاوة' : 'إيقاف التلاوة'),
-                  behavior: SnackBarBehavior.floating,
-                ),
-              );
-            },
-          ),
-        ],
-      ),
-      body: Column(
-        children: [
-          // قائمة الآيات القابلة للنقر
-          Expanded(
-            child: ListView.builder(
-              padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
-              itemCount: widget.verses.length,
-              itemBuilder: (context, index) {
-                final ayah = widget.verses[index];
-                return GestureDetector(
-                  onTap: () => _showAyahOptions(ayah),
-                  child: Padding(
-                    padding: EdgeInsets.symmetric(vertical: 8.h),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      textDirection: TextDirection.rtl,
-                      children: [
-                        // رقم الآية داخل دائرة صغيرة
-                        Container(
-                          width: 36.w,
-                          height: 36.h,
-                          margin: EdgeInsets.only(left: 12, top: 2),
-                          decoration: BoxDecoration(
-                            gradient: const LinearGradient(
-                              colors: [Color(0xFF1A6B58), Color(0xFF239F82)],
-                            ),
-                            shape: BoxShape.circle,
-                          ),
-                          child: Center(
-                            child: Text(
-                              '${ayah.number}',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 16.sp,
-                              ),
-                            ),
-                          ),
-                        ),
-                        // نص الآية
-                        Expanded(
-                          child: Text(
-                            ayah.text,
-                            textAlign: TextAlign.right,
-                            style: TextStyle(
-                              fontSize: 18.sp,
-                              height: 1.5.h,
-                              color: Color(0xFF1E2A32),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
-          // الأزرار السفلية
-          Container(
-            padding: EdgeInsets.all(20.w),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.vertical(
-                top: Radius.circular(30.r),
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: Scaffold(
+        backgroundColor: const Color.fromARGB(255, 255, 255, 255),
+        body: SafeArea(
+          child: Column(
+            children: [
+              MushafTopBar(
+                surah: widget.surah,
+                currentPage: _currentPage + 1,
+                pagesCount: _pages.length,
               ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.grey.withOpacity(0.1),
-                  blurRadius: 10,
-                  offset: const Offset(0, -5),
-                ),
-              ],
-            ),
-            child: Column(
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    _buildActionButton(Icons.play_circle_outline, 'استماع', () {
-                      setState(() => isPlaying = !isPlaying);
-                    }),
-                    _buildActionButton(Icons.description_outlined, 'تفسير', () {
-                      // يمكن فتح صفحة تفسير السورة كاملة
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('فتح التفسير الكامل للسورة'),
-                          behavior: SnackBarBehavior.floating,
-                        ),
-                      );
-                    }),
-                    _buildActionButton(Icons.bookmark_outline, 'حفظ موضوع', () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text(
-                            'حفظ الموضوع (سيتم إضافته إلى المحفوظات)',
-                          ),
-                          behavior: SnackBarBehavior.floating,
-                        ),
-                      );
-                    }),
-                    _buildActionButton(
-                      Icons.save_alt_outlined,
-                      'حفظ الآية',
-                      () {
-                        // حفظ الآية الحالية (مثال: أول آية)
-                        if (widget.verses.isNotEmpty) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                'تم حفظ الآية ${widget.verses.first.number}',
-                              ),
-                            ),
-                          );
-                        }
-                      },
-                    ),
-                  ],
-                ),
-                SizedBox(height: 20.h),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton.icon(
-                    onPressed: () {
-                      // الانتقال إلى سورة البقرة (يمكن توجيه المستخدم)
-                      Navigator.pop(context);
-                      // يمكن إضافة صفحة سورة البقرة
-                    },
-                    icon: Icon(Icons.navigate_before),
-                    label: Text(
-                      'الذهاب إلى سورة البقرة',
-                      style: TextStyle(fontSize: 16.sp),
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF1A6B58),
-                      foregroundColor: Colors.white,
-                      padding: EdgeInsets.symmetric(vertical: 14.h),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(40.r),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
-  Widget _buildActionButton(IconData icon, String label, VoidCallback onTap) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Column(
-        children: [
-          Container(
-            padding: EdgeInsets.all(12.w),
-            decoration: BoxDecoration(
-              color: const Color(0xFF1A6B58).withOpacity(0.1),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(icon, color: const Color(0xFF1A6B58), size: 28.sp),
+              Expanded(
+                child: PageView.builder(
+                  controller: _pageController,
+                  reverse: true,
+                  itemCount: _pages.length,
+                  onPageChanged: (page) {
+                    setState(() => _currentPage = page);
+                    _saveRecentQuranAction();
+                  },
+
+                  itemBuilder: (context, index) {
+                    return _MushafPage(
+                      surah: widget.surah,
+                      ayahs: _pages[index],
+                      isFirstPage: index == 0,
+                      pageNumber: index + 1,
+                    );
+                  },
+                ),
+              ),
+            ],
           ),
-          SizedBox(height: 6.h),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 12.sp,
-              fontWeight: FontWeight.w500,
-              color: Color(0xFF1E2A32),
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
 }
 
-// مثال لاستخدام الصفحة مع بيانات مطابقة للصورة (سورة الفاتحة)
-// SurahDetailPage(
-//   surahId: 1,
-//   surahName: 'الفاتحة',
-//   verses: [
-//     Ayah(number: 1, text: 'بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ', tafsir: 'التسمية: بدء باسم الله ذي الرحمة العامة والخاصة'),
-//     Ayah(number: 2, text: 'الْحَمْدُ لِلَّهِ رَبِّ الْعَالَمِينَ', tafsir: 'الثناء على الله بصفات الكمال، مالك العالمين'),
-//     Ayah(number: 3, text: 'الرَّحْمَٰنِ الرَّحِيمِ', tafsir: 'الرحمن ذو الرحمة الواسعة، الرحيم بالمؤمنين'),
-//     Ayah(number: 4, text: 'مَالِكِ يَوْمِ الدِّينِ', tafsir: 'المالك ليوم الجزاء والحساب'),
-//     Ayah(number: 5, text: 'إِيَّاكَ نَعْبُدُ وَإِيَّاكَ نَسْتَعِينُ', tafsir: 'نخصك بالعبادة والطلب'),
-//     Ayah(number: 6, text: 'اهْدِنَا الصِّرَاطَ الْمُسْتَقِيمَ', tafsir: 'وفقنا إلى طريق الحق'),
-//     Ayah(number: 7, text: 'صِرَاطَ الَّذِينَ أَنْعَمْتَ عَلَيْهِمْ غَيْرِ الْمَغْضُوبِ عَلَيْهِمْ وَلَا الضَّالِّينَ', tafsir: 'طريق الأنبياء والصديقين، لا طريق المغضوب عليهم ولا الضالين'),
-//   ],
-// )
+class _MushafPage extends StatelessWidget {
+  const _MushafPage({
+    required this.surah,
+    required this.ayahs,
+    required this.isFirstPage,
+    required this.pageNumber,
+  });
+
+  final QuranSurah surah;
+  final List<QuranAyah> ayahs;
+  final bool isFirstPage;
+  final int pageNumber;
+  bool get _showBasmala =>
+      isFirstPage && surah.number != 1 && surah.number != 9;
+
+  @override
+  Widget build(BuildContext context) {
+    final textScale = MediaQuery.textScalerOf(context);
+
+    return Container(
+      decoration: BoxDecoration(
+        // الخَلفية الجديدة لصورة السورة
+        image: const DecorationImage(
+          image: AssetImage('assets/img/surah_detail_green.png'),
+          fit: BoxFit.fill,
+          // fit: BoxFit.cover,
+        ),
+      ),
+      child: Stack(
+        children: [
+          Column(
+            children: [
+              Container(
+                width: 400.w,
+                height: 650.h,
+                child: Padding(
+                  padding: EdgeInsets.only(
+                    top: 60.h,
+                    right: 30.w,
+                    left: 30.w,
+                    bottom: 18.h,
+                  ),
+                  child: Expanded(
+                    child: SingleChildScrollView(
+                      physics: const BouncingScrollPhysics(),
+                      child: Column(
+                        // mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          if (isFirstPage) ...[
+                            if (_showBasmala) ...[
+                              // SizedBox(height: 12.h),
+                              Padding(
+                                padding: const EdgeInsets.only(top: 10),
+                                child: Text(
+                                  'بِسۡمِ ٱللَّهِ ٱلرَّحۡمَٰنِ ٱلرَّحِيمِ',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    color: const Color(0xFF1E1A12),
+                                    fontSize: textScale.scale(15.sp),
+                                    fontWeight: FontWeight.w700,
+                                    height: 0.5.h,
+                                  ),
+                                ),
+                              ),
+                            ],
+                            SizedBox(height: 10.h),
+                          ],
+                          RichText(
+                            textDirection: TextDirection.rtl,
+                            textAlign: TextAlign.justify,
+                            text: TextSpan(
+                              style: TextStyle(
+                                color: const Color(0xFF1A1710),
+                                fontSize: textScale.scale(18.sp),
+                                height: 2.05,
+                                fontWeight: FontWeight.w500,
+                              ),
+                              children: _buildAyahSpans(context),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              SizedBox(height: 8.h),
+              AyahFooter(pageNumber: pageNumber),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  List<InlineSpan> _buildAyahSpans(BuildContext context) {
+    final spans = <InlineSpan>[];
+    for (final ayah in ayahs) {
+      spans.add(TextSpan(text: '${ayah.text} '));
+      spans.add(
+        WidgetSpan(
+          alignment: PlaceholderAlignment.middle,
+          child: AyahNumber(number: ayah.verse),
+        ),
+      );
+      spans.add(const TextSpan(text: ' '));
+    }
+    return spans;
+  }
+}

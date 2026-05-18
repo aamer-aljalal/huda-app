@@ -10,8 +10,9 @@ class PrayerProvider extends ChangeNotifier {
   final double _lat = 21.4225;
   final double _lng = 39.8262;
   late final Coordinates _coordinates = Coordinates(_lat, _lng);
-  late final CalculationParameters _calculationParameters =
-      CalculationMethod.umm_al_qura.getParameters();
+  late final CalculationParameters _calculationParameters = CalculationMethod
+      .umm_al_qura
+      .getParameters();
 
   // بيانات أوقات الصلاة
   PrayerTimes? _prayerTimes;
@@ -64,15 +65,15 @@ class PrayerProvider extends ChangeNotifier {
   void _updateNextPrayer() {
     if (_prayerTimes != null) {
       _nextPrayer = _prayerTimes!.nextPrayer();
-      
+
       // تخطي صلاة الشروق وجعل الصلاة القادمة هي الظهر
       if (_nextPrayer == Prayer.sunrise) {
         _nextPrayer = Prayer.dhuhr;
       }
-      
+
       if (_nextPrayer == Prayer.none) {
         // إذا انتهت صلوات اليوم، فالصلاة القادمة هي الفجر غداً
-        _nextPrayer = Prayer.fajr; 
+        _nextPrayer = Prayer.fajr;
       }
     }
   }
