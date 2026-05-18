@@ -75,6 +75,7 @@ flutter:
   assets:
     - assets/json/quran.json
     - assets/json/metadata.json
+    - assets/json/Interpretation.json
     - assets/json/azkar.json
     - assets/json/hadith.json
     - assets/json/names_of_allah.json

@@ -47,26 +47,6 @@ class _HomeHeaderState extends State<HomeHeader> {
       final month = hijri.getLongMonthName();
       return '\u200F$day $month \u200F$year';
     }
-  String _getDayName() {
-    final now = DateTime.now();
-    switch (now.weekday) {
-      case DateTime.monday:
-        return 'الإثنين';
-      case DateTime.tuesday:
-        return 'الثلاثاء';
-      case DateTime.wednesday:
-        return 'الأربعاء';
-      case DateTime.thursday:
-        return 'الخميس';
-      case DateTime.friday:
-        return 'الجمعة';
-      case DateTime.saturday:
-        return 'السبت';
-      case DateTime.sunday:
-        return 'الأحد';
-      default:
-        return '';
-    }
   }
 
   IconData _getPrayerIcon(String prayerName) {
@@ -330,7 +310,7 @@ class _HomeHeaderState extends State<HomeHeader> {
                             ),
                             SizedBox(width: 6.w),
                             Text(
-                              '${_getDayName()}، ${_getHijriDate(_isNumericFormat)}',
+                              _getHijriDate(_isNumericFormat),
                               style: TextStyle(
                                 color: Colors.white,
                                 fontSize: 13.sp,
@@ -394,7 +374,7 @@ class _HomeHeaderState extends State<HomeHeader> {
                       ),
                     ],
                   ),
-                  
+
                   // بطاقة أوقات الصلاة الأفقية
                   Container(
                     padding: EdgeInsets.only(
@@ -586,6 +566,31 @@ class _HomeHeaderState extends State<HomeHeader> {
     final amPmAr = amPmEn == 'AM' ? 'ص' : 'م';
     final currentTime = '$timeDigits $amPmAr';
 
+    String dayName = '';
+    switch (now.weekday) {
+      case DateTime.monday:
+        dayName = 'الإثنين';
+        break;
+      case DateTime.tuesday:
+        dayName = 'الثلاثاء';
+        break;
+      case DateTime.wednesday:
+        dayName = 'الأربعاء';
+        break;
+      case DateTime.thursday:
+        dayName = 'الخميس';
+        break;
+      case DateTime.friday:
+        dayName = 'الجمعة';
+        break;
+      case DateTime.saturday:
+        dayName = 'السبت';
+        break;
+      case DateTime.sunday:
+        dayName = 'الأحد';
+        break;
+    }
+
     return Row(
       children: [
         Container(
@@ -612,7 +617,7 @@ class _HomeHeaderState extends State<HomeHeader> {
               ),
               SizedBox(width: 6.w),
               Text(
-                currentTime,
+                '$currentTime  •  $dayName',
                 style: TextStyle(
                   color: colorScheme.primary, // اللون الأساسي للتطبيق
                   fontWeight: FontWeight.bold,

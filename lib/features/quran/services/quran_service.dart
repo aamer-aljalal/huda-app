@@ -37,6 +37,7 @@ class QuranService {
 
   static List<QuranSurah>? _surahs;
   static Map<String, dynamic>? _quran;
+  static Map<String, String>? _interpretations;
 
   static Future<List<QuranSurah>> loadSurahs() async {
     if (_surahs != null) return _surahs!;
@@ -77,5 +78,41 @@ class QuranService {
         text: map['text'] as String,
       );
     }).toList();
+  }
+
+  static Future<String> loadInterpretation({
+    required int surahNumber,
+    required int ayahNumber,
+  }) async {
+    _interpretations ??= await _loadInterpretations();
+    return _interpretations!['$surahNumber:$ayahNumber'] ?? '';
+  }
+
+  static Future<Map<String, String>> _loadInterpretations() async {
+    final raw = await rootBundle.loadString('assets/json/Interpretation.json');
+    final decoded = jsonDecode(raw) as List<dynamic>;
+    final interpretations = <String, String>{};
+
+    for (final item in decoded) {
+      final map = item as Map<String, dynamic>;
+      final surah = map['sura'] as int?;
+      final ayah = map['aya'] as int?;
+      final text = _cleanInterpretation(map['text'] as String? ?? '');
+
+      if (surah == null || ayah == null) continue;
+      interpretations['$surah:$ayah'] = text;
+    }
+
+    return interpretations;
+  }
+
+  static String _cleanInterpretation(String value) {
+    return value
+        .replaceAll('<br>', '\n')
+        .replaceAll('<br/>', '\n')
+        .replaceAll('<br />', '\n')
+        .replaceAll(RegExp(r'\s+\n'), '\n')
+        .replaceAll(RegExp(r'\n\s+'), '\n')
+        .trim();
   }
 }
