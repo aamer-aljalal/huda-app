@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:huda/core/theme/app_colors.dart';
 import 'package:huda/features/azkar/model/zekr_category.dart';
 import 'package:huda/features/azkar/services/azkar_service.dart';
 import 'package:huda/routes/AppRoutes.dart';
@@ -75,7 +76,7 @@ class _HomeAzkarPromptCardState extends State<HomeAzkarPromptCard> {
 
     await Navigator.pushNamed(
       context,
-      AppRoutes.surahDetails,
+      AppRoutes.zkarDetails,
       arguments: category,
     );
   }
@@ -105,10 +106,10 @@ class _PromptCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
+    // final colorScheme = theme.colorScheme;
 
     return Padding(
-      padding: EdgeInsets.only(bottom: 12.h),
+      padding: EdgeInsets.only(top: 5.h),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
@@ -116,9 +117,9 @@ class _PromptCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(8.r),
           child: Ink(
             width: double.infinity,
-            padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
+            padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
             decoration: BoxDecoration(
-              color: colorScheme.primary,
+              color: AppColors.lightSecondaryText,
               borderRadius: BorderRadius.circular(8.r),
               boxShadow: [
                 BoxShadow(
@@ -136,9 +137,8 @@ class _PromptCard extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: Colors.white.withValues(alpha: 0.14),
                     shape: BoxShape.circle,
-                    border: Border.all(
-                      color: Colors.white.withValues(alpha: 0.25),
-                    ),
+
+                    border: Border.all(color: AppColors.goldAccent),
                   ),
                   child: Icon(prompt.icon, color: Colors.white, size: 22.sp),
                 ),

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:adhan/adhan.dart';
 import 'package:intl/intl.dart';
 import 'package:huda/core/services/adhan_notification_service.dart';
+import 'package:huda/core/services/adhan_player_service.dart';
 
 class PrayerProvider extends ChangeNotifier {
   // موقع مكة المكرمة الثابت
@@ -17,6 +18,7 @@ class PrayerProvider extends ChangeNotifier {
   // بيانات أوقات الصلاة
   PrayerTimes? _prayerTimes;
   Prayer? _nextPrayer;
+  DateTime? _nextPrayerTime;
   Duration _timeUntilNextPrayer = Duration.zero;
   Timer? _timer;
 
@@ -28,6 +30,7 @@ class PrayerProvider extends ChangeNotifier {
   String get cityName => _cityName;
   PrayerTimes? get prayerTimes => _prayerTimes;
   Prayer? get nextPrayer => _nextPrayer;
+  DateTime? get nextPrayerTime => _nextPrayerTime;
   Duration get timeUntilNextPrayer => _timeUntilNextPrayer;
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
@@ -63,17 +66,30 @@ class PrayerProvider extends ChangeNotifier {
   }
 
   void _updateNextPrayer() {
+    _prayerTimes = PrayerTimes.today(_coordinates, _calculationParameters);
     if (_prayerTimes != null) {
-      _nextPrayer = _prayerTimes!.nextPrayer();
+      Prayer next = _prayerTimes!.nextPrayer();
 
       // تخطي صلاة الشروق وجعل الصلاة القادمة هي الظهر
-      if (_nextPrayer == Prayer.sunrise) {
-        _nextPrayer = Prayer.dhuhr;
+      if (next == Prayer.sunrise) {
+        next = Prayer.dhuhr;
       }
 
-      if (_nextPrayer == Prayer.none) {
+      if (next == Prayer.none) {
         // إذا انتهت صلوات اليوم، فالصلاة القادمة هي الفجر غداً
         _nextPrayer = Prayer.fajr;
+        
+        // حساب وقت الفجر للغد
+        final tomorrow = DateTime.now().add(const Duration(days: 1));
+        final tomorrowTimes = PrayerTimes(
+          _coordinates,
+          DateComponents.from(tomorrow),
+          _calculationParameters,
+        );
+        _nextPrayerTime = tomorrowTimes.timeForPrayer(Prayer.fajr);
+      } else {
+        _nextPrayer = next;
+        _nextPrayerTime = _prayerTimes!.timeForPrayer(next);
       }
     }
   }
@@ -83,17 +99,21 @@ class PrayerProvider extends ChangeNotifier {
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (_prayerTimes != null &&
           _nextPrayer != null &&
-          _nextPrayer != Prayer.none) {
-        DateTime nextPrayerTime = _prayerTimes!.timeForPrayer(_nextPrayer!)!;
-
+          _nextPrayerTime != null) {
         final now = DateTime.now();
-        if (now.isAfter(nextPrayerTime)) {
+        if (now.isAfter(_nextPrayerTime!)) {
+          final enteredPrayer = _nextPrayer!;
+          if (enteredPrayer != Prayer.sunrise) {
+            final prayerName = getPrayerName(enteredPrayer);
+            AdhanPlayerService().playAdhan(prayerName);
+          }
+
           // إذا حان وقت الصلاة، نعيد حساب الصلاة التي تليها
           _updateNextPrayer();
           scheduleAdhanNotifications();
           notifyListeners();
         } else {
-          _timeUntilNextPrayer = nextPrayerTime.difference(now);
+          _timeUntilNextPrayer = _nextPrayerTime!.difference(now);
           notifyListeners();
         }
       }

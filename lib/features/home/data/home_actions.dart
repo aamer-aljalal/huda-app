@@ -16,12 +16,17 @@ class HomeActions {
     AccessListModel(
       icon: Icons.auto_awesome_outlined,
       route: AppRoutes.namesOfAllah,
-      title: 'أسماء الله',
+      title: 'أسماء الله الحسنى',
     ),
     AccessListModel(
       icon: Icons.bookmark_outline,
       route: AppRoutes.azkarCategories,
       title: 'الأذكار',
+    ),
+    AccessListModel(
+      icon: Icons.auto_stories_outlined,
+      route: AppRoutes.hisnCategories,
+      title: 'حصن المسلم',
     ),
     AccessListModel(
       icon: Icons.format_quote_outlined,

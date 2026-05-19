@@ -22,13 +22,16 @@ class DhikrModelAdapter extends TypeAdapter<DhikrModel> {
       currentCount: fields[2] as int,
       createdAt: fields[3] as DateTime,
       lastUpdated: fields[4] as DateTime,
+      isReminderEnabled: (fields[5] as bool?) ?? false,
+      reminderHour: (fields[6] as int?) ?? 9,
+      reminderMinute: (fields[7] as int?) ?? 0,
     );
   }
 
   @override
   void write(BinaryWriter writer, DhikrModel obj) {
     writer
-      ..writeByte(5)
+      ..writeByte(8)
       ..writeByte(0)
       ..write(obj.text)
       ..writeByte(1)
@@ -38,7 +41,13 @@ class DhikrModelAdapter extends TypeAdapter<DhikrModel> {
       ..writeByte(3)
       ..write(obj.createdAt)
       ..writeByte(4)
-      ..write(obj.lastUpdated);
+      ..write(obj.lastUpdated)
+      ..writeByte(5)
+      ..write(obj.isReminderEnabled)
+      ..writeByte(6)
+      ..write(obj.reminderHour)
+      ..writeByte(7)
+      ..write(obj.reminderMinute);
   }
 
   @override

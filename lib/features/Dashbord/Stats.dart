@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:huda/core/widgets/appbars/huda_app_bar.dart';
+import 'package:huda/core/services/stats_service.dart';
 
 class StatsScreen extends StatefulWidget {
   const StatsScreen({super.key});
@@ -12,50 +13,35 @@ class StatsScreen extends StatefulWidget {
 class _StatsScreenState extends State<StatsScreen>
     with SingleTickerProviderStateMixin {
   late final TabController _tabController;
-
-  final Map<String, StatsData> _statsData = {
-    'اليوم': const StatsData(
-      azkar: 42,
-      readingPages: 3,
-      tasbeeh: 120,
-      khatma: 0,
-      progress: 0.38,
-      streak: 4,
-      chartValues: [0.2, 0.5, 0.35, 0.7, 0.6, 0.85, 0.45],
-    ),
-    'الأسبوع': const StatsData(
-      azkar: 287,
-      readingPages: 21,
-      tasbeeh: 760,
-      khatma: 0,
-      progress: 0.56,
-      streak: 6,
-      chartValues: [0.4, 0.55, 0.62, 0.48, 0.78, 0.66, 0.9],
-    ),
-    'الشهر': const StatsData(
-      azkar: 1150,
-      readingPages: 87,
-      tasbeeh: 3240,
-      khatma: 1,
-      progress: 0.71,
-      streak: 18,
-      chartValues: [0.5, 0.64, 0.58, 0.72, 0.81, 0.76, 0.92],
-    ),
-    'السنة': const StatsData(
-      azkar: 12480,
-      readingPages: 945,
-      tasbeeh: 35100,
-      khatma: 12,
-      progress: 0.82,
-      streak: 41,
-      chartValues: [0.52, 0.6, 0.7, 0.68, 0.78, 0.83, 0.88],
-    ),
-  };
+  Map<String, DynamicStats> _statsData = {};
+  List<String> _chartLabels = [];
+  bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: _statsData.length, vsync: this);
+    _tabController = TabController(length: 4, vsync: this);
+    _loadStats();
+  }
+
+  Future<void> _loadStats() async {
+    try {
+      final data = await StatsService.getFullStats();
+      final labels = StatsService.getLast7DaysLabels();
+      if (mounted) {
+        setState(() {
+          _statsData = data;
+          _chartLabels = labels;
+          _isLoading = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
   }
 
   @override
@@ -70,20 +56,38 @@ class _StatsScreenState extends State<StatsScreen>
       textDirection: TextDirection.rtl,
       child: Scaffold(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        appBar: const HudaAppBar(titleText: 'الإحصائيات', elevation: 0),
-        body: Column(
-          children: [
-            _StatsTabs(controller: _tabController, tabs: _statsData.keys),
-            Expanded(
-              child: TabBarView(
-                controller: _tabController,
-                children: _statsData.values.map((data) {
-                  return _StatsContent(data: data);
-                }).toList(),
-              ),
-            ),
-          ],
+        appBar: const HudaAppBar(
+          titleText: 'الإحصائيات والنشاط',
+          elevation: 0,
+          toolbarHeight: 90,
         ),
+        body: _isLoading
+            ? const Center(
+                child: CircularProgressIndicator(),
+              )
+            : _statsData.isEmpty
+                ? const Center(
+                    child: Text(
+                      'لا توجد بيانات إحصائية متوفرة حالياً',
+                      style: TextStyle(fontFamily: 'Cairo'),
+                    ),
+                  )
+                : Column(
+                    children: [
+                      _StatsTabs(controller: _tabController, tabs: _statsData.keys),
+                      Expanded(
+                        child: TabBarView(
+                          controller: _tabController,
+                          children: _statsData.values.map((data) {
+                            return _StatsContent(
+                              data: data,
+                              chartLabels: _chartLabels,
+                            );
+                          }).toList(),
+                        ),
+                      ),
+                    ],
+                  ),
       ),
     );
   }
@@ -117,10 +121,11 @@ class _StatsTabs extends StatelessWidget {
         labelColor: Colors.white,
         unselectedLabelColor: colorScheme.onSurfaceVariant,
         dividerColor: Colors.transparent,
-        labelStyle: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.w700),
+        labelStyle: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.w700, fontFamily: 'Cairo'),
         unselectedLabelStyle: TextStyle(
           fontSize: 12.sp,
           fontWeight: FontWeight.w600,
+          fontFamily: 'Cairo',
         ),
         tabs: tabs.map((label) => Tab(text: label)).toList(),
       ),
@@ -129,9 +134,10 @@ class _StatsTabs extends StatelessWidget {
 }
 
 class _StatsContent extends StatelessWidget {
-  const _StatsContent({required this.data});
+  const _StatsContent({required this.data, required this.chartLabels});
 
-  final StatsData data;
+  final DynamicStats data;
+  final List<String> chartLabels;
 
   @override
   Widget build(BuildContext context) {
@@ -175,8 +181,128 @@ class _StatsContent extends StatelessWidget {
             ),
           ],
         ),
+        SizedBox(height: 10.h),
+        Row(
+          children: [
+            Expanded(
+              child: _MetricCard(
+                title: 'أدعية حصن المسلم',
+                value: data.hisnAlmuslim.toString(),
+                icon: Icons.shield_outlined,
+                color: const Color(0xFFD32F2F),
+              ),
+            ),
+            SizedBox(width: 10.w),
+            Expanded(
+              child: _MetricCard(
+                title: 'الأحاديث المقروءة',
+                value: data.hadith.toString(),
+                icon: Icons.auto_stories_rounded,
+                color: Colors.orange.shade700,
+              ),
+            ),
+          ],
+        ),
         SizedBox(height: 14.h),
-        _ChartCard(values: data.chartValues),
+        // Detailed Hisn al-Muslim & Azkar Stats Card
+        if (data.azkar > 0 || data.hisnAlmuslim > 0 || data.completedAzkarSingle > 0 || data.completedAzkarCategory > 0) ...[
+          Container(
+            padding: EdgeInsets.all(16.w),
+            margin: EdgeInsets.only(bottom: 14.h),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surface,
+              borderRadius: BorderRadius.circular(8.r),
+              border: Border.all(color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.12)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(Icons.shield_outlined, color: const Color(0xFF1A8C6E), size: 22.sp),
+                    SizedBox(width: 8.w),
+                    Text(
+                      'نشاط الأذكار وحصن المسلم 🛡️',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w800,
+                        fontSize: 15.sp,
+                        fontFamily: 'Cairo',
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 14.h),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _SubMetricCard(
+                        title: 'تكرار الأذكار',
+                        value: data.azkar.toString(),
+                        color: const Color(0xFF1A8C6E),
+                      ),
+                    ),
+                    SizedBox(width: 10.w),
+                    Expanded(
+                      child: _SubMetricCard(
+                        title: 'تكرار حصن المسلم',
+                        value: data.hisnAlmuslim.toString(),
+                        color: const Color(0xFFD32F2F),
+                      ),
+                    ),
+                  ],
+                ),
+                if (data.completedAzkarSingle > 0 || data.completedAzkarCategory > 0) ...[
+                  SizedBox(height: 10.h),
+                  Row(
+                    children: [
+                      if (data.completedAzkarSingle > 0)
+                        Expanded(
+                          child: _SubMetricCard(
+                            title: 'أذكار مكتملة',
+                            value: data.completedAzkarSingle.toString(),
+                            color: Colors.amber.shade700,
+                          ),
+                        ),
+                    ],
+                  ),
+                  if (data.completedAzkarCategory > 0) ...[
+                    SizedBox(height: 10.h),
+                    Container(
+                      width: double.infinity,
+                      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF1A8C6E).withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(8.r),
+                        border: Border.all(color: const Color(0xFF1A8C6E).withValues(alpha: 0.15)),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(Icons.check_circle_outline_rounded, color: const Color(0xFF1A8C6E), size: 18.sp),
+                          SizedBox(width: 8.w),
+                          Expanded(
+                            child: Text(
+                              'أتممت قراءة أقسام أذكار كاملة: ${data.completedAzkarCategory} مرّة',
+                              style: TextStyle(
+                                fontSize: 11.sp,
+                                fontWeight: FontWeight.bold,
+                                fontFamily: 'Cairo',
+                                color: const Color(0xFF1A8C6E),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ],
+              ],
+            ),
+          ),
+        ],
+        _ChartCard(
+          values: data.chartValues,
+          labels: chartLabels,
+        ),
         SizedBox(height: 105.h),
       ],
     );
@@ -186,7 +312,7 @@ class _StatsContent extends StatelessWidget {
 class _OverviewCard extends StatelessWidget {
   const _OverviewCard({required this.data});
 
-  final StatsData data;
+  final DynamicStats data;
 
   @override
   Widget build(BuildContext context) {
@@ -216,11 +342,12 @@ class _OverviewCard extends StatelessWidget {
               SizedBox(width: 8.w),
               Expanded(
                 child: Text(
-                  'ملخص نشاطك',
+                  'ملخص نشاطك الإيماني',
                   style: theme.textTheme.titleMedium?.copyWith(
                     color: Colors.white,
                     fontWeight: FontWeight.w800,
                     fontSize: 16.sp,
+                    fontFamily: 'Cairo',
                   ),
                 ),
               ),
@@ -230,6 +357,7 @@ class _OverviewCard extends StatelessWidget {
                   color: Colors.white,
                   fontWeight: FontWeight.w900,
                   fontSize: 22.sp,
+                  fontFamily: 'Cairo',
                 ),
               ),
             ],
@@ -249,16 +377,17 @@ class _OverviewCard extends StatelessWidget {
             children: [
               Icon(
                 Icons.local_fire_department_outlined,
-                color: Colors.white,
+                color: Colors.amberAccent,
                 size: 20.sp,
               ),
               SizedBox(width: 6.w),
               Text(
-                'سلسلة الالتزام: ${data.streak} أيام',
+                'سلسلة الالتزام: ${data.streak} أيام متتالية',
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: Colors.white.withValues(alpha: 0.9),
                   fontSize: 12.sp,
                   fontWeight: FontWeight.w600,
+                  fontFamily: 'Cairo',
                 ),
               ),
             ],
@@ -288,7 +417,7 @@ class _MetricCard extends StatelessWidget {
     final colorScheme = theme.colorScheme;
 
     return Container(
-      padding: EdgeInsets.all(12.w),
+      padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
       decoration: BoxDecoration(
         color: colorScheme.surface,
         borderRadius: BorderRadius.circular(8.r),
@@ -319,6 +448,7 @@ class _MetricCard extends StatelessWidget {
                     color: colorScheme.onSurface,
                     fontWeight: FontWeight.w900,
                     fontSize: 20.sp,
+                    fontFamily: 'Cairo',
                   ),
                 ),
                 SizedBox(height: 2.h),
@@ -330,6 +460,7 @@ class _MetricCard extends StatelessWidget {
                     color: colorScheme.onSurfaceVariant,
                     fontSize: 11.sp,
                     fontWeight: FontWeight.w600,
+                    fontFamily: 'Cairo',
                   ),
                 ),
               ],
@@ -342,15 +473,15 @@ class _MetricCard extends StatelessWidget {
 }
 
 class _ChartCard extends StatelessWidget {
-  const _ChartCard({required this.values});
+  const _ChartCard({required this.values, required this.labels});
 
   final List<double> values;
+  final List<String> labels;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final days = ['س', 'ح', 'ن', 'ث', 'ر', 'خ', 'ج'];
 
     return Container(
       padding: EdgeInsets.all(16.w),
@@ -367,10 +498,11 @@ class _ChartCard extends StatelessWidget {
               Icon(Icons.bar_chart, color: colorScheme.primary, size: 22.sp),
               SizedBox(width: 8.w),
               Text(
-                'النشاط خلال الفترة',
+                'النشاط الإجمالي خلال آخر 7 أيام',
                 style: theme.textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.w800,
                   fontSize: 15.sp,
+                  fontFamily: 'Cairo',
                 ),
               ),
             ],
@@ -402,10 +534,11 @@ class _ChartCard extends StatelessWidget {
                       ),
                       SizedBox(height: 8.h),
                       Text(
-                        days[index],
+                        index < labels.length ? labels[index] : '',
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: colorScheme.onSurfaceVariant,
                           fontWeight: FontWeight.w700,
+                          fontFamily: 'Cairo',
                         ),
                       ),
                     ],
@@ -420,22 +553,76 @@ class _ChartCard extends StatelessWidget {
   }
 }
 
-class StatsData {
-  const StatsData({
-    required this.azkar,
-    required this.readingPages,
-    required this.tasbeeh,
-    required this.khatma,
-    required this.progress,
-    required this.streak,
-    required this.chartValues,
+class _SubMetricCard extends StatelessWidget {
+  const _SubMetricCard({
+    required this.title,
+    required this.value,
+    required this.color,
   });
 
-  final int azkar;
-  final int readingPages;
-  final int tasbeeh;
-  final int khatma;
-  final double progress;
-  final int streak;
-  final List<double> chartValues;
+  final String title;
+  final String value;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
+      decoration: BoxDecoration(
+        color: colorScheme.surface,
+        borderRadius: BorderRadius.circular(8.r),
+        border: Border.all(color: colorScheme.outline.withValues(alpha: 0.08)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 30.w,
+            height: 30.w,
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.1),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              color == const Color(0xFF1A8C6E) ? Icons.done_all_rounded : Icons.check_circle_outline_rounded,
+              color: color,
+              size: 16.sp,
+            ),
+          ),
+          SizedBox(width: 8.w),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  value,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    color: colorScheme.onSurface,
+                    fontWeight: FontWeight.w900,
+                    fontSize: 16.sp,
+                    fontFamily: 'Cairo',
+                  ),
+                ),
+                Text(
+                  title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
+                    fontSize: 9.sp,
+                    fontWeight: FontWeight.w600,
+                    fontFamily: 'Cairo',
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }

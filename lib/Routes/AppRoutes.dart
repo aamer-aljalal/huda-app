@@ -21,8 +21,14 @@ class AppRoutes {
   static const adhanMuezzin = '/adhan-muezzin';
   // ========================= الإحصائيات =========================
   static const stats = '/stats';
+  static const khatmaPlanner = '/khatma-planner';
   // ========================= الأخطاء =========================
   static const notFound = '/not-found';
 
   static const tasbeehTow = '/tasbeehTow';
+  static const bookmarks = '/bookmarks';
+
+  // ========================= حصن المسلم =========================
+  static const hisnCategories = '/hisn-categories';
+  static const hisnDetails = '/hisn-details';
 }

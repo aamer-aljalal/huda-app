@@ -52,8 +52,8 @@ class RecentActionsManager {
       final prefs = await SharedPreferences.getInstance();
       final actions = await getActions();
 
-      // Remove existing item of same category and title/extra to keep MRU order
-      actions.removeWhere((item) => item.category == category && item.title == title);
+      // Remove ANY existing item of the same category to keep exactly one item per category
+      actions.removeWhere((item) => item.category == category);
 
       // Add to start of list
       actions.insert(0, RecentAction(

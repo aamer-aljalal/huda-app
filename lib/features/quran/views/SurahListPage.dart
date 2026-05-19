@@ -117,18 +117,154 @@ class _SurahListPageState extends State<SurahListPage> {
       return Center(
         child: Text(
           'لا توجد نتائج',
-          style: TextStyle(fontSize: 18.sp, color: Colors.grey),
+          style: TextStyle(
+            fontSize: 18.sp,
+            color: Colors.grey,
+            fontFamily: 'Cairo',
+          ),
         ),
       );
     }
 
+    final isSearching = searchController.text.trim().isNotEmpty;
+
     return ListView.builder(
       padding: EdgeInsets.all(16.w),
-      itemCount: filteredSurahs.length,
+      itemCount: filteredSurahs.length + (isSearching ? 0 : 1),
       itemBuilder: (context, index) {
-        final surah = filteredSurahs[index];
+        if (!isSearching && index == 0) {
+          return _buildKhatmaPromoCard();
+        }
+        final surah = filteredSurahs[isSearching ? index : index - 1];
         return _SurahTile(surah: surah, onTap: () => _openSurah(surah));
       },
+    );
+  }
+
+  Widget _buildKhatmaPromoCard() {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    // Custom premium HSL-tailored colors for an elite royal-islamic visual style
+    final emeraldDeep = isDark
+        ? const Color(0xFF0F3A2E)
+        : const Color(0xFF144D3E);
+    final emeraldLight = isDark
+        ? const Color(0xFF1D5A4A)
+        : const Color(0xFF227E67);
+    const accentGold = Color(0xFFE2B755);
+
+    return Padding(
+      padding: EdgeInsets.only(
+        bottom: 12.h,
+      ), // Matches _SurahTile padding exactly!
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [emeraldDeep, emeraldLight],
+            begin: Alignment.topRight,
+            end: Alignment.bottomLeft,
+          ),
+          borderRadius: BorderRadius.circular(
+            8.r,
+          ), // Matches _SurahTile radius exactly!
+          border: Border.all(
+            color: accentGold.withValues(alpha: 0.35),
+            width: 1.2.w,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: emeraldDeep.withValues(alpha: 0.15),
+              blurRadius: 8,
+              offset: const Offset(0, 3),
+            ),
+          ],
+        ),
+        child: Material(
+          color: Colors.transparent,
+          borderRadius: BorderRadius.circular(8.r),
+          child: InkWell(
+            onTap: () {
+              Navigator.pushNamed(context, '/khatma-planner');
+            },
+            borderRadius: BorderRadius.circular(8.r),
+            child: Padding(
+              padding: EdgeInsets.symmetric(
+                horizontal: 16.w,
+                vertical: 14.h,
+              ), // Matches _SurahTile height balance perfectly!
+              child: Row(
+                children: [
+                  // Gold Ring Glowing Icon Container (Matches _SurahNumber size perfectly)
+                  Container(
+                    width: 42.w,
+                    height: 42.w,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.white.withValues(alpha: 0.12),
+                      border: Border.all(
+                        color: accentGold.withValues(alpha: 0.4),
+                        width: 1.5.w,
+                      ),
+                    ),
+                    child: Icon(
+                      Icons.auto_awesome_outlined,
+                      color: accentGold,
+                      size: 20.sp,
+                    ),
+                  ),
+                  SizedBox(width: 14.w),
+
+                  // Title Text & Gold "جديد" Badge
+                  Expanded(
+                    child: Row(
+                      children: [
+                        Text(
+                          'خطة اتمام المصحف ',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 10.sp,
+                            fontWeight: FontWeight.w800,
+                            fontFamily: 'Cairo',
+                          ),
+                        ),
+                        SizedBox(width: 8.w),
+                        // Floating Gold Badge
+                        Container(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 6.w,
+                            vertical: 2.h,
+                          ),
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [accentGold, Color(0xFFC5953C)],
+                            ),
+                            borderRadius: BorderRadius.circular(6.r),
+                          ),
+                          child: Text(
+                            'جديد',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 8.sp,
+                              fontWeight: FontWeight.bold,
+                              fontFamily: 'Cairo',
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  SizedBox(width: 10.w),
+
+                  // Sleek White Chevron Arrow matching Surah Tile style
+                  const Icon(Icons.chevron_left, color: Colors.white70),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
@@ -180,6 +316,7 @@ class _SurahTile extends StatelessWidget {
                         style: theme.textTheme.titleMedium?.copyWith(
                           fontSize: 18.sp,
                           fontWeight: FontWeight.w800,
+                          fontFamily: 'Amiri',
                         ),
                       ),
                       SizedBox(height: 4.h),
@@ -189,7 +326,8 @@ class _SurahTile extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: colorScheme.onSurfaceVariant,
-                          fontSize: 12.sp,
+                          fontSize: 10.sp,
+                          fontFamily: 'Cairo',
                         ),
                       ),
                     ],
@@ -229,6 +367,7 @@ class _SurahNumber extends StatelessWidget {
           color: colorScheme.primary,
           fontWeight: FontWeight.w800,
           fontSize: 14.sp,
+          fontFamily: 'Cairo',
         ),
       ),
     );

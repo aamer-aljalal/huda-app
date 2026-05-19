@@ -92,8 +92,9 @@ class AccessListGrid extends StatelessWidget {
                     SizedBox(height: 12.h),
 
                     Container(
-                      padding: EdgeInsets.all(12.w),
+                      padding: EdgeInsets.all(10.w),
                       decoration: BoxDecoration(
+                        border: Border.all(color: AppColors.goldAccent),
                         color: brightness == Brightness.dark
                             ? AppColors.primary.withOpacity(0.25)
                             : AppColors.primary.withOpacity(0.22),
@@ -102,27 +103,35 @@ class AccessListGrid extends StatelessWidget {
 
                       child: Icon(
                         item.icon,
-                        size: 30.sp,
+                        size: 25.sp,
                         color: AppColors.greenBorder,
+                        // color: AppColors.goldAccent,
                       ),
                     ),
 
-                    SizedBox(height: 5.h),
+                    // SizedBox(height: 3.h),
                     Expanded(
-                      child: AutoSizeText(
-                        item.title,
-                        maxLines: 2,
-                        minFontSize: 4,
-                        stepGranularity: 0.1,
-                        overflow: TextOverflow.ellipsis,
-                        textAlign: TextAlign.center,
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: Theme.of(context).colorScheme.onSurface,
-                          fontWeight: FontWeight.w600,
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 8.w),
+                        child: AutoSizeText(
+                          item.title,
+                          maxLines: 3,
+                          minFontSize: 10,
+                          maxFontSize: 16,
+                          stepGranularity: 0.5,
+                          overflow: TextOverflow.ellipsis,
+                          textAlign: TextAlign.center,
+                          style: Theme.of(context).textTheme.bodyMedium
+                              ?.copyWith(
+                                fontSize: 14.sp,
+                                color: Theme.of(context).colorScheme.onSurface,
+                                fontWeight: FontWeight.w600,
+                                fontFamily: 'Cairo',
+                              ),
                         ),
                       ),
                     ),
-                    SizedBox(height: 4.h),
+                    SizedBox(height: 5.h),
                   ],
                 ),
               ),

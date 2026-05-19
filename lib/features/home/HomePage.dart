@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:huda/core/dialogs/exit_confirmation_dialog.dart';
 import 'package:huda/features/home/data/home_actions.dart';
 import 'package:huda/features/home/widgets/home_azkar_prompt_card.dart';
-import 'package:huda/features/home/widgets/home_header.dart';
+import 'package:huda/features/home/widgets/home_header/home_header.dart';
 import 'package:huda/core/widgets/grids/access_list_grid.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
@@ -50,28 +52,37 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: CustomScrollView(
-        slivers: [
-          HomeHeader(),
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: EdgeInsets.all(20.0.w),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const HomeAzkarPromptCard(),
-                  // ================== أزرار الوصول السريع بشكل عصري ==================4
-                  AccessListGrid(
-                    actions: HomeActions.quickActionsList,
-                    controller: _gridAnimationController,
-                  ),
-                ],
+    return PopScope(
+      canPop: false,
+      onPopInvoked: (didPop) async {
+        if (didPop) return;
+        final shouldExit = await ExitConfirmationDialog(context);
+        if (shouldExit) {
+          await SystemNavigator.pop();
+        }
+      },
+      child: Scaffold(
+        body: CustomScrollView(
+          slivers: [
+            HomeHeader(),
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: EdgeInsets.symmetric(horizontal: 20.0.w),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const HomeAzkarPromptCard(),
+                    AccessListGrid(
+                      actions: HomeActions.quickActionsList,
+                      controller: _gridAnimationController,
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
-          SliverToBoxAdapter(child: SizedBox(height: 105.h)),
-        ],
+            SliverToBoxAdapter(child: SizedBox(height: 50.h)),
+          ],
+        ),
       ),
     );
   }

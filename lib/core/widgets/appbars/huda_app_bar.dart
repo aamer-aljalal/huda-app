@@ -10,7 +10,6 @@ import 'package:huda/core/theme/app_theme.dart';
 /// - Accepts custom `leading`, `actions`, or a full `title` widget.
 /// - Implements `PreferredSizeWidget` so it can be used directly as `appBar:`.
 ///
-/// Usage examples are provided at the bottom of this file.
 class HudaAppBar extends StatelessWidget implements PreferredSizeWidget {
   /// A custom title widget. If provided, `titleText` is ignored.
   final Widget? titleWidget;
@@ -51,7 +50,7 @@ class HudaAppBar extends StatelessWidget implements PreferredSizeWidget {
   /// Text alignment for the search field (use TextAlign.right for Arabic).
   final TextAlign searchTextAlign;
 
-  /// Height of the built-in bottom area (default matches sample: 60).
+  /// Height of the built-in bottom area (default matches sample: 70).
   final double bottomHeight;
 
   /// Elevation of the bar.
@@ -75,7 +74,7 @@ class HudaAppBar extends StatelessWidget implements PreferredSizeWidget {
     this.searchTextAlign = TextAlign.right,
     this.bottomHeight = 70,
     this.elevation = 0,
-    this.toolbarHeight = 90,
+    this.toolbarHeight = 70,
   });
 
   PreferredSizeWidget? get _effectiveBottom {
@@ -85,15 +84,14 @@ class HudaAppBar extends StatelessWidget implements PreferredSizeWidget {
     return PreferredSize(
       preferredSize: Size.fromHeight(bottomHeight),
       child: Padding(
-        padding: EdgeInsets.fromLTRB(16, 0, 16, 12),
+        padding: EdgeInsets.only(left: 10, top: 0, right: 10, bottom: 15),
+        // fromLTRB(16, 0, 16, 12)
         child: _buildSearchContainer(),
       ),
     );
   }
 
   Widget _buildSearchContainer() {
-    // Use the current theme brightness to select surface color
-    // but keep all colors defined in AppColors for consistency.
     return Builder(
       builder: (context) {
         final theme = Theme.of(context);
@@ -109,13 +107,6 @@ class HudaAppBar extends StatelessWidget implements PreferredSizeWidget {
         );
 
         return Container(
-          decoration: BoxDecoration(
-            color: fillColor,
-            borderRadius: BorderRadius.circular(30.r),
-            border: Border.all(
-              color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
-            ),
-          ),
           child: TextField(
             controller: searchController,
             textAlign: searchTextAlign,
@@ -152,106 +143,70 @@ class HudaAppBar extends StatelessWidget implements PreferredSizeWidget {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
-    final gradient = LinearGradient(
-      begin: Alignment.topRight,
-      end: Alignment.bottomLeft,
-
-      colors: isDark
-          ? [AppColors.secondary, AppColors.primary]
-          : [AppColors.primary, AppColors.primaryLight],
-    );
-
-    final defaultTitle =
-        titleWidget ??
-        (titleText != null
-            ? Text(
-                titleText!,
-                style:
-                    theme.appBarTheme.titleTextStyle ??
-                    theme.textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
+    final Widget? effectiveLeading =
+        leading ??
+        (Navigator.canPop(context)
+            ? IconButton(
+                icon: const Icon(Icons.arrow_back_ios_new_rounded),
+                onPressed: () => Navigator.pop(context),
               )
             : null);
 
     return AppBar(
-      title: defaultTitle,
-      leading: leading,
-      actions: actions,
-      centerTitle: centerTitle,
-      elevation: elevation,
-      backgroundColor: Colors.transparent,
-      // flexibleSpace: Container(decoration: BoxDecoration(gradient: gradient)),
-      flexibleSpace: ClipRRect(
-        borderRadius: BorderRadius.vertical(bottom: Radius.circular(7.r)),
-
-        child: Container(
-          decoration: BoxDecoration(
-            gradient: gradient,
-
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.08),
-                blurRadius: 12,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
+      title: Padding(
+        padding: EdgeInsets.only(top: 20.h),
+        child: Text(
+          titleText!,
+          style:
+              (theme.appBarTheme.titleTextStyle ?? theme.textTheme.titleLarge)
+                  ?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                    fontFamily: 'Cairo',
+                  ),
         ),
       ),
 
-      shape:
-          shape ??
-          RoundedRectangleBorder(
-            borderRadius: BorderRadius.vertical(bottom: Radius.circular(5.r)),
-          ),
-
+      leading: Padding(
+        padding: EdgeInsets.only(top: 22.h),
+        child: effectiveLeading,
+      ),
+      centerTitle: centerTitle,
+      elevation: elevation,
+      backgroundColor: Colors.transparent,
+      flexibleSpace: ClipRRect(
+        borderRadius: BorderRadius.vertical(
+          bottom: Radius.circular(showSearch ? 0 : 5.r),
+        ),
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            Image.asset('assets/img/top_bar.png', fit: BoxFit.cover),
+            Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topRight,
+                  end: Alignment.bottomLeft,
+                  colors: [
+                    AppColors.primary.withOpacity(0.70),
+                    const Color.fromARGB(255, 93, 122, 31).withOpacity(0.30),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(
+          bottom: Radius.circular(showSearch ? 20.r : 8.r),
+        ),
+      ),
       bottom: _effectiveBottom,
       iconTheme:
           Theme.of(context).appBarTheme.iconTheme ??
-          IconThemeData(
-            color: isDark ? AppColors.goldAccent : AppColors.primary,
-          ),
+          IconThemeData(color: isDark ? AppColors.goldAccent : Colors.white),
       automaticallyImplyLeading: leading == null ? true : false,
     );
   }
 }
-
-/*
-Usage examples:
-
-1) Simple title with built-in search (Arabic alignment by default):
-
-appBar: const HudaAppBar(
-  titleText: 'قائمة السور',
-  showSearch: true,
-  searchHint: 'ابحث عن سورة...',
-),
-
-2) With custom leading and actions:
-
-appBar: HudaAppBar(
-  titleText: 'الصفحة',
-  leading: IconButton(
-    icon: Icon(Icons.arrow_back_ios_new, color: AppColors.primary),
-    onPressed: () => Navigator.pop(context),
-  ),
-  actions: [
-    IconButton(icon: Icon(Icons.share, color: AppColors.primary), onPressed: () {}),
-  ],
-),
-
-3) Using a custom bottom widget (takes precedence over showSearch):
-
-appBar: HudaAppBar(
-  titleText: 'بحث متقدم',
-  bottom: PreferredSize(
-    preferredSize: Size.fromHeight(80),
-    child: YourCustomWidget(),
-  ),
-),
-
-Notes:
-- Colors are taken from `AppColors` and respect the current theme brightness.
-- The built-in search uses `TextField` and calls `onSearchChanged` on input.
-*/

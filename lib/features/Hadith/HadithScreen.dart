@@ -3,9 +3,12 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:huda/core/theme/app_colors.dart';
 import 'package:huda/core/widgets/appbars/huda_app_bar.dart';
 import 'package:huda/features/Hadith/hadith_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:huda/core/services/recent_actions_service.dart';
+import 'package:huda/core/services/stats_service.dart';
 
 class HadithScreen extends StatefulWidget {
   const HadithScreen({super.key});
@@ -31,6 +34,30 @@ class _HadithScreenState extends State<HadithScreen> {
     super.initState();
     _loadHadiths();
     _searchController.addListener(_filterHadiths);
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final args = ModalRoute.of(context)?.settings.arguments;
+      if (args is int) {
+        _openHadithByNumber(args);
+      }
+    });
+  }
+
+  void _openHadithByNumber(int number) {
+    if (_isLoading) {
+      Future.delayed(
+        const Duration(milliseconds: 100),
+        () => _openHadithByNumber(number),
+      );
+      return;
+    }
+    try {
+      final hadith = _allHadiths.firstWhere(
+        (h) => h.number == number,
+        orElse: () => _allHadiths.first,
+      );
+      _showHadithDetails(hadith);
+    } catch (_) {}
   }
 
   @override
@@ -64,7 +91,7 @@ class _HadithScreenState extends State<HadithScreen> {
     } catch (_) {
       if (!mounted) return;
       setState(() {
-        _errorMessage = 'تعذر تحميل ملف الأحاديث';
+        _errorMessage = 'تعذر تحميل الأحاديث النبوية الشريفة';
         _isLoading = false;
       });
     }
@@ -97,13 +124,15 @@ class _HadithScreenState extends State<HadithScreen> {
 
   Future<void> _copyHadith(HadithModel hadith) async {
     await Clipboard.setData(
-      ClipboardData(text: 'حديث رقم ${hadith.number}\n\n${hadith.hadith}'),
+      ClipboardData(
+        text: '${hadith.hadith}\n\n[الأربعون النووية - ${hadith.shortTitle}]',
+      ),
     );
 
     if (!mounted) return;
     ScaffoldMessenger.of(
       context,
-    ).showSnackBar(const SnackBar(content: Text('تم نسخ الحديث')));
+    ).showSnackBar(const SnackBar(content: Text('تم نسخ الحديث الشريف بنجاح')));
   }
 
   void _openRandomHadith() {
@@ -131,6 +160,7 @@ class _HadithScreenState extends State<HadithScreen> {
 
   void _showHadithDetails(HadithModel hadith) {
     final isFavorite = _favoriteNumbers.contains(hadith.number);
+    _saveRecentHadithAction(hadith);
 
     showModalBottomSheet(
       context: context,
@@ -141,8 +171,8 @@ class _HadithScreenState extends State<HadithScreen> {
           textDirection: TextDirection.rtl,
           child: DraggableScrollableSheet(
             initialChildSize: 0.82,
-            minChildSize: 0.45,
-            maxChildSize: 0.94,
+            minChildSize: 0.5,
+            maxChildSize: 0.96,
             builder: (context, controller) {
               return _HadithDetailsSheet(
                 hadith: hadith,
@@ -152,6 +182,10 @@ class _HadithScreenState extends State<HadithScreen> {
                 onFavorite: () {
                   Navigator.pop(context);
                   _toggleFavorite(hadith);
+                  // Refresh active detail view if it was reopened
+                  Future.delayed(const Duration(milliseconds: 150), () {
+                    _showHadithDetails(hadith);
+                  });
                 },
               );
             },
@@ -161,6 +195,22 @@ class _HadithScreenState extends State<HadithScreen> {
     );
   }
 
+  Future<void> _saveRecentHadithAction(HadithModel hadith) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setInt('last_hadith_number', hadith.number);
+      await RecentActionsManager.addAction(
+        category: 'hadith',
+        title: 'الأربعون النووية - ${hadith.shortTitle}',
+        subtitle: 'واصل قراءة ودراسة الأحاديث النبوية الشريفة',
+        extraData: {'hadith_number': hadith.number},
+      );
+
+      // Record statistics
+      await StatsService.recordAction('hadith');
+    } catch (_) {}
+  }
+
   @override
   Widget build(BuildContext context) {
     return Directionality(
@@ -168,19 +218,19 @@ class _HadithScreenState extends State<HadithScreen> {
       child: Scaffold(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         appBar: HudaAppBar(
-          titleText: 'الأحاديث',
+          titleText: 'الأربعون النووية',
           showSearch: true,
           searchController: _searchController,
-          searchHint: 'ابحث في الأحاديث...',
+          searchHint: 'ابحث في الأحاديث أو الشروحات...',
           actions: [
             IconButton(
-              tooltip: 'حديث عشوائي',
-              icon: const Icon(Icons.shuffle),
+              tooltip: 'حديث عشوائي مبارك',
+              icon: const Icon(Icons.shuffle_rounded),
               onPressed: _isLoading ? null : _openRandomHadith,
             ),
             IconButton(
-              tooltip: 'المفضلة',
-              icon: const Icon(Icons.star_border),
+              tooltip: 'الأحاديث المحفوظة',
+              icon: const Icon(Icons.star_rounded),
               onPressed: _isLoading ? null : _showFavoritesOnly,
             ),
           ],
@@ -199,18 +249,26 @@ class _HadithScreenState extends State<HadithScreen> {
       return Center(
         child: Text(
           _errorMessage!,
-          style: TextStyle(fontSize: 16.sp, color: Colors.red.shade700),
+          style: TextStyle(
+            fontSize: 14.sp,
+            color: Colors.red.shade700,
+            fontFamily: 'Cairo',
+            fontWeight: FontWeight.bold,
+          ),
         ),
       );
     }
 
     return Column(
       children: [
+        // Summary Bar
         _HadithSummaryBar(
           total: _allHadiths.length,
           visible: _filteredHadiths.length,
           favorites: _favoriteNumbers.length,
         ),
+
+        // Hadith list
         Expanded(
           child: _filteredHadiths.isEmpty
               ? _EmptyHadithState(
@@ -224,7 +282,7 @@ class _HadithScreenState extends State<HadithScreen> {
               : ListView.builder(
                   controller: _scrollController,
                   physics: const BouncingScrollPhysics(),
-                  padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 105.h),
+                  padding: EdgeInsets.fromLTRB(16.w, 4.h, 16.w, 100.h),
                   itemCount: _filteredHadiths.length,
                   itemBuilder: (context, index) {
                     final hadith = _filteredHadiths[index];
@@ -258,35 +316,46 @@ class _HadithSummaryBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
 
     return Container(
-      margin: EdgeInsets.fromLTRB(16.w, 14.h, 16.w, 8.h),
+      margin: EdgeInsets.fromLTRB(16.w, 10.h, 16.w, 6.h),
       padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
       decoration: BoxDecoration(
-        color: colorScheme.primary,
-        borderRadius: BorderRadius.circular(8.r),
+        color: isDark ? const Color(0xFF2C2C2C) : Colors.grey.shade100,
+        borderRadius: BorderRadius.circular(10.r),
+        border: Border.all(
+          color: isDark ? Colors.white10 : Colors.grey.shade200,
+        ),
       ),
       child: Row(
         children: [
-          Icon(Icons.auto_stories_outlined, color: Colors.white, size: 22.sp),
-          SizedBox(width: 10.w),
+          Icon(
+            Icons.library_books_rounded,
+            color: AppColors.primary,
+            size: 20.sp,
+          ),
+          SizedBox(width: 8.w),
           Expanded(
             child: Text(
               'الأحاديث المتاحة: $visible من $total',
               style: theme.textTheme.bodyMedium?.copyWith(
-                color: Colors.white,
-                fontWeight: FontWeight.w700,
-                fontSize: 13.sp,
+                color: isDark ? Colors.white70 : Colors.black87,
+                fontWeight: FontWeight.w800,
+                fontSize: 12.sp,
+                fontFamily: 'Cairo',
               ),
             ),
           ),
-          Icon(Icons.star, color: Colors.amber.shade200, size: 18.sp),
+          Icon(Icons.star_rounded, color: Colors.amber, size: 18.sp),
           SizedBox(width: 4.w),
           Text(
-            '$favorites',
+            '$favorites محفوظ',
             style: theme.textTheme.bodyMedium?.copyWith(
-              color: Colors.white,
+              color: isDark ? Colors.white70 : Colors.black87,
               fontWeight: FontWeight.w800,
+              fontSize: 11.sp,
+              fontFamily: 'Cairo',
             ),
           ),
         ],
@@ -314,21 +383,27 @@ class _HadithCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
 
     return Padding(
-      padding: EdgeInsets.only(bottom: 10.h),
+      padding: EdgeInsets.only(bottom: 12.h),
       child: Material(
-        color: colorScheme.surface,
-        borderRadius: BorderRadius.circular(8.r),
+        color: isDark ? const Color(0xFF2C2C2C) : Colors.white,
+        borderRadius: BorderRadius.circular(12.r),
+        elevation: isDark ? 0 : 2,
+        shadowColor: Colors.black.withValues(alpha: 0.05),
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(8.r),
+          borderRadius: BorderRadius.circular(12.r),
           child: Container(
-            padding: EdgeInsets.all(14.w),
+            padding: EdgeInsets.all(16.w),
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(8.r),
+              borderRadius: BorderRadius.circular(12.r),
               border: Border.all(
-                color: colorScheme.outline.withValues(alpha: 0.12),
+                color: isFavorite
+                    ? AppColors.primary.withValues(alpha: 0.35)
+                    : (isDark ? Colors.white10 : Colors.grey.shade100),
+                width: 1.5,
               ),
             ),
             child: Column(
@@ -337,48 +412,70 @@ class _HadithCard extends StatelessWidget {
                 Row(
                   children: [
                     _HadithNumber(number: hadith.number),
-                    SizedBox(width: 10.w),
+                    SizedBox(width: 14.w),
                     Expanded(
                       child: Text(
-                        'حديث رقم ${hadith.number}',
-                        style: theme.textTheme.titleSmall?.copyWith(
+                        hadith.shortTitle,
+                        style: TextStyle(
                           fontSize: 13.sp,
-                          fontWeight: FontWeight.w800,
-                          color: colorScheme.primary,
+                          fontWeight: FontWeight.w900,
+                          color: AppColors.primary,
+                          fontFamily: 'Cairo',
                         ),
                       ),
                     ),
                     IconButton(
                       tooltip: 'نسخ',
                       onPressed: onCopy,
-                      icon: Icon(Icons.copy, size: 20.sp),
-                      color: colorScheme.onSurfaceVariant,
+                      icon: Icon(Icons.copy_rounded, size: 18.sp),
+                      color: Colors.grey.shade500,
                     ),
                     IconButton(
                       tooltip: 'المفضلة',
                       onPressed: onFavorite,
                       icon: Icon(
-                        isFavorite ? Icons.star : Icons.star_border,
+                        isFavorite
+                            ? Icons.star_rounded
+                            : Icons.star_border_rounded,
                         size: 21.sp,
                       ),
-                      color: isFavorite
-                          ? Colors.amber.shade700
-                          : colorScheme.onSurfaceVariant,
+                      color: isFavorite ? Colors.amber : Colors.grey.shade500,
                     ),
                   ],
                 ),
-                SizedBox(height: 8.h),
+                SizedBox(height: 10.h),
                 Text(
-                  hadith.hadith,
+                  hadith.textOnly,
                   maxLines: 4,
                   overflow: TextOverflow.ellipsis,
                   textAlign: TextAlign.right,
-                  style: theme.textTheme.bodyLarge?.copyWith(
-                    fontSize: 16.sp,
-                    height: 1.7,
-                    color: colorScheme.onSurface,
+                  style: TextStyle(
+                    fontSize: 15.sp,
+                    height: 1.8,
+                    color: isDark ? Colors.white70 : Colors.black87,
                     fontWeight: FontWeight.w500,
+                    fontFamily: 'Amiri',
                   ),
+                ),
+                SizedBox(height: 10.h),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    Text(
+                      'عرض الشرح والفوائد',
+                      style: TextStyle(
+                        color: AppColors.goldAccent,
+                        fontSize: 10.sp,
+                        fontWeight: FontWeight.bold,
+                        fontFamily: 'Cairo',
+                      ),
+                    ),
+                    Icon(
+                      Icons.arrow_back_ios_new_rounded,
+                      size: 10.sp,
+                      color: AppColors.goldAccent,
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -396,24 +493,33 @@ class _HadithNumber extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
-    return Container(
-      width: 34.w,
-      height: 34.w,
+    return Stack(
       alignment: Alignment.center,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: colorScheme.primary.withValues(alpha: 0.1),
-      ),
-      child: Text(
-        '$number',
-        style: TextStyle(
-          color: colorScheme.primary,
-          fontSize: 11.sp,
-          fontWeight: FontWeight.w800,
+      children: [
+        Transform.rotate(
+          angle: math.pi / 4,
+          child: Container(
+            width: 32.w,
+            height: 32.w,
+            decoration: BoxDecoration(
+              color: AppColors.primary.withValues(alpha: 0.1),
+              border: Border.all(
+                color: AppColors.goldAccent.withValues(alpha: 0.5),
+                width: 1.5.w,
+              ),
+              borderRadius: BorderRadius.circular(4.r),
+            ),
+          ),
         ),
-      ),
+        Text(
+          '$number',
+          style: TextStyle(
+            color: AppColors.primary,
+            fontSize: 12.sp,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+      ],
     );
   }
 }
@@ -436,83 +542,179 @@ class _HadithDetailsSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+    final cardBg = isDark ? const Color(0xFF2C2C2C) : Colors.grey.shade50;
 
     return Container(
       decoration: BoxDecoration(
-        color: colorScheme.surface,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(8.r)),
+        color: Theme.of(context).scaffoldBackgroundColor,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
+        border: Border.all(
+          color: AppColors.primary.withValues(alpha: 0.15),
+          width: 2,
+        ),
       ),
-      child: ListView(
-        controller: controller,
-        physics: const BouncingScrollPhysics(),
-        padding: EdgeInsets.fromLTRB(18.w, 10.h, 18.w, 28.h),
+      child: Column(
         children: [
+          // Drag handle indicator
+          SizedBox(height: 10.h),
           Center(
             child: Container(
-              width: 46.w,
+              width: 50.w,
               height: 4.h,
               decoration: BoxDecoration(
-                color: colorScheme.outline.withValues(alpha: 0.35),
-                borderRadius: BorderRadius.circular(20.r),
+                color: Colors.grey.shade400,
+                borderRadius: BorderRadius.circular(10.r),
               ),
             ),
           ),
-          SizedBox(height: 18.h),
-          Row(
-            children: [
-              _HadithNumber(number: hadith.number),
-              SizedBox(width: 10.w),
-              Expanded(
-                child: Text(
-                  'حديث رقم ${hadith.number}',
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w800,
-                    color: colorScheme.primary,
+          SizedBox(height: 12.h),
+
+          // Details Toolbar
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16.w),
+            child: Row(
+              children: [
+                _HadithNumber(number: hadith.number),
+                SizedBox(width: 14.w),
+                Expanded(
+                  child: Text(
+                    hadith.shortTitle,
+                    style: TextStyle(
+                      fontSize: 14.sp,
+                      fontWeight: FontWeight.w900,
+                      color: AppColors.primary,
+                      fontFamily: 'Cairo',
+                    ),
                   ),
                 ),
-              ),
-              IconButton(
-                onPressed: onCopy,
-                icon: const Icon(Icons.copy),
-                tooltip: 'نسخ الحديث',
-              ),
-              IconButton(
-                onPressed: onFavorite,
-                icon: Icon(isFavorite ? Icons.star : Icons.star_border),
-                color: isFavorite ? Colors.amber.shade700 : null,
-                tooltip: 'المفضلة',
-              ),
-            ],
-          ),
-          SizedBox(height: 14.h),
-          Text(
-            hadith.hadith,
-            textAlign: TextAlign.right,
-            style: theme.textTheme.bodyLarge?.copyWith(
-              fontSize: 18.sp,
-              height: 1.9,
-              fontWeight: FontWeight.w500,
-              color: colorScheme.onSurface,
-            ),
-          ),
-          if (hadith.description.isNotEmpty) ...[
-            SizedBox(height: 18.h),
-            Container(
-              padding: EdgeInsets.all(12.w),
-              decoration: BoxDecoration(
-                color: colorScheme.primary.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(8.r),
-              ),
-              child: Text(
-                hadith.description,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  height: 1.6,
-                  color: colorScheme.onSurface,
+                IconButton(
+                  onPressed: onCopy,
+                  icon: const Icon(Icons.copy_rounded),
+                  tooltip: 'نسخ الحديث',
                 ),
-              ),
+                IconButton(
+                  onPressed: onFavorite,
+                  icon: Icon(
+                    isFavorite ? Icons.star_rounded : Icons.star_border_rounded,
+                  ),
+                  color: isFavorite ? Colors.amber : null,
+                  tooltip: 'حفظ للمفضلة',
+                ),
+              ],
             ),
-          ],
+          ),
+          const Divider(height: 20),
+
+          // Scrollable content
+          Expanded(
+            child: ListView(
+              controller: controller,
+              physics: const BouncingScrollPhysics(),
+              padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
+              children: [
+                // Noble Hadith Text Panel
+                Container(
+                  padding: EdgeInsets.all(16.w),
+                  decoration: BoxDecoration(
+                    color: cardBg,
+                    borderRadius: BorderRadius.circular(14.r),
+                    border: Border.all(
+                      color: isDark ? Colors.white10 : Colors.grey.shade100,
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.format_quote_rounded,
+                            color: AppColors.primary,
+                            size: 20.sp,
+                          ),
+                          SizedBox(width: 6.w),
+                          Text(
+                            'متن الحديث الشريف:',
+                            style: TextStyle(
+                              fontSize: 11.sp,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.primary,
+                              fontFamily: 'Cairo',
+                            ),
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 10.h),
+                      Text(
+                        hadith.textOnly,
+                        textDirection: TextDirection.rtl,
+                        textAlign: TextAlign.justify,
+                        style: TextStyle(
+                          fontSize: 16.sp,
+                          height: 1.9,
+                          fontWeight: FontWeight.w500,
+                          color: isDark ? Colors.white : Colors.black87,
+                          fontFamily: 'Amiri',
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                SizedBox(height: 14.h),
+
+                // Explanation/Benefits Panel
+                if (hadith.description.isNotEmpty) ...[
+                  Container(
+                    padding: EdgeInsets.all(16.w),
+                    decoration: BoxDecoration(
+                      color: cardBg,
+                      borderRadius: BorderRadius.circular(14.r),
+                      border: Border.all(
+                        color: isDark ? Colors.white10 : Colors.grey.shade100,
+                      ),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.lightbulb_outline_rounded,
+                              color: AppColors.goldAccent,
+                              size: 20.sp,
+                            ),
+                            SizedBox(width: 6.w),
+                            Text(
+                              'شرح وفوائد الحديث الشريف:',
+                              style: TextStyle(
+                                fontSize: 11.sp,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.goldAccent,
+                                fontFamily: 'Cairo',
+                              ),
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: 12.h),
+                        Text(
+                          hadith.description,
+                          textDirection: TextDirection.rtl,
+                          textAlign: TextAlign.justify,
+                          style: TextStyle(
+                            fontSize: 13.sp,
+                            height: 1.7,
+                            color: isDark ? Colors.white70 : Colors.black87,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+                SizedBox(height: 24.h),
+              ],
+            ),
+          ),
         ],
       ),
     );
@@ -526,8 +728,6 @@ class _EmptyHadithState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
     return Center(
       child: Padding(
         padding: EdgeInsets.all(24.w),
@@ -535,19 +735,29 @@ class _EmptyHadithState extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
-              Icons.search_off,
-              size: 46.sp,
-              color: colorScheme.onSurfaceVariant,
+              Icons.search_off_rounded,
+              size: 48.sp,
+              color: Colors.grey.shade400,
             ),
             SizedBox(height: 10.h),
             Text(
-              'لا توجد أحاديث مطابقة',
-              style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w700),
+              'لا توجد أحاديث مطابقة للبحث',
+              style: TextStyle(
+                fontSize: 14.sp,
+                fontWeight: FontWeight.w700,
+                fontFamily: 'Cairo',
+              ),
             ),
             SizedBox(height: 6.h),
             TextButton(
               onPressed: onReset,
-              child: const Text('عرض كل الأحاديث'),
+              child: const Text(
+                'عرض كل أحاديث الأربعين النووية',
+                style: TextStyle(
+                  fontFamily: 'Cairo',
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ),
           ],
         ),

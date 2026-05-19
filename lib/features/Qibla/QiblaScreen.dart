@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'dart:math' as math;
 import 'dart:ui' as ui;
 
+import 'package:huda/core/widgets/appbars/huda_app_bar.dart';
+
 class QiblaScreen extends StatefulWidget {
   const QiblaScreen({super.key});
 
@@ -125,27 +127,10 @@ class _QiblaScreenState extends State<QiblaScreen>
 
     return Scaffold(
       extendBodyBehindAppBar: true,
-      appBar: AppBar(
-        title: Text(
-          'اتجاه القبلة',
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 22.sp),
-        ),
-        centerTitle: true,
+      appBar: HudaAppBar(
+        titleText: 'اتجاه القبلة',
+        toolbarHeight: 90,
         elevation: 0,
-        backgroundColor: Colors.transparent,
-        foregroundColor: colorScheme.onPrimary,
-        flexibleSpace: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                colorScheme.primary,
-                colorScheme.secondary.withOpacity(0.8),
-              ],
-            ),
-          ),
-        ),
         actions: [
           IconButton(
             icon: Icon(Icons.help_outline_rounded),

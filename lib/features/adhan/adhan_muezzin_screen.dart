@@ -92,7 +92,11 @@ class _AdhanMuezzinScreenState extends State<AdhanMuezzinScreen> {
       textDirection: TextDirection.rtl,
       child: Scaffold(
         backgroundColor: theme.scaffoldBackgroundColor,
-        appBar: HudaAppBar(titleText: 'اختيار المؤذن', elevation: 0),
+        appBar: HudaAppBar(
+          titleText: 'اختيار المؤذن',
+          elevation: 0,
+          toolbarHeight: 90,
+        ),
         body: ListView.separated(
           physics: const BouncingScrollPhysics(),
           padding: EdgeInsets.all(16.w),

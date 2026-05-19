@@ -44,6 +44,7 @@ class _AzkarCategoriesScreenState extends State<AzkarCategoriesScreen>
       appBar: HudaAppBar(
         titleText: 'الأذكار',
         elevation: 0,
+        toolbarHeight: 90,
         // We already listen to the controller in initState, so onSearchChanged is optional
       ),
 

@@ -47,7 +47,7 @@ class AzkarService {
 
         title: category.title,
 
-        route: AppRoutes.surahDetails,
+        route: AppRoutes.zkarDetails,
 
         arguments: category,
       );
