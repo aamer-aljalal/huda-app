@@ -20,6 +20,7 @@ class SurahDetailPage extends StatefulWidget {
     required this.surah,
     required this.ayahs,
     this.initialPage = 0,
+    this.initialAyah,
     this.resumeLastPage = false,
     this.isKhatmaSession = false,
   });
@@ -27,6 +28,7 @@ class SurahDetailPage extends StatefulWidget {
   final QuranSurah surah;
   final List<QuranAyah> ayahs;
   final int initialPage;
+  final int? initialAyah;
   final bool resumeLastPage;
   final bool isKhatmaSession;
 
@@ -51,7 +53,18 @@ class _SurahDetailPageState extends State<SurahDetailPage> {
     _pages = _splitIntoMushafPages(widget.ayahs);
     _pageKeys = List.generate(_pages.length, (_) => GlobalKey());
     _centerSliverKey = GlobalKey();
-    _centerPage = widget.initialPage;
+
+    int startPage = widget.initialPage;
+    if (widget.initialAyah != null) {
+      for (int i = 0; i < _pages.length; i++) {
+        if (_pages[i].any((a) => a.verse == widget.initialAyah)) {
+          startPage = i;
+          break;
+        }
+      }
+    }
+
+    _centerPage = startPage;
     if (_centerPage >= _pages.length) _centerPage = 0;
     _currentPage = _centerPage;
 

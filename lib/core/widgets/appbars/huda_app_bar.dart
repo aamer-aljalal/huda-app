@@ -44,6 +44,9 @@ class HudaAppBar extends StatelessWidget implements PreferredSizeWidget {
   /// Called on each search text change.
   final ValueChanged<String>? onSearchChanged;
 
+  /// Optional callback for verse search. If provided, a dedicated button appears next to search.
+  final VoidCallback? onVerseSearchPressed;
+
   /// Hint text for the search field.
   final String? searchHint;
 
@@ -70,6 +73,7 @@ class HudaAppBar extends StatelessWidget implements PreferredSizeWidget {
     this.showSearch = false,
     this.searchController,
     this.onSearchChanged,
+    this.onVerseSearchPressed,
     this.searchHint,
     this.searchTextAlign = TextAlign.right,
     this.bottomHeight = 70,
@@ -106,27 +110,62 @@ class HudaAppBar extends StatelessWidget implements PreferredSizeWidget {
               : AppColors.lightSecondaryText,
         );
 
-        return Container(
-          child: TextField(
-            controller: searchController,
-            textAlign: searchTextAlign,
-            onChanged: onSearchChanged,
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: isDark
-                  ? AppColors.darkPrimaryText
-                  : AppColors.lightPrimaryText,
-            ),
-            decoration: InputDecoration(
-              hintText: searchHint ?? 'ابحث...',
-              hintStyle: hintStyle,
-              prefixIcon: Icon(Icons.search, color: prefixColor),
-              border: InputBorder.none,
-              contentPadding: EdgeInsets.symmetric(
-                vertical: 12.h,
-                horizontal: 16.w,
+        return Row(
+          children: [
+            Expanded(
+              child: Container(
+                decoration: BoxDecoration(
+                  color: fillColor,
+                  borderRadius: BorderRadius.circular(12.r),
+                ),
+                child: TextField(
+                  controller: searchController,
+                  textAlign: searchTextAlign,
+                  onChanged: onSearchChanged,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: isDark
+                        ? AppColors.darkPrimaryText
+                        : AppColors.lightPrimaryText,
+                  ),
+                  decoration: InputDecoration(
+                    hintText: searchHint ?? 'ابحث...',
+                    hintStyle: hintStyle,
+                    prefixIcon: Icon(Icons.search, color: prefixColor),
+                    border: InputBorder.none,
+                    contentPadding: EdgeInsets.symmetric(
+                      vertical: 12.h,
+                      horizontal: 16.w,
+                    ),
+                  ),
+                ),
               ),
             ),
-          ),
+            if (onVerseSearchPressed != null) ...[
+              SizedBox(width: 8.w),
+              Material(
+                color: fillColor,
+                borderRadius: BorderRadius.circular(12.r),
+                child: InkWell(
+                  onTap: onVerseSearchPressed,
+                  borderRadius: BorderRadius.circular(12.r),
+                  child: Container(
+                    padding: EdgeInsets.all(12.w),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12.r),
+                      border: Border.all(
+                        color: prefixColor.withValues(alpha: 0.3),
+                      ),
+                    ),
+                    child: Icon(
+                      Icons.manage_search_rounded,
+                      color: prefixColor,
+                      size: 24.sp,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ],
         );
       },
     );

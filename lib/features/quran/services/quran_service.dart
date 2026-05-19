@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/services.dart';
+import 'package:huda/core/helpers/arabic_search_helper.dart';
 
 class QuranSurah {
   const QuranSurah({
@@ -32,12 +33,25 @@ class QuranAyah {
   final String text;
 }
 
+class SearchableAyah {
+  const SearchableAyah({
+    required this.ayah,
+    required this.surah,
+    required this.normalizedText,
+  });
+
+  final QuranAyah ayah;
+  final QuranSurah surah;
+  final String normalizedText;
+}
+
 class QuranService {
   QuranService._();
 
   static List<QuranSurah>? _surahs;
   static Map<String, dynamic>? _quran;
   static Map<String, String>? _interpretations;
+  static List<SearchableAyah>? _searchableAyahs;
 
   static Future<List<QuranSurah>> loadSurahs() async {
     if (_surahs != null) return _surahs!;
@@ -78,6 +92,38 @@ class QuranService {
         text: map['text'] as String,
       );
     }).toList();
+  }
+
+  static Future<List<SearchableAyah>> loadAllSearchableAyahs() async {
+    if (_searchableAyahs != null) return _searchableAyahs!;
+
+    final surahs = await loadSurahs();
+    final List<SearchableAyah> results = [];
+
+    _quran ??=
+        jsonDecode(await rootBundle.loadString('assets/json/quran.json'))
+            as Map<String, dynamic>;
+
+    for (final surah in surahs) {
+      final rawAyahs = (_quran!['${surah.number}'] as List<dynamic>? ?? []);
+      for (final item in rawAyahs) {
+        final map = item as Map<String, dynamic>;
+        final text = map['text'] as String;
+        final ayah = QuranAyah(
+          chapter: map['chapter'] as int,
+          verse: map['verse'] as int,
+          text: text,
+        );
+        results.add(SearchableAyah(
+          ayah: ayah,
+          surah: surah,
+          normalizedText: ArabicSearchHelper.normalize(text),
+        ));
+      }
+    }
+
+    _searchableAyahs = results;
+    return _searchableAyahs!;
   }
 
   static Future<String> loadInterpretation({

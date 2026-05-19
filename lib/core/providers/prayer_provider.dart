@@ -1,17 +1,20 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:adhan/adhan.dart';
 import 'package:intl/intl.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:geocoding/geocoding.dart';
 import 'package:huda/core/services/adhan_notification_service.dart';
 import 'package:huda/core/services/adhan_player_service.dart';
 
 class PrayerProvider extends ChangeNotifier {
-  // موقع مكة المكرمة الثابت
-  final String _cityName = 'مكة المكرمة';
-  final double _lat = 21.4225;
-  final double _lng = 39.8262;
-  late final Coordinates _coordinates = Coordinates(_lat, _lng);
-  late final CalculationParameters _calculationParameters = CalculationMethod
+  // موقع مكة المكرمة الافتراضي والاحتياطي
+  String _cityName = 'مكة المكرمة';
+  double _lat = 21.4225;
+  double _lng = 39.8262;
+  late Coordinates _coordinates = Coordinates(_lat, _lng);
+  late CalculationParameters _calculationParameters = CalculationMethod
       .umm_al_qura
       .getParameters();
 
@@ -41,15 +44,93 @@ class PrayerProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      // حساب المواقيت فوراً بناءً على مكة المكرمة بدون إنترنت أو GPS
+      // 1. حساب المواقيت فوراً بناءً على مكة المكرمة بدون إنترنت أو GPS لضمان السرعة المطلقة والاستقرار
       _calculatePrayerTimes();
-      await scheduleAdhanNotifications();
       _startTimer();
+
+      // 2. محاولة تحديث المواقيت بناءً على إحداثيات موقع المستخدم الحقيقي في الخلفية بشكل آمن
+      await _updateLocationAndRecalculate();
     } catch (e) {
       _errorMessage = 'حدث خطأ أثناء جلب البيانات: $e';
     } finally {
       _isLoading = false;
       notifyListeners();
+    }
+  }
+
+  Future<void> _updateLocationAndRecalculate() async {
+    try {
+      // تجنب تشغيل Geolocator على نظام الويندوز تفادياً لأي أعطال أثناء الاختبار
+      if (defaultTargetPlatform == TargetPlatform.windows) {
+        return;
+      }
+
+      // التحقق من تفعيل خدمة تحديد الموقع بالجهاز (GPS)
+      final isServiceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!isServiceEnabled) return;
+
+      // التحقق من صلاحيات الموقع وطلبها إذا لم تكن ممنوحة
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied ||
+            permission == LocationPermission.deniedForever) {
+          return;
+        }
+      }
+
+      if (permission == LocationPermission.deniedForever) {
+        return;
+      }
+
+      // محاولة الحصول على آخر موقع معروف أولاً لسرعته الفائقة وعدم استهلاك الطاقة
+      Position? pos;
+      try {
+        pos = await Geolocator.getLastKnownPosition();
+      } catch (_) {}
+
+      // إعدادات الموقع للأندرويد التي تتخطى مشاكل خدمات جوجل وتعمل بدقة منخفضة مناسبة للمواقيت
+      final locationSettings = defaultTargetPlatform == TargetPlatform.android
+          ? AndroidSettings(
+              accuracy: LocationAccuracy.low,
+              forceLocationManager: true,
+            )
+          : const LocationSettings(
+              accuracy: LocationAccuracy.low,
+            );
+
+      // إذا لم يتوفر آخر موقع معروف، نطلب الموقع الحالي بمهلة زمنية قصيرة (5 ثوانٍ)
+      pos ??= await Geolocator.getCurrentPosition(
+        locationSettings: locationSettings,
+      ).timeout(const Duration(seconds: 5));
+
+      if (pos != null) {
+        _lat = pos.latitude;
+        _lng = pos.longitude;
+        _coordinates = Coordinates(_lat, _lng);
+
+        // محاولة جلب الاسم الجغرافي للمدينة
+        try {
+          final placemarks = await placemarkFromCoordinates(_lat, _lng);
+          if (placemarks.isNotEmpty) {
+            final place = placemarks.first;
+            _cityName = place.locality ??
+                place.subAdministrativeArea ??
+                place.administrativeArea ??
+                'موقعي الحالي';
+          }
+        } catch (_) {
+          _cityName = 'موقعي الحالي';
+        }
+
+        // إشعار التطبيق بالتحديث وإعادة حساب المواقيت وتحديث إشعارات الأذان
+        _calculatePrayerTimes();
+        await scheduleAdhanNotifications();
+        notifyListeners();
+      }
+    } catch (e) {
+      // في حال حدوث أي خطأ، لا نفعل شيئاً ونبقي على مكة المكرمة كخيار احتياطي آمن 100%
+      debugPrint("Silent catch - Qibla/Prayer times location fetch failed: $e");
     }
   }
 

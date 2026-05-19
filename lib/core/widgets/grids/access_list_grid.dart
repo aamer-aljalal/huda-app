@@ -69,11 +69,6 @@ class AccessListGrid extends StatelessWidget {
                     width: 2.w,
                   ),
 
-                  // gradient: LinearGradient(
-                  //   end: Alignment.bottomRight,
-                  //   begin: Alignment.centerLeft,
-                  //   colors: [Color(gradient[0]), Color(gradient[1])],
-                  // ),
                   color: Theme.of(context).colorScheme.surface,
                   borderRadius: BorderRadius.circular(AppRadius.small),
                   boxShadow: [
@@ -89,7 +84,7 @@ class AccessListGrid extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.center,
 
                   children: [
-                    SizedBox(height: 12.h),
+                    SizedBox(height: 8.h),
 
                     Container(
                       padding: EdgeInsets.all(10.w),

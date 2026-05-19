@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:huda/core/widgets/appbars/huda_app_bar.dart';
 import 'package:huda/features/quran/services/quran_service.dart';
 import 'package:huda/features/quran/views/surah_detail_page.dart';
+import 'package:huda/features/quran/views/quran_verse_search_page.dart';
 
 class SurahListPage extends StatefulWidget {
   const SurahListPage({super.key});
@@ -91,6 +92,12 @@ class _SurahListPageState extends State<SurahListPage> {
           showSearch: true,
           searchController: searchController,
           searchHint: 'ابحث عن سورة...',
+          onVerseSearchPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const QuranVerseSearchPage()),
+            );
+          },
           centerTitle: true,
           elevation: 0,
         ),
@@ -192,7 +199,8 @@ class _SurahListPageState extends State<SurahListPage> {
               padding: EdgeInsets.symmetric(
                 horizontal: 16.w,
                 vertical: 14.h,
-              ), // Matches _SurahTile height balance perfectly!
+              ),
+               // Matches _SurahTile height balance perfectly!
               child: Row(
                 children: [
                   // Gold Ring Glowing Icon Container (Matches _SurahNumber size perfectly)
@@ -216,7 +224,7 @@ class _SurahListPageState extends State<SurahListPage> {
                   ),
                   SizedBox(width: 14.w),
 
-                  // Title Text & Gold "جديد" Badge
+
                   Expanded(
                     child: Row(
                       children: [
@@ -255,10 +263,11 @@ class _SurahListPageState extends State<SurahListPage> {
                       ],
                     ),
                   ),
-                  SizedBox(width: 10.w),
 
-                  // Sleek White Chevron Arrow matching Surah Tile style
+                  SizedBox(width: 10.w),
                   const Icon(Icons.chevron_left, color: Colors.white70),
+
+
                 ],
               ),
             ),

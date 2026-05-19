@@ -80,7 +80,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                 ),
               ),
             ),
-            SliverToBoxAdapter(child: SizedBox(height: 50.h)),
+            SliverToBoxAdapter(child: SizedBox(height: 20.h)),
           ],
         ),
       ),

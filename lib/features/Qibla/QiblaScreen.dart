@@ -2,12 +2,12 @@ import 'dart:async';
 import 'dart:math' as math;
 import 'dart:ui' as ui;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_compass/flutter_compass.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:huda/core/widgets/appbars/huda_app_bar.dart';
-import 'package:permission_handler/permission_handler.dart';
 
 class QiblaScreen extends StatefulWidget {
   const QiblaScreen({super.key});
@@ -56,43 +56,129 @@ class _QiblaScreenState extends State<QiblaScreen>
     setState(() {
       _isLoading = true;
       _hasError = false;
-      _statusMessage = 'جاري طلب الصلاحيات...';
+      _statusMessage = 'جاري التحقق من صلاحيات الموقع...';
     });
 
-    // طلب صلاحية الموقع
-    final locStatus = await Permission.location.request();
-    if (!locStatus.isGranted) {
-      setState(() {
-        _isLoading = false;
-        _hasError = true;
-        _statusMessage = 'يتطلب تحديد القبلة إذن الموقع.\nيُرجى تفعيله من الإعدادات.';
-      });
-      return;
-    }
-
-    setState(() => _statusMessage = 'جاري تحديد موقعك...');
-
     try {
-      final pos = await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(accuracy: LocationAccuracy.high),
-      ).timeout(const Duration(seconds: 15));
+      // 0. دعم اختبار وتطوير التطبيق على الويندوز Desktop دون انهيار البوصلة
+      if (defaultTargetPlatform == TargetPlatform.windows) {
+        final qibla = _calculateQiblaAngle(21.4225, 39.8262); // إحداثيات مكة المكرمة كافتراضي
+        setState(() {
+          _qiblaAngle = qibla;
+          _isLoading = false;
+          _statusMessage = 'البوصلة نشطة (الوضع الافتراضي للويندوز)';
+          _locationName = 'مكة المكرمة (الافتراضي للويندوز)';
+        });
+        _startCompass();
+        return;
+      }
 
-      final qibla = _calculateQiblaAngle(pos.latitude, pos.longitude);
+      // 1. التحقق من صلاحيات الموقع عبر Geolocator مباشرة لضمان أعلى توافق وتجنب تعارض الحزم
+      LocationPermission permission = await Geolocator.checkPermission();
+      
+      if (permission == LocationPermission.denied) {
+        setState(() => _statusMessage = 'جاري طلب إذن الموقع...');
+        permission = await Geolocator.requestPermission();
+        
+        if (permission == LocationPermission.denied) {
+          setState(() {
+            _isLoading = false;
+            _hasError = true;
+            _statusMessage = 'يتطلب تحديد القبلة إذن الموقع.\nيُرجى تفعيله من الإعدادات.';
+          });
+          return;
+        }
+      }
 
-      setState(() {
-        _qiblaAngle = qibla;
-        _isLoading = false;
-        _statusMessage = 'البوصلة نشطة';
-        _locationName =
-            '${pos.latitude.toStringAsFixed(4)}°N, ${pos.longitude.toStringAsFixed(4)}°E';
-      });
+      if (permission == LocationPermission.deniedForever) {
+        setState(() {
+          _isLoading = false;
+          _hasError = true;
+          _statusMessage = 'صلاحية الموقع مرفوضة دائماً.\nيرجى تفعيلها من إعدادات الهاتف.';
+        });
+        return;
+      }
 
-      _startCompass();
+      setState(() => _statusMessage = 'جاري تحديد موقعك...');
+
+      // 2. التحقق من تفعيل خدمة تحديد الموقع بالجهاز (GPS)
+      final isServiceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!isServiceEnabled) {
+        setState(() {
+          _isLoading = false;
+          _hasError = true;
+          _statusMessage = 'يرجى تفعيل خدمة الموقع (GPS) في إعدادات الهاتف.';
+        });
+        return;
+      }
+
+      // 3. محاولة الحصول على آخر موقع معروف أولاً (سريع ومجاني وبدون تعليق)
+      Position? pos;
+      try {
+        pos = await Geolocator.getLastKnownPosition();
+      } catch (_) {}
+
+      // 4. إعدادات الموقع للأندرويد التي تتجاوز مشاكل خدمات جوجل وتعتمد على محرك النظام مباشرة (Force Location Manager)
+      final locationSettingsLow = defaultTargetPlatform == TargetPlatform.android
+          ? AndroidSettings(
+              accuracy: LocationAccuracy.low,
+              forceLocationManager: true,
+            )
+          : const LocationSettings(
+              accuracy: LocationAccuracy.low,
+            );
+
+      final locationSettingsLowest = defaultTargetPlatform == TargetPlatform.android
+          ? AndroidSettings(
+              accuracy: LocationAccuracy.lowest,
+              forceLocationManager: true,
+            )
+          : const LocationSettings(
+              accuracy: LocationAccuracy.lowest,
+            );
+
+      // 5. إذا لم يتوفر آخر موقع معروف، نطلب الموقع بدقة منخفضة تفادياً لتعليق الستلايت
+      if (pos == null) {
+        try {
+          pos = await Geolocator.getCurrentPosition(
+            locationSettings: locationSettingsLow,
+          ).timeout(const Duration(seconds: 6));
+        } catch (_) {
+          // 6. تراجع أخير للدقة الدنيا (تعتمد على الأبراج والـ Wi-Fi وتعمل فوراً بالداخل)
+          try {
+            pos = await Geolocator.getCurrentPosition(
+              locationSettings: locationSettingsLowest,
+            ).timeout(const Duration(seconds: 6));
+          } catch (err) {
+            debugPrint("Qibla location fetch error: $err");
+          }
+        }
+      }
+
+      // إذا نجحنا في تحديد الموقع
+      if (pos != null) {
+        final currentPos = pos;
+        final qibla = _calculateQiblaAngle(currentPos.latitude, currentPos.longitude);
+
+        setState(() {
+          _qiblaAngle = qibla;
+          _isLoading = false;
+          _statusMessage = 'البوصلة نشطة';
+          _locationName =
+              '${currentPos.latitude.toStringAsFixed(4)}°N, ${currentPos.longitude.toStringAsFixed(4)}°E';
+        });
+
+        _startCompass();
+      } else {
+        // فشل كامل في الحصول على الإحداثيات
+        throw Exception('Location service returned null coordinates');
+      }
     } catch (e) {
       setState(() {
         _isLoading = false;
         _hasError = true;
-        _statusMessage = 'تعذّر تحديد الموقع. تحقق من خدمة GPS.';
+        _statusMessage =
+            'تعذّر تحديد إحداثيات موقعك: ${e.toString().split("\n").first}\nيرجى التأكد من تفعيل الـ GPS والاتصال والمحاولة مجدداً.';
       });
     }
   }
@@ -112,20 +198,46 @@ class _QiblaScreenState extends State<QiblaScreen>
   }
 
   void _startCompass() {
-    _compassSub = FlutterCompass.events?.listen((event) {
-      if (!mounted) return;
-      final h = event.heading;
-      if (h == null) return;
+    try {
+      final stream = FlutterCompass.events;
+      if (stream == null) {
+        setState(() {
+          _hasError = true;
+          _statusMessage = 'حساس البوصلة غير مدعوم في هذا الجهاز.';
+        });
+        return;
+      }
 
-      final deviceAngle = (_qiblaAngle! - h + 360) % 360;
-      final aligned = deviceAngle < 3 || deviceAngle > 357;
+      _compassSub = stream.listen(
+        (event) {
+          if (!mounted) return;
+          final h = event.heading;
+          if (h == null) return;
+          if (_qiblaAngle == null) return;
 
+          final deviceAngle = (_qiblaAngle! - h + 360) % 360;
+          final aligned = deviceAngle < 3 || deviceAngle > 357;
+
+          setState(() {
+            _heading = h;
+            _deviceQiblaAngle = deviceAngle;
+            _isAligned = aligned;
+          });
+        },
+        onError: (error) {
+          if (!mounted) return;
+          setState(() {
+            _hasError = true;
+            _statusMessage = 'حدث خطأ في حساس البوصلة بالجهاز أو البوصلة غير مدعومة.';
+          });
+        },
+      );
+    } catch (e) {
       setState(() {
-        _heading = h;
-        _deviceQiblaAngle = deviceAngle;
-        _isAligned = aligned;
+        _hasError = true;
+        _statusMessage = 'حساس البوصلة غير مدعوم في هذا الجهاز.';
       });
-    });
+    }
   }
 
   @override

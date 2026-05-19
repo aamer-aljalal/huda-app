@@ -207,9 +207,9 @@ class _HomeHeaderState extends State<HomeHeader> {
             bottom: false,
             child: Padding(
               padding: EdgeInsets.only(
-                left: 20.w,
-                top: 20.h,
-                right: 20.w,
+                left: 10.w,
+                top: 15.h,
+                right: 10.w,
                 bottom: 30.h,
               ),
               child: Column(
@@ -321,8 +321,6 @@ class _HomeHeaderState extends State<HomeHeader> {
                   ),
 
                   const HomeRecentActions(),
-
-
                 ],
               ),
             ),
