@@ -60,7 +60,8 @@ class _KhatmaPlannerScreenState extends State<KhatmaPlannerScreen> {
 
         if (lastReadStr != null) {
           final lastReadDate = DateTime.parse(lastReadStr);
-          final lastReadDayStr = '${lastReadDate.year}-${lastReadDate.month}-${lastReadDate.day}';
+          final lastReadDayStr =
+              '${lastReadDate.year}-${lastReadDate.month}-${lastReadDate.day}';
           if (todayStr != lastReadDayStr) {
             readToday = 0;
             await prefs.setInt('khatma_pages_read_today', 0);
@@ -131,8 +132,6 @@ class _KhatmaPlannerScreenState extends State<KhatmaPlannerScreen> {
       });
     }
   }
-
-
 
   // Cancel the active plan entirely and delete from SharedPreferences
   Future<void> _cancelKhatmaPlan() async {
@@ -243,8 +242,18 @@ class _KhatmaPlannerScreenState extends State<KhatmaPlannerScreen> {
     final now = DateTime.now();
     final completionDate = now.add(Duration(days: _daysSliderValue.toInt()));
     final months = [
-      'يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو',
-      'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'
+      'يناير',
+      'فبراير',
+      'مارس',
+      'أبريل',
+      'مايو',
+      'يونيو',
+      'يوليو',
+      'أغسطس',
+      'سبتمبر',
+      'أكتوبر',
+      'نوفمبر',
+      'ديسمبر',
     ];
     return '${completionDate.day} ${months[completionDate.month - 1]} ${completionDate.year}';
   }
@@ -259,7 +268,9 @@ class _KhatmaPlannerScreenState extends State<KhatmaPlannerScreen> {
           textDirection: TextDirection.rtl,
           child: Dialog(
             backgroundColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24.r)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(24.r),
+            ),
             child: Container(
               padding: EdgeInsets.all(24.w),
               decoration: BoxDecoration(
@@ -360,7 +371,9 @@ class _KhatmaPlannerScreenState extends State<KhatmaPlannerScreen> {
           textDirection: TextDirection.rtl,
           child: Dialog(
             backgroundColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24.r)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(24.r),
+            ),
             child: Container(
               padding: EdgeInsets.all(24.w),
               decoration: BoxDecoration(
@@ -484,7 +497,10 @@ class _KhatmaPlannerScreenState extends State<KhatmaPlannerScreen> {
       if (prefs.getBool('khatma_active') ?? false) {
         await prefs.setInt('khatma_reminder_hour', picked.hour);
         await prefs.setInt('khatma_reminder_minute', picked.minute);
-        await GeneralNotificationService.scheduleKhatmaReminder(picked.hour, picked.minute);
+        await GeneralNotificationService.scheduleKhatmaReminder(
+          picked.hour,
+          picked.minute,
+        );
       }
     }
   }
@@ -527,7 +543,10 @@ class _KhatmaPlannerScreenState extends State<KhatmaPlannerScreen> {
           padding: EdgeInsets.all(18.w),
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: [AppColors.primary, AppColors.primary.withValues(alpha: 0.85)],
+              colors: [
+                AppColors.primary,
+                AppColors.primary.withValues(alpha: 0.85),
+              ],
               begin: Alignment.topRight,
               end: Alignment.bottomLeft,
             ),
@@ -541,10 +560,10 @@ class _KhatmaPlannerScreenState extends State<KhatmaPlannerScreen> {
                   Icon(Icons.auto_stories, color: Colors.white, size: 24.sp),
                   SizedBox(width: 8.w),
                   Text(
-                    'تحدي ختم القرآن الكريم 📖',
+                    'تحدي ختم القرآن الكريم',
                     style: TextStyle(
                       color: Colors.white,
-                      fontSize: 14.sp,
+                      fontSize: 10.sp,
                       fontWeight: FontWeight.w900,
                       fontFamily: 'Cairo',
                     ),
@@ -594,7 +613,10 @@ class _KhatmaPlannerScreenState extends State<KhatmaPlannerScreen> {
                     ),
                   ),
                   Container(
-                    padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 10.w,
+                      vertical: 4.h,
+                    ),
                     decoration: BoxDecoration(
                       color: AppColors.primary.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(12.r),
@@ -628,10 +650,38 @@ class _KhatmaPlannerScreenState extends State<KhatmaPlannerScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text('5 أيام', style: TextStyle(fontSize: 10.sp, fontFamily: 'Cairo', color: Colors.grey)),
-                  Text('30 يوماً', style: TextStyle(fontSize: 10.sp, fontFamily: 'Cairo', color: Colors.grey)),
-                  Text('60 يوماً', style: TextStyle(fontSize: 10.sp, fontFamily: 'Cairo', color: Colors.grey)),
-                  Text('120 يوماً', style: TextStyle(fontSize: 10.sp, fontFamily: 'Cairo', color: Colors.grey)),
+                  Text(
+                    '5 أيام',
+                    style: TextStyle(
+                      fontSize: 10.sp,
+                      fontFamily: 'Cairo',
+                      color: Colors.grey,
+                    ),
+                  ),
+                  Text(
+                    '30 يوماً',
+                    style: TextStyle(
+                      fontSize: 10.sp,
+                      fontFamily: 'Cairo',
+                      color: Colors.grey,
+                    ),
+                  ),
+                  Text(
+                    '60 يوماً',
+                    style: TextStyle(
+                      fontSize: 10.sp,
+                      fontFamily: 'Cairo',
+                      color: Colors.grey,
+                    ),
+                  ),
+                  Text(
+                    '120 يوماً',
+                    style: TextStyle(
+                      fontSize: 10.sp,
+                      fontFamily: 'Cairo',
+                      color: Colors.grey,
+                    ),
+                  ),
                 ],
               ),
             ],
@@ -656,7 +706,8 @@ class _KhatmaPlannerScreenState extends State<KhatmaPlannerScreen> {
                 icon: Icons.menu_book_rounded,
                 title: 'الورد اليومي المطلوب:',
                 value: '$_dailyPagesNeeded صفحة',
-                subValue: '(${(_dailyPagesNeeded / 20).toStringAsFixed(1)} جزء تقريباً)',
+                subValue:
+                    '(${(_dailyPagesNeeded / 20).toStringAsFixed(1)} جزء تقريباً)',
                 isPrimary: true,
               ),
               const Divider(height: 24),
@@ -753,7 +804,10 @@ class _KhatmaPlannerScreenState extends State<KhatmaPlannerScreen> {
           child: Container(
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: [AppColors.primary, AppColors.primary.withValues(alpha: 0.85)],
+                colors: [
+                  AppColors.primary,
+                  AppColors.primary.withValues(alpha: 0.85),
+                ],
               ),
               borderRadius: BorderRadius.circular(16.r),
               boxShadow: [
@@ -802,7 +856,9 @@ class _KhatmaPlannerScreenState extends State<KhatmaPlannerScreen> {
         Container(
           padding: EdgeInsets.all(8.w),
           decoration: BoxDecoration(
-            color: (isPrimary ? AppColors.primary : Colors.teal).withValues(alpha: 0.1),
+            color: (isPrimary ? AppColors.primary : Colors.teal).withValues(
+              alpha: 0.1,
+            ),
             shape: BoxShape.circle,
           ),
           child: Icon(
@@ -885,9 +941,9 @@ class _KhatmaPlannerScreenState extends State<KhatmaPlannerScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'تحدي الختمة والورد 🌟',
+                        'تحدي الختمة والورد',
                         style: TextStyle(
-                          fontSize: 14.sp,
+                          fontSize: 10.sp,
                           fontWeight: FontWeight.w900,
                           fontFamily: 'Cairo',
                           color: isDark ? Colors.white : Colors.black87,
@@ -897,7 +953,7 @@ class _KhatmaPlannerScreenState extends State<KhatmaPlannerScreen> {
                       Text(
                         'الخطة الكاملة: ${_daysSliderValue.toInt()} يوماً',
                         style: TextStyle(
-                          fontSize: 11.sp,
+                          fontSize: 9.sp,
                           fontFamily: 'Cairo',
                           color: Colors.grey,
                         ),
@@ -906,7 +962,11 @@ class _KhatmaPlannerScreenState extends State<KhatmaPlannerScreen> {
                   ),
                   // Edit Button
                   IconButton(
-                    icon: Icon(Icons.edit_note_rounded, color: AppColors.primary, size: 24.sp),
+                    icon: Icon(
+                      Icons.edit_note_rounded,
+                      color: AppColors.primary,
+                      size: 24.sp,
+                    ),
                     onPressed: () {
                       // Confirms before editing existing plan
                       showDialog(
@@ -914,23 +974,49 @@ class _KhatmaPlannerScreenState extends State<KhatmaPlannerScreen> {
                         builder: (ctx) => Directionality(
                           textDirection: TextDirection.rtl,
                           child: AlertDialog(
-                            backgroundColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
-                            title: Text('تعديل الخطة الحالية', style: TextStyle(fontFamily: 'Cairo', fontSize: 14.sp, fontWeight: FontWeight.bold)),
-                            content: Text('هل تريد تعديل الخطة الحالية؟ سيؤدي ذلك لإعادة ضبط الأيام والورد من جديد مع الاحتفاظ بالصفحات المقروءة.', style: TextStyle(fontFamily: 'Cairo', fontSize: 12.sp)),
+                            backgroundColor: isDark
+                                ? const Color(0xFF1E1E1E)
+                                : Colors.white,
+                            title: Text(
+                              'تعديل الخطة الحالية',
+                              style: TextStyle(
+                                fontFamily: 'Cairo',
+                                fontSize: 14.sp,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            content: Text(
+                              'هل تريد تعديل الخطة الحالية؟ سيؤدي ذلك لإعادة ضبط الأيام والورد من جديد مع الاحتفاظ بالصفحات المقروءة.',
+                              style: TextStyle(
+                                fontFamily: 'Cairo',
+                                fontSize: 9.sp,
+                              ),
+                            ),
                             actions: [
                               TextButton(
                                 onPressed: () => Navigator.pop(ctx),
-                                child: const Text('إلغاء', style: TextStyle(fontFamily: 'Cairo')),
+                                child: const Text(
+                                  'إلغاء',
+                                  style: TextStyle(fontFamily: 'Cairo'),
+                                ),
                               ),
                               ElevatedButton(
-                                style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppColors.primary,
+                                ),
                                 onPressed: () {
                                   Navigator.pop(ctx);
                                   setState(() {
                                     _showActiveKhatma = false;
                                   });
                                 },
-                                child: const Text('تعديل', style: TextStyle(fontFamily: 'Cairo', color: Colors.white)),
+                                child: const Text(
+                                  'تعديل',
+                                  style: TextStyle(
+                                    fontFamily: 'Cairo',
+                                    color: Colors.white,
+                                  ),
+                                ),
                               ),
                             ],
                           ),
@@ -941,7 +1027,7 @@ class _KhatmaPlannerScreenState extends State<KhatmaPlannerScreen> {
                 ],
               ),
               SizedBox(height: 20.h),
-              
+
               // Progress Circle
               Stack(
                 alignment: Alignment.center,
@@ -952,8 +1038,12 @@ class _KhatmaPlannerScreenState extends State<KhatmaPlannerScreen> {
                     child: CircularProgressIndicator(
                       value: _completionPercent,
                       strokeWidth: 10.w,
-                      backgroundColor: AppColors.primary.withValues(alpha: 0.12),
-                      valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+                      backgroundColor: AppColors.primary.withValues(
+                        alpha: 0.12,
+                      ),
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        AppColors.primary,
+                      ),
                     ),
                   ),
                   Column(
@@ -962,7 +1052,7 @@ class _KhatmaPlannerScreenState extends State<KhatmaPlannerScreen> {
                       Text(
                         '${(_completionPercent * 100).toStringAsFixed(1)}%',
                         style: TextStyle(
-                          fontSize: 20.sp,
+                          fontSize: 15.sp,
                           fontWeight: FontWeight.w900,
                           fontFamily: 'Cairo',
                           color: isDark ? Colors.white : Colors.black87,
@@ -971,9 +1061,10 @@ class _KhatmaPlannerScreenState extends State<KhatmaPlannerScreen> {
                       Text(
                         'مكتمل من المصحف',
                         style: TextStyle(
-                          fontSize: 10.sp,
+                          fontSize: 7.sp,
                           fontFamily: 'Cairo',
                           color: Colors.grey,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
                     ],
@@ -981,13 +1072,20 @@ class _KhatmaPlannerScreenState extends State<KhatmaPlannerScreen> {
                 ],
               ),
               SizedBox(height: 24.h),
-              
+
               // Bottom row statistics
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
-                  _buildMiniStat('الصفحات المقروءة', '$_totalPagesRead / $_totalQuranPages'),
-                  Container(width: 1, height: 30.h, color: Colors.grey.shade300),
+                  _buildMiniStat(
+                    'الصفحات المقروءة',
+                    '$_totalPagesRead / $_totalQuranPages',
+                  ),
+                  Container(
+                    width: 1,
+                    height: 30.h,
+                    color: Colors.grey.shade300,
+                  ),
                   _buildMiniStat('الأيام المتبقية', '$_daysRemaining يوماً'),
                 ],
               ),
@@ -1014,9 +1112,9 @@ class _KhatmaPlannerScreenState extends State<KhatmaPlannerScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    'الورد المطلوب اليوم 📖',
+                    'الورد المطلوب اليوم',
                     style: TextStyle(
-                      fontSize: 13.sp,
+                      fontSize: 10.sp,
                       fontWeight: FontWeight.w800,
                       fontFamily: 'Cairo',
                       color: isDark ? Colors.white : Colors.black87,
@@ -1025,7 +1123,7 @@ class _KhatmaPlannerScreenState extends State<KhatmaPlannerScreen> {
                   Text(
                     '$_pagesReadToday / $_dailyPagesNeeded صفحة',
                     style: TextStyle(
-                      fontSize: 12.sp,
+                      fontSize: 9.sp,
                       fontWeight: FontWeight.bold,
                       fontFamily: 'Cairo',
                       color: AppColors.primary,
@@ -1050,20 +1148,23 @@ class _KhatmaPlannerScreenState extends State<KhatmaPlannerScreen> {
                   Text(
                     'وصلت إلى الصفحة الحالية: ${_totalPagesRead + 1}',
                     style: TextStyle(
-                      fontSize: 10.sp,
+                      fontSize: 7.sp,
                       fontFamily: 'Cairo',
                       color: Colors.grey.shade500,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
                   Text(
                     _pagesReadToday >= _dailyPagesNeeded
-                        ? 'أتممت ورد اليوم بنجاح 🎉'
+                        ? 'أتممت ورد اليوم بنجاح'
                         : 'المتبقي لليوم: ${(_dailyPagesNeeded - _pagesReadToday).clamp(0, _dailyPagesNeeded)} صفحات',
                     style: TextStyle(
-                      fontSize: 10.sp,
+                      fontSize: 9.sp,
                       fontWeight: FontWeight.bold,
                       fontFamily: 'Cairo',
-                      color: _pagesReadToday >= _dailyPagesNeeded ? Colors.green : Colors.grey.shade500,
+                      color: _pagesReadToday >= _dailyPagesNeeded
+                          ? Colors.green
+                          : Colors.grey.shade500,
                     ),
                   ),
                 ],
@@ -1094,7 +1195,7 @@ class _KhatmaPlannerScreenState extends State<KhatmaPlannerScreen> {
             final surahName = data['surahName'] as String;
             final page = data['page'] as int;
             final hasStarted = data['hasStarted'] as bool;
-            
+
             return Container(
               padding: EdgeInsets.all(16.w),
               decoration: BoxDecoration(
@@ -1125,9 +1226,9 @@ class _KhatmaPlannerScreenState extends State<KhatmaPlannerScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'آخر موضع وصلت إليه 📖',
+                          'آخر موضع وصلت إليه',
                           style: TextStyle(
-                            fontSize: 12.sp,
+                            fontSize: 9.sp,
                             fontWeight: FontWeight.w800,
                             fontFamily: 'Cairo',
                             color: isDark ? Colors.white : Colors.black87,
@@ -1135,14 +1236,16 @@ class _KhatmaPlannerScreenState extends State<KhatmaPlannerScreen> {
                         ),
                         SizedBox(height: 4.h),
                         Text(
-                          hasStarted 
+                          hasStarted
                               ? 'سورة $surahName (الصفحة $page)'
                               : 'لم تبدأ القراءة في هذه الختمة بعد (ستبدأ من الفاتحة)',
                           style: TextStyle(
-                            fontSize: 11.sp,
+                            fontSize: 8.sp,
                             fontWeight: FontWeight.bold,
                             fontFamily: 'Cairo',
-                            color: hasStarted ? AppColors.primary : Colors.grey.shade500,
+                            color: hasStarted
+                                ? AppColors.primary
+                                : Colors.grey.shade500,
                           ),
                         ),
                       ],
@@ -1162,7 +1265,10 @@ class _KhatmaPlannerScreenState extends State<KhatmaPlannerScreen> {
           child: Container(
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: [AppColors.primary, AppColors.primary.withValues(alpha: 0.85)],
+                colors: [
+                  AppColors.primary,
+                  AppColors.primary.withValues(alpha: 0.85),
+                ],
               ),
               borderRadius: BorderRadius.circular(16.r),
               boxShadow: [
@@ -1185,13 +1291,17 @@ class _KhatmaPlannerScreenState extends State<KhatmaPlannerScreen> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.menu_book_outlined, color: Colors.white, size: 20.sp),
+                  Icon(
+                    Icons.menu_book_outlined,
+                    color: Colors.white,
+                    size: 20.sp,
+                  ),
                   SizedBox(width: 8.w),
                   Text(
-                    'اذهب لقراءة القرآن الكريم الآن 📖',
+                    'اذهب لقراءة القرآن الكريم الآن',
                     style: TextStyle(
                       color: Colors.white,
-                      fontSize: 13.sp,
+                      fontSize: 9.sp,
                       fontWeight: FontWeight.w900,
                       fontFamily: 'Cairo',
                     ),
@@ -1214,21 +1324,52 @@ class _KhatmaPlannerScreenState extends State<KhatmaPlannerScreen> {
                 builder: (ctx) => Directionality(
                   textDirection: TextDirection.rtl,
                   child: AlertDialog(
-                    backgroundColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
-                    title: Text('إلغاء الختمة الحالية ⚠️', style: TextStyle(fontFamily: 'Cairo', fontSize: 13.sp, fontWeight: FontWeight.bold, color: Colors.red)),
-                    content: Text('هل أنت متأكد تماماً من إلغاء وحذف هذه الختمة نهائياً؟ سيؤدي ذلك لمسح كل تقدمك التراكمي بالأيام والصفحات.', style: TextStyle(fontFamily: 'Cairo', fontSize: 12.sp)),
-                    actions: [
-                      TextButton(
-                        onPressed: () => Navigator.pop(ctx),
-                        child: const Text('تراجع', style: TextStyle(fontFamily: 'Cairo')),
+                    backgroundColor: isDark
+                        ? const Color(0xFF1E1E1E)
+                        : Colors.white,
+                    title: Text(
+                      'إلغاء الختمة الحالية',
+                      style: TextStyle(
+                        fontFamily: 'Cairo',
+                        fontSize: 10.sp,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.red,
                       ),
-                      ElevatedButton(
-                        style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-                        onPressed: () {
-                          Navigator.pop(ctx);
-                          _cancelKhatmaPlan();
-                        },
-                        child: const Text('نعم، الغاء الخطة', style: TextStyle(fontFamily: 'Cairo', color: Colors.white)),
+                    ),
+                    content: Text(
+                      'هل أنت متأكد تماماً من إلغاء وحذف هذه الختمة نهائياً؟ سيؤدي ذلك لمسح كل تقدمك التراكمي بالأيام والصفحات.',
+                      style: TextStyle(fontFamily: 'Cairo', fontSize: 9.sp),
+                    ),
+                    actions: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(ctx),
+                            child: const Text(
+                              'تراجع',
+                              style: TextStyle(fontFamily: 'Cairo'),
+                            ),
+                          ),
+
+                          ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.red,
+                            ),
+                            onPressed: () {
+                              Navigator.pop(ctx);
+                              _cancelKhatmaPlan();
+                            },
+                            child: const Text(
+                              'نعم، الغاء الخطة',
+                              style: TextStyle(
+                                fontFamily: 'Cairo',
+                                color: Colors.white,
+                                fontSize: 9,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
@@ -1238,7 +1379,11 @@ class _KhatmaPlannerScreenState extends State<KhatmaPlannerScreen> {
             icon: Icon(Icons.delete_outline_rounded, size: 16.sp),
             label: Text(
               'إنهاء وإلغاء هذه الختمة نهائياً',
-              style: TextStyle(fontSize: 11.sp, fontFamily: 'Cairo', fontWeight: FontWeight.bold),
+              style: TextStyle(
+                fontSize: 11.sp,
+                fontFamily: 'Cairo',
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
         ),

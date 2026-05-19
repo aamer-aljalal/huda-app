@@ -57,6 +57,8 @@ class Huda extends StatelessWidget {
 
   static final GlobalKey<NavigatorState> navigatorKey =
       GlobalKey<NavigatorState>();
+  static final RouteObserver<ModalRoute<void>> routeObserver =
+      RouteObserver<ModalRoute<void>>();
 
   @override
   Widget build(BuildContext context) {
@@ -93,6 +95,7 @@ class Huda extends StatelessWidget {
 
           initialRoute: AppRoutes.splash,
           onGenerateRoute: RouteGenerator.generate,
+          navigatorObservers: [routeObserver],
         );
       },
     );

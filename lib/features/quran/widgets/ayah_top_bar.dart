@@ -1,19 +1,20 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:huda/features/quran/services/quran_service.dart';
 
 class MushafTopBar extends StatelessWidget {
   const MushafTopBar({
+    super.key,
     required this.surah,
     required this.currentPage,
     required this.pagesCount,
   });
 
   final QuranSurah surah;
+  // نحتفظ بهذين الحقلين للتوافق مع الكود القديم لكن نعرض عدد الآيات
   final int currentPage;
   final int pagesCount;
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -30,52 +31,45 @@ class MushafTopBar extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Expanded(child: _TextMethod(text: surah.revelationPlace)),
-          _verticalLine(),
+          Expanded(child: _metaText(surah.revelationPlace)),
+          _divider(),
           Expanded(
             flex: 2,
             child: Text(
-              '${surah.nameArabic}',
+              surah.nameArabic,
               textAlign: TextAlign.center,
               style: TextStyle(
-                color: const Color.fromARGB(255, 255, 255, 255),
+                color: Colors.white,
                 fontSize: 20.sp,
                 fontWeight: FontWeight.w900,
                 fontFamily: 'Amiri',
               ),
             ),
           ),
-          _verticalLine(),
-
-          Expanded(child: _TextMethod(text: '${surah.versesCount} آية')),
-          _verticalLine(),
-          SizedBox(child: _TextMethod(text: '$currentPage/$pagesCount')),
+          _divider(),
+          Expanded(child: _metaText('${surah.versesCount} آية')),
         ],
       ),
     );
   }
 
-  Text _TextMethod({String text = ''}) {
-    return Text('$text', textAlign: TextAlign.center, style: _metaStyle());
-  }
-
-  SizedBox _verticalLine() {
-    return SizedBox(
-      height: 70.h,
-      child: VerticalDivider(
-        color: const Color.fromARGB(255, 0, 0, 0),
-        thickness: 2,
+  Text _metaText(String text) {
+    return Text(
+      text,
+      textAlign: TextAlign.center,
+      style: TextStyle(
+        color: const Color(0xFFEABB11),
+        fontSize: 12.sp,
+        fontWeight: FontWeight.w700,
+        fontFamily: 'Cairo',
       ),
     );
   }
 
-  TextStyle _metaStyle() {
-    return TextStyle(
-      color: const Color.fromARGB(255, 234, 187, 17),
-      fontSize: 12.sp,
-      fontWeight: FontWeight.w700,
-      // fontFamily: 'Amiri',
-      fontFamily: 'Cairo',
+  SizedBox _divider() {
+    return SizedBox(
+      height: 70.h,
+      child: const VerticalDivider(color: Colors.black, thickness: 2),
     );
   }
 }

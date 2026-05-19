@@ -1,6 +1,7 @@
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:huda/core/services/recent_actions_service.dart';
 import 'package:huda/core/theme/app_colors.dart';
 import 'package:huda/features/home/widgets/home_header/home_mini_header.dart';
 import 'package:huda/features/home/widgets/home_header/home_notifications_sheet.dart';
@@ -186,7 +187,6 @@ class _HomeHeaderState extends State<HomeHeader> {
     final countdown = prayerProvider.timeUntilNextPrayer.inSeconds > 0
         ? _formatDuration(prayerProvider.timeUntilNextPrayer)
         : '--:--';
-
     return SliverAppBar(
       automaticallyImplyLeading: false,
       toolbarHeight: 380.h,
@@ -321,6 +321,8 @@ class _HomeHeaderState extends State<HomeHeader> {
                   ),
 
                   const HomeRecentActions(),
+
+
                 ],
               ),
             ),

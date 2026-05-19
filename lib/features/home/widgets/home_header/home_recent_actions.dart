@@ -5,11 +5,55 @@ import 'package:huda/Routes/AppRoutes.dart';
 import 'package:huda/core/services/recent_actions_service.dart';
 import 'package:huda/core/theme/app_colors.dart';
 import 'package:huda/features/azkar/services/azkar_service.dart';
+import 'package:huda/features/hisn_almuslim/services/hisn_service.dart';
 import 'package:huda/features/quran/services/quran_service.dart';
 import 'package:huda/features/quran/views/surah_detail_page.dart';
+import 'package:huda/main.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-class HomeRecentActions extends StatelessWidget {
+class HomeRecentActions extends StatefulWidget {
   const HomeRecentActions({super.key});
+
+  @override
+  State<HomeRecentActions> createState() => _HomeRecentActionsState();
+}
+
+class _HomeRecentActionsState extends State<HomeRecentActions> with RouteAware {
+  late Future<List<RecentAction>> _actionsFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _actionsFuture = RecentActionsManager.getActions();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final route = ModalRoute.of(context);
+    if (route is PageRoute) {
+      Huda.routeObserver.subscribe(this, route);
+    }
+  }
+
+  @override
+  void dispose() {
+    Huda.routeObserver.unsubscribe(this);
+    super.dispose();
+  }
+
+  @override
+  void didPopNext() {
+    _reloadActions();
+  }
+
+  Future<void> _reloadActions() async {
+    if (!mounted) return;
+    setState(() {
+      _actionsFuture = RecentActionsManager.getActions();
+    });
+  }
+
   Future<void> _resumeQuran(BuildContext context, int surahNumber) async {
     showDialog(
       context: context,
@@ -18,13 +62,25 @@ class HomeRecentActions extends StatelessWidget {
     );
 
     try {
+      final prefs = await SharedPreferences.getInstance();
+
+      // تحقق من العلامة المرجعية أولاً
+      final bmSurah = prefs.getInt('quran_bookmark_surah');
+      final bmAyah = prefs.getInt('quran_bookmark_ayah');
+
+      // إذا كانت العلامة لسورة مختلفة عن المضغوطة، استخدمها
+      final targetSurahNumber = (bmSurah != null && bmSurah != surahNumber)
+          ? bmSurah
+          : surahNumber;
+      final targetAyah = (bmSurah == targetSurahNumber) ? bmAyah : null;
+
       final surahs = await QuranService.loadSurahs();
-      final surah = surahs.firstWhere((s) => s.number == surahNumber);
-      final ayahs = await QuranService.loadAyahs(surahNumber);
+      final surah = surahs.firstWhere((s) => s.number == targetSurahNumber);
+      final ayahs = await QuranService.loadAyahs(targetSurahNumber);
 
       if (context.mounted) {
         Navigator.pop(context); // Close dialog
-        Navigator.push(
+        await Navigator.push(
           context,
           MaterialPageRoute(
             builder: (_) => SurahDetailPage(
@@ -58,7 +114,7 @@ class HomeRecentActions extends StatelessWidget {
 
       if (context.mounted) {
         Navigator.pop(context); // Close dialog
-        Navigator.pushNamed(
+        await Navigator.pushNamed(
           context,
           AppRoutes.zkarDetails,
           arguments: category,
@@ -74,6 +130,35 @@ class HomeRecentActions extends StatelessWidget {
     }
   }
 
+  Future<void> _resumeHisn(BuildContext context, String categoryTitle) async {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(child: CircularProgressIndicator()),
+    );
+
+    try {
+      final categories = await HisnService.loadHisn();
+      final category = categories.firstWhere((c) => c.title == categoryTitle);
+
+      if (context.mounted) {
+        Navigator.pop(context); // Close dialog
+        await Navigator.pushNamed(
+          context,
+          AppRoutes.hisnDetails,
+          arguments: category,
+        );
+      }
+    } catch (_) {
+      if (context.mounted) {
+        Navigator.pop(context); // Close dialog
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('تعذر فتح حصن المسلم')));
+      }
+    }
+  }
+
   Future<void> _resumeHadith(BuildContext context, int hadithNumber) async {
     showDialog(
       context: context,
@@ -84,7 +169,11 @@ class HomeRecentActions extends StatelessWidget {
     try {
       if (context.mounted) {
         Navigator.pop(context); // Close dialog
-        Navigator.pushNamed(context, AppRoutes.hadith, arguments: hadithNumber);
+        await Navigator.pushNamed(
+          context,
+          AppRoutes.hadith,
+          arguments: hadithNumber,
+        );
       }
     } catch (_) {
       if (context.mounted) {
@@ -96,24 +185,34 @@ class HomeRecentActions extends StatelessWidget {
     }
   }
 
-  void _handleRecentActionTap(BuildContext context, RecentAction action) {
+  Future<void> _handleRecentActionTap(
+    BuildContext context,
+    RecentAction action,
+  ) async {
     HapticFeedback.lightImpact();
     if (action.category == 'quran') {
       final surahNumber = action.extraData['surah_number'] as int?;
       if (surahNumber != null) {
-        _resumeQuran(context, surahNumber);
+        await _resumeQuran(context, surahNumber);
       }
     } else if (action.category == 'azkar') {
       final categoryTitle = action.extraData['category_title'] as String?;
       if (categoryTitle != null) {
-        _resumeAzkar(context, categoryTitle);
+        await _resumeAzkar(context, categoryTitle);
+      }
+    } else if (action.category == 'hisn_almuslim') {
+      final categoryTitle = action.extraData['category_title'] as String?;
+      if (categoryTitle != null) {
+        await _resumeHisn(context, categoryTitle);
       }
     } else if (action.category == 'hadith') {
       final hadithNumber = action.extraData['hadith_number'] as int?;
       if (hadithNumber != null) {
-        _resumeHadith(context, hadithNumber);
+        await _resumeHadith(context, hadithNumber);
       }
     }
+
+    await _reloadActions();
   }
 
   @override
@@ -121,7 +220,7 @@ class HomeRecentActions extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
 
     return FutureBuilder<List<RecentAction>>(
-      future: RecentActionsManager.getActions(),
+      future: _actionsFuture,
       builder: (context, snapshot) {
         if (!snapshot.hasData || snapshot.data!.isEmpty) {
           return const SizedBox.shrink();
@@ -162,6 +261,8 @@ class HomeRecentActions extends StatelessWidget {
           return Icons.bookmark_added_rounded;
         case 'hadith':
           return Icons.auto_stories_rounded;
+        case 'hisn_almuslim':
+          return Icons.shield_outlined;
         case 'names_of_allah':
           return Icons.auto_awesome_rounded;
         default:
@@ -169,20 +270,48 @@ class HomeRecentActions extends StatelessWidget {
       }
     }
 
-    // Color getCategoryColor(ColorScheme colorScheme) {
-    //   switch (action.category) {
-    //     case 'quran':
-    //       return Colors.greenAccent;
-    //     case 'azkar':
-    //       return Colors.amberAccent;
-    //     case 'hadith':
-    //       return Colors.orangeAccent;
-    //     case 'names_of_allah':
-    //       return Colors.cyanAccent;
-    //     default:
-    //       return Colors.white70;
-    //   }
-    // }
+    Color getCategoryColor(ColorScheme colorScheme) {
+      //   switch (action.category) {
+      //     case 'quran':
+      //       return Colors.greenAccent;
+      //     case 'azkar':
+      //       return Colors.amberAccent;
+      //     case 'hadith':
+      //       return Colors.orangeAccent;
+      //     case 'names_of_allah':
+      //       return Colors.cyanAccent;
+      //     default:
+      //       return Colors.white;
+      //   }
+      // }
+
+      //   switch (action.category) {
+      //     case 'quran':
+      //       return Colors.white;
+      //     case 'azkar':
+      //       return Colors.white;
+      //     case 'hadith':
+      //       return Colors.white;
+      //     case 'names_of_allah':
+      //       return Colors.white;
+      //     default:
+      //       return Colors.white;
+      //   }
+      // }
+
+      switch (action.category) {
+        case 'quran':
+          return Colors.black;
+        case 'azkar':
+          return Colors.black;
+        case 'hadith':
+          return Colors.black;
+        case 'names_of_allah':
+          return Colors.black;
+        default:
+          return Colors.black;
+      }
+    }
 
     return Expanded(
       child: InkWell(
@@ -204,8 +333,8 @@ class HomeRecentActions extends StatelessWidget {
               child: Icon(
                 getIcon(),
                 size: 16.sp,
-                // color: getCategoryColor(Theme.of(context).colorScheme),
-                color: Colors.white,
+                color: getCategoryColor(Theme.of(context).colorScheme),
+                // color: Colors.white,
               ),
             ),
             SizedBox(height: 2.h),

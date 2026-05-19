@@ -307,7 +307,7 @@ class _IslamicNotificationsPageState extends State<IslamicNotificationsPage> {
           Switch.adaptive(
             value: value,
             onChanged: onChanged,
-            activeColor: AppColors.primary,
+            activeThumbColor: AppColors.primary,
             activeTrackColor: AppColors.primary.withValues(alpha: 0.3),
           ),
         ],

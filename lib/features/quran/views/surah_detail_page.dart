@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:huda/features/quran/services/quran_service.dart';
-import 'package:huda/features/quran/widgets/ayah_footer.dart';
 import 'package:huda/features/quran/widgets/ayah_number.dart';
 import 'package:huda/features/quran/widgets/ayah_top_bar.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -38,17 +37,31 @@ class SurahDetailPage extends StatefulWidget {
 class _SurahDetailPageState extends State<SurahDetailPage> {
   static const String _savedAyahsKey = 'saved_quran_ayahs';
 
-  late final PageController _pageController;
   late final List<List<QuranAyah>> _pages;
+  late final List<GlobalKey> _pageKeys;
+  late final GlobalKey _centerSliverKey;
   int _currentPage = 0;
+  int _centerPage = 0;
+  bool _isLoading = false;
   List<QuranSurah> _allSurahs = [];
 
   @override
   void initState() {
     super.initState();
     _pages = _splitIntoMushafPages(widget.ayahs);
-    _pageController = PageController();
-    _loadSavedPage();
+    _pageKeys = List.generate(_pages.length, (_) => GlobalKey());
+    _centerSliverKey = GlobalKey();
+    _centerPage = widget.initialPage;
+    if (_centerPage >= _pages.length) _centerPage = 0;
+    _currentPage = _centerPage;
+
+    if (widget.resumeLastPage) {
+      _isLoading = true;
+      _loadSavedPageAsync();
+    } else {
+      _loadSavedPageSync();
+    }
+
     _loadAllSurahs();
 
     if (widget.surah.number == 18) {
@@ -67,33 +80,29 @@ class _SurahDetailPageState extends State<SurahDetailPage> {
     } catch (_) {}
   }
 
-  Future<void> _loadSavedPage() async {
-    if (widget.resumeLastPage) {
-      try {
-        final prefs = await SharedPreferences.getInstance();
-        final savedPage = prefs.getInt('quran_page_${widget.surah.number}') ?? 0;
-        if (savedPage > 0 && savedPage < _pages.length) {
-          setState(() {
-            _currentPage = savedPage;
-          });
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (_pageController.hasClients) {
-              _pageController.jumpToPage(savedPage);
-            }
-          });
-        }
-      } catch (_) {}
-    } else if (widget.initialPage > 0 && widget.initialPage < _pages.length) {
-      setState(() {
-        _currentPage = widget.initialPage;
-      });
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (_pageController.hasClients) {
-          _pageController.jumpToPage(widget.initialPage);
-        }
-      });
-    }
+  Future<void> _loadSavedPageAsync() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final savedPage = prefs.getInt('quran_page_${widget.surah.number}') ?? 0;
+      if (savedPage > 0 && savedPage < _pages.length) {
+        _centerPage = savedPage;
+        _currentPage = savedPage;
+      }
+    } catch (_) {}
 
+    if (mounted) {
+      setState(() {
+        _isLoading = false;
+      });
+      _postLoadActions();
+    }
+  }
+
+  void _loadSavedPageSync() {
+    _postLoadActions();
+  }
+
+  void _postLoadActions() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _saveRecentQuranAction();
       if (widget.isKhatmaSession) {
@@ -212,8 +221,49 @@ class _SurahDetailPageState extends State<SurahDetailPage> {
 
   @override
   void dispose() {
-    _pageController.dispose();
     super.dispose();
+  }
+
+  void _onScroll() {
+    for (int i = 0; i < _pages.length; i++) {
+      final key = _pageKeys[i];
+      final context = key.currentContext;
+      if (context != null) {
+        final box = context.findRenderObject() as RenderBox?;
+        if (box != null) {
+          final position = box.localToGlobal(Offset.zero).dy;
+          final height = box.size.height;
+          // Use a reasonable center threshold (e.g. 300 logical pixels from top)
+          if (position <= 300 && position + height > 300) {
+            if (_currentPage != i) {
+              setState(() {
+                _currentPage = i;
+              });
+              _saveRecentQuranAction();
+              if (widget.isKhatmaSession) {
+                _updateKhatmaProgress(i);
+              }
+            }
+            break;
+          }
+        }
+      }
+    }
+  }
+
+  Widget _buildPageSliver(int index) {
+    return _MushafPage(
+      key: _pageKeys[index],
+      surah: widget.surah,
+      ayahs: _pages[index],
+      isFirstPage: index == 0,
+      isLastPage: index == _pages.length - 1,
+      pageNumber: index + 1,
+      onAyahLongPress: _showAyahActions,
+      nextSurah: _nextSurah,
+      prevSurah: _prevSurah,
+      onNavigate: _navigateToSurah,
+    );
   }
 
   QuranSurah? get _nextSurah {
@@ -251,53 +301,54 @@ class _SurahDetailPageState extends State<SurahDetailPage> {
 
   Future<void> _updateKhatmaProgress(int newPage) async {
     if (!widget.isKhatmaSession) return;
-    
+
     try {
       final prefs = await SharedPreferences.getInstance();
-      
+
       // Save the current Surah and page in SharedPreferences specifically for Khatma plan
       await prefs.setInt('khatma_last_read_surah', widget.surah.number);
       await prefs.setInt('khatma_last_read_page', newPage);
-      
+
       // Calculate absolute page
       final offset = await getAbsolutePageOffset(widget.surah.number);
       final currentAbsolutePage = offset + newPage;
-      
+
       // Load current Khatma progress
       final previousTotalRead = prefs.getInt('khatma_pages_read') ?? 0;
-      
+
       // Let's load the maximum reached absolute page
       final prevMaxReached = prefs.getInt('khatma_max_reached_page') ?? 0;
-      
+
       if (currentAbsolutePage > prevMaxReached) {
         final difference = currentAbsolutePage - prevMaxReached;
         await prefs.setInt('khatma_max_reached_page', currentAbsolutePage);
-        
+
         // Update Khatma pages read
         final newTotalRead = (previousTotalRead + difference).clamp(0, 604);
         await prefs.setInt('khatma_pages_read', newTotalRead);
-        
+
         // Update today's read pages
         final now = DateTime.now();
         final todayStr = '${now.year}-${now.month}-${now.day}';
-        
+
         var readToday = prefs.getInt('khatma_pages_read_today') ?? 0;
         final lastReadStr = prefs.getString('khatma_last_read_date');
         if (lastReadStr != null) {
           final lastReadDate = DateTime.parse(lastReadStr);
-          final lastReadDayStr = '${lastReadDate.year}-${lastReadDate.month}-${lastReadDate.day}';
+          final lastReadDayStr =
+              '${lastReadDate.year}-${lastReadDate.month}-${lastReadDate.day}';
           if (todayStr != lastReadDayStr) {
             readToday = 0;
           }
         }
-        
+
         final newReadToday = readToday + difference;
         await prefs.setInt('khatma_pages_read_today', newReadToday);
         await prefs.setString('khatma_last_read_date', now.toIso8601String());
-        
+
         // Also log in the general StatsService
         await StatsService.recordAction('quran', amount: difference);
-        
+
         // Check if completed
         if (newTotalRead >= 604) {
           await StatsService.incrementCompletedKhatmas();
@@ -305,7 +356,7 @@ class _SurahDetailPageState extends State<SurahDetailPage> {
       }
     } catch (_) {}
   }
-  
+
   static Future<int> getAbsolutePageOffset(int surahNumber) async {
     int offset = 0;
     for (int i = 1; i < surahNumber; i++) {
@@ -318,7 +369,9 @@ class _SurahDetailPageState extends State<SurahDetailPage> {
     return offset;
   }
 
-  static List<List<QuranAyah>> _splitIntoMushafPagesStatic(List<QuranAyah> ayahs) {
+  static List<List<QuranAyah>> _splitIntoMushafPagesStatic(
+    List<QuranAyah> ayahs,
+  ) {
     final pages = <List<QuranAyah>>[];
     var current = <QuranAyah>[];
     var currentLength = 0;
@@ -378,33 +431,53 @@ class _SurahDetailPageState extends State<SurahDetailPage> {
                 currentPage: _currentPage + 1,
                 pagesCount: _pages.length,
               ),
-
               Expanded(
-                child: PageView.builder(
-                  controller: _pageController,
-                  reverse: true,
-                  itemCount: _pages.length,
-                  onPageChanged: (page) {
-                    setState(() => _currentPage = page);
-                    _saveRecentQuranAction();
-                    if (widget.isKhatmaSession) {
-                      _updateKhatmaProgress(page);
-                    }
-                  },
-
-                  itemBuilder: (context, index) {
-                    return _MushafPage(
-                      surah: widget.surah,
-                      ayahs: _pages[index],
-                      isFirstPage: index == 0,
-                      isLastPage: index == _pages.length - 1,
-                      pageNumber: index + 1,
-                      onAyahLongPress: _showAyahActions,
-                      nextSurah: _nextSurah,
-                      prevSurah: _prevSurah,
-                      onNavigate: _navigateToSurah,
-                    );
-                  },
+                child: Container(
+                  padding: EdgeInsets.only(top: 65.h, bottom: 60.h),
+                  decoration: const BoxDecoration(
+                    image: DecorationImage(
+                      image: AssetImage('assets/img/surah_detail_green.png'),
+                      fit: BoxFit.fill,
+                    ),
+                  ),
+                  child: Padding(
+                    padding: EdgeInsets.only(right: 18.w, left: 18.w),
+                    child: _isLoading
+                        ? const Center(child: CircularProgressIndicator())
+                        : NotificationListener<ScrollNotification>(
+                            onNotification: (scrollInfo) {
+                              _onScroll();
+                              return false;
+                            },
+                            child: CustomScrollView(
+                              center: _centerSliverKey,
+                              physics: const BouncingScrollPhysics(),
+                              slivers: [
+                                if (_centerPage > 0)
+                                  SliverList(
+                                    delegate: SliverChildBuilderDelegate((
+                                      context,
+                                      index,
+                                    ) {
+                                      final actualIndex =
+                                          _centerPage - 1 - index;
+                                      return _buildPageSliver(actualIndex);
+                                    }, childCount: _centerPage),
+                                  ),
+                                SliverList(
+                                  key: _centerSliverKey,
+                                  delegate: SliverChildBuilderDelegate((
+                                    context,
+                                    index,
+                                  ) {
+                                    final actualIndex = _centerPage + index;
+                                    return _buildPageSliver(actualIndex);
+                                  }, childCount: _pages.length - _centerPage),
+                                ),
+                              ],
+                            ),
+                          ),
+                  ),
                 ),
               ),
             ],
@@ -417,6 +490,7 @@ class _SurahDetailPageState extends State<SurahDetailPage> {
 
 class _MushafPage extends StatefulWidget {
   const _MushafPage({
+    super.key,
     required this.surah,
     required this.ayahs,
     required this.isFirstPage,
@@ -452,137 +526,94 @@ class _MushafPageState extends State<_MushafPage> {
     final textScale = MediaQuery.textScalerOf(context);
 
     return Container(
-      decoration: const BoxDecoration(
-        // الخَلفية الجديدة لصورة السورة
-        image: DecorationImage(
-          image: AssetImage('assets/img/surah_detail_green.png'),
-          fit: BoxFit.fill,
-          // fit: BoxFit.cover,
-        ),
-      ),
-      child: Stack(
+      width: double.infinity,
+      color: Colors.transparent,
+      padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 8.h),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.start,
         children: [
-          Column(
-            children: [
-              Expanded(
-                child: Align(
-                  alignment: Alignment.topCenter,
-                  child: Container(
-                    constraints: BoxConstraints(
-                      maxWidth: 400.w,
-                      maxHeight: 650.h,
-                    ),
-                    child: Padding(
-                      padding: EdgeInsets.only(
-                        top: 60.h,
-                        right: 30.w,
-                        left: 30.w,
-                        bottom: 18.h,
-                      ),
-                      child: SingleChildScrollView(
-                        physics: const BouncingScrollPhysics(),
-                        child: Column(
-                          // mainAxisAlignment: MainAxisAlignment.center,
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            if (widget.isFirstPage) ...[
-                              if (_showBasmala) ...[
-                                // SizedBox(height: 12.h),
-                                Padding(
-                                  padding: const EdgeInsets.only(top: 10),
-                                  child: Text(
-                                    'بِسۡمِ ٱللَّهِ ٱلرَّحۡمَٰنِ ٱلرَّحِيمِ',
-                                    textAlign: TextAlign.center,
-                                    style: TextStyle(
-                                      color: const Color(0xFF1E1A12),
-                                      fontSize: textScale.scale(15.sp),
-                                      fontWeight: FontWeight.w700,
-                                      height: 0.5.h,
-                                      fontFamily: 'Amiri',
-                                    ),
-                                  ),
-                                ),
-                              ],
-                              SizedBox(height: 30.h),
-                            ],
-                            RichText(
-                              textDirection: TextDirection.rtl,
-                              textAlign: TextAlign.justify,
-                              text: TextSpan(
-                                style: TextStyle(
-                                  color: const Color(0xFF1A1710),
-                                  fontSize: textScale.scale(18.sp),
-                                  height: 2.05,
-                                  fontWeight: FontWeight.w500,
-                                  fontFamily: 'Amiri',
-                                ),
-                                children: _buildAyahSpans(context),
-                              ),
-                            ),
-                            if (widget.isLastPage &&
-                                (widget.prevSurah != null ||
-                                    widget.nextSurah != null)) ...[
-                              SizedBox(height: 32.h),
-                              Container(
-                                width: 120.w,
-                                height: 1.h,
-                                color: const Color(
-                                  0xFF1E1A12,
-                                ).withValues(alpha: 0.15),
-                              ),
-                              SizedBox(height: 24.h),
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceEvenly,
-                                children: [
-                                  if (widget.prevSurah != null)
-                                    Expanded(
-                                      child: Padding(
-                                        padding: EdgeInsets.symmetric(
-                                          horizontal: 6.w,
-                                        ),
-                                        child: _NavigationCard(
-                                          title: 'السورة السابقة',
-                                          surahName:
-                                              widget.prevSurah!.nameArabic,
-                                          isNext: false,
-                                          onTap: () => widget.onNavigate(
-                                            widget.prevSurah!.number,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  if (widget.nextSurah != null)
-                                    Expanded(
-                                      child: Padding(
-                                        padding: EdgeInsets.symmetric(
-                                          horizontal: 6.w,
-                                        ),
-                                        child: _NavigationCard(
-                                          title: 'السورة التالية',
-                                          surahName:
-                                              widget.nextSurah!.nameArabic,
-                                          isNext: true,
-                                          onTap: () => widget.onNavigate(
-                                            widget.nextSurah!.number,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                ],
-                              ),
-                              SizedBox(height: 16.h),
-                            ],
-                          ],
+          Align(
+            alignment: Alignment.topCenter,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                if (widget.isFirstPage) ...[
+                  if (_showBasmala) ...[
+                    Padding(
+                      padding: const EdgeInsets.only(top: 10),
+                      child: Text(
+                        'بِسۡمِ ٱللَّهِ ٱلرَّحۡمَٰنِ ٱلرَّحِيمِ',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: const Color(0xFF1E1A12),
+                          fontSize: textScale.scale(15.sp),
+                          fontWeight: FontWeight.w700,
+                          height: 0.5.h,
+                          fontFamily: 'Amiri',
                         ),
                       ),
                     ),
+                  ],
+                  SizedBox(height: 30.h),
+                ],
+                RichText(
+                  textDirection: TextDirection.rtl,
+                  textAlign: TextAlign.justify,
+                  text: TextSpan(
+                    style: TextStyle(
+                      color: const Color(0xFF1A1710),
+                      fontSize: textScale.scale(18.sp),
+                      height: 2.05,
+                      fontWeight: FontWeight.w500,
+                      fontFamily: 'Amiri',
+                    ),
+                    children: _buildAyahSpans(context),
                   ),
                 ),
-              ),
-              SizedBox(height: 8.h),
-              AyahFooter(pageNumber: widget.pageNumber),
-            ],
+                if (widget.isLastPage &&
+                    (widget.prevSurah != null || widget.nextSurah != null)) ...[
+                  SizedBox(height: 32.h),
+                  Container(
+                    width: 120.w,
+                    height: 1.h,
+                    color: const Color(0xFF1E1A12).withValues(alpha: 0.15),
+                  ),
+                  SizedBox(height: 24.h),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      if (widget.prevSurah != null)
+                        Expanded(
+                          child: Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 6.w),
+                            child: _NavigationCard(
+                              title: 'السورة السابقة',
+                              surahName: widget.prevSurah!.nameArabic,
+                              isNext: false,
+                              onTap: () =>
+                                  widget.onNavigate(widget.prevSurah!.number),
+                            ),
+                          ),
+                        ),
+                      if (widget.nextSurah != null)
+                        Expanded(
+                          child: Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 6.w),
+                            child: _NavigationCard(
+                              title: 'السورة التالية',
+                              surahName: widget.nextSurah!.nameArabic,
+                              isNext: true,
+                              onTap: () =>
+                                  widget.onNavigate(widget.nextSurah!.number),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                  SizedBox(height: 16.h),
+                ],
+              ],
+            ),
           ),
         ],
       ),
