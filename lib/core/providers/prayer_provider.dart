@@ -1,12 +1,16 @@
 import 'dart:async';
+import 'dart:io';
+import 'dart:ui' as ui;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:adhan/adhan.dart';
 import 'package:intl/intl.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:huda/core/services/adhan_notification_service.dart';
 import 'package:huda/core/services/adhan_player_service.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class PrayerProvider extends ChangeNotifier {
   // موقع مكة المكرمة الافتراضي والاحتياطي
@@ -38,18 +42,23 @@ class PrayerProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
 
+  /// تهيئة مواقيت الصلاة عند فتح التطبيق بشكل فوري وأوفلاين
   Future<void> initializeData() async {
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
 
     try {
-      // 1. حساب المواقيت فوراً بناءً على مكة المكرمة بدون إنترنت أو GPS لضمان السرعة المطلقة والاستقرار
+      // 1. تحميل الإحداثيات والمدينة المخزنة مسبقاً من ذاكرة الهاتف
+      final prefs = await SharedPreferences.getInstance();
+      _lat = prefs.getDouble('prayer_lat') ?? 21.4225;
+      _lng = prefs.getDouble('prayer_lng') ?? 39.8262;
+      _cityName = prefs.getString('prayer_city_name') ?? 'مكة المكرمة';
+      _coordinates = Coordinates(_lat, _lng);
+
+      // 2. حساب المواقيت فوراً وبشكل أوفلاين 100% باستخدام مكتبة adhan
       _calculatePrayerTimes();
       _startTimer();
-
-      // 2. محاولة تحديث المواقيت بناءً على إحداثيات موقع المستخدم الحقيقي في الخلفية بشكل آمن
-      await _updateLocationAndRecalculate();
     } catch (e) {
       _errorMessage = 'حدث خطأ أثناء جلب البيانات: $e';
     } finally {
@@ -58,38 +67,248 @@ class PrayerProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> _updateLocationAndRecalculate() async {
+  /// التحقق من الموقع وعرض رسالة للمستخدم لتحديث إحداثيات تحديد المواقيت
+  Future<void> checkAndPromptLocation(BuildContext context) async {
+    // تجنب تشغيل Geolocator على نظام الويندوز تفادياً لأي أعطال أثناء الاختبار
+    if (defaultTargetPlatform == TargetPlatform.windows) {
+      return;
+    }
+
     try {
-      // تجنب تشغيل Geolocator على نظام الويندوز تفادياً لأي أعطال أثناء الاختبار
-      if (defaultTargetPlatform == TargetPlatform.windows) {
+      final prefs = await SharedPreferences.getInstance();
+      final bool hasAskedPermissionBefore = prefs.getBool('asked_location_permission') ?? false;
+
+      if (!hasAskedPermissionBefore) {
+        // المرة الأولى: تنبيه المستخدم بلطف لأخذ إذن الموقع
+        if (context.mounted) {
+          await _showLocationSetupDialog(context, isFirstTime: true);
+        }
+      } else {
+        // المرات اللاحقة: نتحقق هل مر 4 أيام على آخر تحديث؟
+        final lastUpdateStr = prefs.getString('last_location_update_time');
+        if (lastUpdateStr != null) {
+          final lastUpdate = DateTime.parse(lastUpdateStr);
+          final daysDifference = DateTime.now().difference(lastUpdate).inDays;
+          
+          if (daysDifference >= 4) {
+            // نتحقق من توفر الإنترنت أولاً في الخلفية قبل مقاطعة المستخدم بسؤاله
+            final hasInternet = await _checkInternetConnection();
+            if (hasInternet && context.mounted) {
+              await _showLocationSetupDialog(context, isFirstTime: false);
+            }
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint("Error in checkAndPromptLocation: $e");
+    }
+  }
+
+  /// فحص وجود اتصال بالإنترنت بطريقة سريعة وآمنة
+  Future<bool> _checkInternetConnection() async {
+    try {
+      final result = await InternetAddress.lookup('google.com')
+          .timeout(const Duration(seconds: 3));
+      if (result.isNotEmpty && result[0].rawAddress.isNotEmpty) {
+        return true;
+      }
+    } catch (_) {}
+    return false;
+  }
+
+  /// عرض نافذة التنبيه الأنيقة والمتناسقة مع هوية التطبيق
+  Future<void> _showLocationSetupDialog(BuildContext context, {required bool isFirstTime}) async {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
+    await showDialog(
+      context: context,
+      barrierDismissible: !isFirstTime, // إجبار التحديد في المرة الأولى أو الرفض يدوياً
+      builder: (context) {
+        return Directionality(
+          textDirection: ui.TextDirection.rtl,
+          child: AlertDialog(
+            backgroundColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20.r),
+            ),
+            contentPadding: EdgeInsets.all(22.w),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // أيقونة الموقع بتأثير دائري جذاب
+                Container(
+                  padding: EdgeInsets.all(16.w),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).primaryColor.withOpacity(0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.location_on_rounded,
+                    size: 38.sp,
+                    color: Theme.of(context).primaryColor,
+                  ),
+                ),
+                SizedBox(height: 16.h),
+                
+                // العنوان
+                Text(
+                  isFirstTime ? 'تحديد مواقيت الصلاة بدقة' : 'تحديث موقعك الحالي',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontFamily: 'Cairo',
+                    fontSize: 16.sp,
+                    fontWeight: FontWeight.bold,
+                    color: isDark ? Colors.white : Colors.black87,
+                  ),
+                ),
+                SizedBox(height: 12.h),
+                
+                // الوصف
+                Text(
+                  isFirstTime
+                      ? 'يرغب تطبيق "هدى" في تحديد موقعك الجغرافي لحساب مواقيت الصلاة والقبلة بدقة متناهية. في حال الرفض أو عدم توفر إنترنت، سيتم اعتماد توقيت مكة المكرمة كخيار افتراضي.'
+                      : 'لقد مر عدة أيام منذ آخر تحديث لموقعك الجغرافي. هل ترغب في تحديث موقعك الحالي لضمان دقة مواقيت الصلاة والأذان (في حال سافرت أو غيرت مكانك)؟',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontFamily: 'Cairo',
+                    fontSize: 12.5.sp,
+                    color: isDark ? Colors.white70 : Colors.black54,
+                    height: 1.5,
+                  ),
+                ),
+                SizedBox(height: 24.h),
+                
+                // أزرار التحكم
+                Row(
+                  children: [
+                    // زر الموافقة والتفعيل
+                    Expanded(
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Theme.of(context).primaryColor,
+                          padding: EdgeInsets.symmetric(vertical: 10.h),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12.r),
+                          ),
+                        ),
+                        onPressed: () async {
+                          Navigator.pop(context);
+                          await _enableLocationAndFetch(context);
+                        },
+                        child: Text(
+                          isFirstTime ? 'تفعيل الآن' : 'تحديث الموقع',
+                          style: TextStyle(
+                            fontFamily: 'Cairo',
+                            fontSize: 13.sp,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                    SizedBox(width: 10.w),
+                    
+                    // زر الرفض
+                    Expanded(
+                      child: OutlinedButton(
+                        style: OutlinedButton.styleFrom(
+                          side: BorderSide(
+                            color: isDark ? Colors.white30 : Colors.black26,
+                          ),
+                          padding: EdgeInsets.symmetric(vertical: 10.h),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12.r),
+                          ),
+                        ),
+                        onPressed: () async {
+                          Navigator.pop(context);
+                          final prefs = await SharedPreferences.getInstance();
+                          await prefs.setBool('asked_location_permission', true);
+                          
+                          if (isFirstTime) {
+                            // حفظ مكة المكرمة كافتراضي
+                            await _saveLocationToPrefs(21.4225, 39.8262, 'مكة المكرمة');
+                            await prefs.setString('last_location_update_time', DateTime.now().toIso8601String());
+                            _lat = 21.4225;
+                            _lng = 39.8262;
+                            _cityName = 'مكة المكرمة';
+                            _coordinates = Coordinates(_lat, _lng);
+                            _calculatePrayerTimes();
+                            notifyListeners();
+                            _showToast(context, 'تم حفظ توقيت مكة المكرمة كخيار افتراضي');
+                          }
+                        },
+                        child: Text(
+                          'ليس الآن',
+                          style: TextStyle(
+                            fontFamily: 'Cairo',
+                            fontSize: 13.sp,
+                            color: isDark ? Colors.white70 : Colors.black54,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  /// طلب صلاحيات الـ GPS وجلب الإحداثيات وحفظها
+  Future<void> _enableLocationAndFetch(BuildContext context) async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('asked_location_permission', true);
+
+      // التحقق من تفعيل الـ GPS بالهاتف
+      final isServiceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!isServiceEnabled) {
+        if (context.mounted) {
+          _showToast(context, 'الرجاء تفعيل خدمة تحديد الموقع (GPS) أولاً في إعدادات الهاتف');
+        }
+        _isLoading = false;
+        notifyListeners();
         return;
       }
 
-      // التحقق من تفعيل خدمة تحديد الموقع بالجهاز (GPS)
-      final isServiceEnabled = await Geolocator.isLocationServiceEnabled();
-      if (!isServiceEnabled) return;
-
-      // التحقق من صلاحيات الموقع وطلبها إذا لم تكن ممنوحة
+      // التحقق من صلاحيات الموقع
       LocationPermission permission = await Geolocator.checkPermission();
       if (permission == LocationPermission.denied) {
         permission = await Geolocator.requestPermission();
-        if (permission == LocationPermission.denied ||
-            permission == LocationPermission.deniedForever) {
-          return;
-        }
       }
 
-      if (permission == LocationPermission.deniedForever) {
+      if (permission == LocationPermission.denied ||
+          permission == LocationPermission.deniedForever) {
+        if (context.mounted) {
+          _showToast(context, 'تم رفض الوصول للموقع، سيتم الاستمرار بتوقيت مكة المكرمة كافتراضي');
+        }
+        await _saveLocationToPrefs(21.4225, 39.8262, 'مكة المكرمة');
+        await prefs.setString('last_location_update_time', DateTime.now().toIso8601String());
+        _lat = 21.4225;
+        _lng = 39.8262;
+        _cityName = 'مكة المكرمة';
+        _coordinates = Coordinates(_lat, _lng);
+        _calculatePrayerTimes();
+        await scheduleAdhanNotifications();
+        _isLoading = false;
+        notifyListeners();
         return;
       }
 
-      // محاولة الحصول على آخر موقع معروف أولاً لسرعته الفائقة وعدم استهلاك الطاقة
+      // جلب آخر موقع معروف أو الموقع الحالي بمهلة 8 ثوانٍ
       Position? pos;
       try {
         pos = await Geolocator.getLastKnownPosition();
       } catch (_) {}
 
-      // إعدادات الموقع للأندرويد التي تتخطى مشاكل خدمات جوجل وتعمل بدقة منخفضة مناسبة للمواقيت
       final locationSettings = defaultTargetPlatform == TargetPlatform.android
           ? AndroidSettings(
               accuracy: LocationAccuracy.low,
@@ -99,17 +318,16 @@ class PrayerProvider extends ChangeNotifier {
               accuracy: LocationAccuracy.low,
             );
 
-      // إذا لم يتوفر آخر موقع معروف، نطلب الموقع الحالي بمهلة زمنية قصيرة (5 ثوانٍ)
       pos ??= await Geolocator.getCurrentPosition(
         locationSettings: locationSettings,
-      ).timeout(const Duration(seconds: 5));
+      ).timeout(const Duration(seconds: 8));
 
       if (pos != null) {
         _lat = pos.latitude;
         _lng = pos.longitude;
         _coordinates = Coordinates(_lat, _lng);
 
-        // محاولة جلب الاسم الجغرافي للمدينة
+        // جلب الاسم الجغرافي للمدينة
         try {
           final placemarks = await placemarkFromCoordinates(_lat, _lng);
           if (placemarks.isNotEmpty) {
@@ -123,15 +341,52 @@ class PrayerProvider extends ChangeNotifier {
           _cityName = 'موقعي الحالي';
         }
 
-        // إشعار التطبيق بالتحديث وإعادة حساب المواقيت وتحديث إشعارات الأذان
+        // حفظ الإحداثيات والمدينة في الذاكرة لتشغيل أوفلاين للأبد
+        await _saveLocationToPrefs(_lat, _lng, _cityName);
+        await prefs.setString('last_location_update_time', DateTime.now().toIso8601String());
+
         _calculatePrayerTimes();
         await scheduleAdhanNotifications();
-        notifyListeners();
+        
+        if (context.mounted) {
+          _showToast(context, 'تم تحديد موقعك بنجاح: $_cityName');
+        }
       }
     } catch (e) {
-      // في حال حدوث أي خطأ، لا نفعل شيئاً ونبقي على مكة المكرمة كخيار احتياطي آمن 100%
-      debugPrint("Silent catch - Qibla/Prayer times location fetch failed: $e");
+      if (context.mounted) {
+        _showToast(context, 'تعذر الحصول على موقعك الحالي، تم الاستمرار بالبيانات السابقة');
+      }
+    } finally {
+      _isLoading = false;
+      notifyListeners();
     }
+  }
+
+  /// حفظ البيانات المشتركة
+  Future<void> _saveLocationToPrefs(double lat, double lng, String cityName) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setDouble('prayer_lat', lat);
+    await prefs.setDouble('prayer_lng', lng);
+    await prefs.setString('prayer_city_name', cityName);
+  }
+
+  /// عرض رسالة إرشادية للمستخدم
+  void _showToast(BuildContext context, String message) {
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Directionality(
+          textDirection: ui.TextDirection.rtl,
+          child: Text(
+            message,
+            style: const TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold),
+          ),
+        ),
+        duration: const Duration(seconds: 4),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.r)),
+      ),
+    );
   }
 
   void _calculatePrayerTimes() {

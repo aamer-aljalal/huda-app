@@ -23,11 +23,11 @@ class _KhatmaPlannerScreenState extends State<KhatmaPlannerScreen> {
   TimeOfDay _selectedTime = const TimeOfDay(hour: 20, minute: 0);
 
   // Persistent active state variables
-  int _totalPagesRead = 0;
-  int _pagesReadToday = 0;
+  int _totalAyahsRead = 0;
+  int _ayahsReadToday = 0;
   DateTime? _startDate;
 
-  static const int _totalQuranPages = 604;
+  static const int _totalQuranAyahs = 6236;
 
   @override
   void initState() {
@@ -48,8 +48,8 @@ class _KhatmaPlannerScreenState extends State<KhatmaPlannerScreen> {
       if (active) {
         final days = prefs.getInt('khatma_days') ?? 30;
         final startStr = prefs.getString('khatma_start_date');
-        final totalRead = prefs.getInt('khatma_pages_read') ?? 0;
-        var readToday = prefs.getInt('khatma_pages_read_today') ?? 0;
+        final totalRead = prefs.getInt('khatma_ayahs_read') ?? 0;
+        var readToday = prefs.getInt('khatma_ayahs_read_today') ?? 0;
         final lastReadStr = prefs.getString('khatma_last_read_date');
         final rHour = prefs.getInt('khatma_reminder_hour') ?? 20;
         final rMin = prefs.getInt('khatma_reminder_minute') ?? 0;
@@ -64,7 +64,7 @@ class _KhatmaPlannerScreenState extends State<KhatmaPlannerScreen> {
               '${lastReadDate.year}-${lastReadDate.month}-${lastReadDate.day}';
           if (todayStr != lastReadDayStr) {
             readToday = 0;
-            await prefs.setInt('khatma_pages_read_today', 0);
+            await prefs.setInt('khatma_ayahs_read_today', 0);
           }
         }
 
@@ -72,8 +72,8 @@ class _KhatmaPlannerScreenState extends State<KhatmaPlannerScreen> {
           _showActiveKhatma = true;
           _daysSliderValue = days.toDouble();
           _startDate = startStr != null ? DateTime.parse(startStr) : now;
-          _totalPagesRead = totalRead;
-          _pagesReadToday = readToday;
+          _totalAyahsRead = totalRead;
+          _ayahsReadToday = readToday;
           _selectedTime = TimeOfDay(hour: rHour, minute: rMin);
         });
       } else {
@@ -103,14 +103,14 @@ class _KhatmaPlannerScreenState extends State<KhatmaPlannerScreen> {
       await prefs.setBool('khatma_active', true);
       await prefs.setInt('khatma_days', _daysSliderValue.toInt());
       await prefs.setString('khatma_start_date', now.toIso8601String());
-      await prefs.setInt('khatma_pages_read', 0);
-      await prefs.setInt('khatma_pages_read_today', 0);
+      await prefs.setInt('khatma_ayahs_read', 0);
+      await prefs.setInt('khatma_ayahs_read_today', 0);
       await prefs.setString('khatma_last_read_date', now.toIso8601String());
       await prefs.setInt('khatma_reminder_hour', _selectedTime.hour);
       await prefs.setInt('khatma_reminder_minute', _selectedTime.minute);
       await prefs.setInt('khatma_last_read_surah', 1);
-      await prefs.setInt('khatma_last_read_page', 0);
-      await prefs.setInt('khatma_max_reached_page', 0);
+      await prefs.setInt('khatma_last_read_ayah', 1);
+      await prefs.setInt('khatma_max_reached_ayah', 0);
 
       // Schedule dynamic local notification
       await GeneralNotificationService.scheduleKhatmaReminder(
@@ -121,8 +121,8 @@ class _KhatmaPlannerScreenState extends State<KhatmaPlannerScreen> {
       setState(() {
         _showActiveKhatma = true;
         _startDate = now;
-        _totalPagesRead = 0;
-        _pagesReadToday = 0;
+        _totalAyahsRead = 0;
+        _ayahsReadToday = 0;
       });
     } catch (e) {
       debugPrint('Error starting Khatma Plan: $e');
@@ -144,22 +144,22 @@ class _KhatmaPlannerScreenState extends State<KhatmaPlannerScreen> {
       await prefs.remove('khatma_active');
       await prefs.remove('khatma_days');
       await prefs.remove('khatma_start_date');
-      await prefs.remove('khatma_pages_read');
-      await prefs.remove('khatma_pages_read_today');
+      await prefs.remove('khatma_ayahs_read');
+      await prefs.remove('khatma_ayahs_read_today');
       await prefs.remove('khatma_last_read_date');
       await prefs.remove('khatma_reminder_hour');
       await prefs.remove('khatma_reminder_minute');
       await prefs.remove('khatma_last_read_surah');
-      await prefs.remove('khatma_last_read_page');
-      await prefs.remove('khatma_max_reached_page');
+      await prefs.remove('khatma_last_read_ayah');
+      await prefs.remove('khatma_max_reached_ayah');
 
       // Cancel local reminder notification
       await GeneralNotificationService.cancelKhatmaReminder();
 
       setState(() {
         _showActiveKhatma = false;
-        _totalPagesRead = 0;
-        _pagesReadToday = 0;
+        _totalAyahsRead = 0;
+        _ayahsReadToday = 0;
         _startDate = null;
       });
     } catch (e) {
@@ -181,7 +181,7 @@ class _KhatmaPlannerScreenState extends State<KhatmaPlannerScreen> {
     try {
       final prefs = await SharedPreferences.getInstance();
       final targetSurahNumber = prefs.getInt('khatma_last_read_surah') ?? 1;
-      final targetPage = prefs.getInt('khatma_last_read_page') ?? 0;
+      final targetAyah = prefs.getInt('khatma_last_read_ayah') ?? 1;
 
       final surahs = await QuranService.loadSurahs();
       final surah = surahs.firstWhere((s) => s.number == targetSurahNumber);
@@ -195,7 +195,7 @@ class _KhatmaPlannerScreenState extends State<KhatmaPlannerScreen> {
             builder: (_) => SurahDetailPage(
               surah: surah,
               ayahs: ayahs,
-              initialPage: targetPage,
+              initialAyah: targetAyah,
               isKhatmaSession: true,
             ),
           ),
@@ -214,8 +214,8 @@ class _KhatmaPlannerScreenState extends State<KhatmaPlannerScreen> {
   }
 
   // Get calculated values
-  int get _dailyPagesNeeded {
-    final double value = _totalQuranPages / _daysSliderValue;
+  int get _dailyAyahsNeeded {
+    final double value = _totalQuranAyahs / _daysSliderValue;
     return value.ceil();
   }
 
@@ -234,8 +234,8 @@ class _KhatmaPlannerScreenState extends State<KhatmaPlannerScreen> {
   }
 
   double get _completionPercent {
-    if (_totalPagesRead == 0) return 0.0;
-    return (_totalPagesRead / _totalQuranPages).clamp(0.0, 1.0);
+    if (_totalAyahsRead == 0) return 0.0;
+    return (_totalAyahsRead / _totalQuranAyahs).clamp(0.0, 1.0);
   }
 
   String _getExpectedCompletionDate() {
@@ -307,7 +307,7 @@ class _KhatmaPlannerScreenState extends State<KhatmaPlannerScreen> {
                   ),
                   SizedBox(height: 8.h),
                   Text(
-                    'لقد أتممت قراءة الورد المحدد في خطتك اليومية بنجاح ($_dailyPagesNeeded صفحة).',
+                    'لقد أتممت قراءة الورد المحدد في خطتك اليومية بنجاح ($_dailyAyahsNeeded آية).',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 12.sp,
@@ -705,9 +705,9 @@ class _KhatmaPlannerScreenState extends State<KhatmaPlannerScreen> {
               _buildCalculationRow(
                 icon: Icons.menu_book_rounded,
                 title: 'الورد اليومي المطلوب:',
-                value: '$_dailyPagesNeeded صفحة',
+                value: '$_dailyAyahsNeeded آية',
                 subValue:
-                    '(${(_dailyPagesNeeded / 20).toStringAsFixed(1)} جزء تقريباً)',
+                    '(${(_dailyAyahsNeeded / 207).toStringAsFixed(1)} جزء تقريباً)',
                 isPrimary: true,
               ),
               const Divider(height: 24),
@@ -986,7 +986,7 @@ class _KhatmaPlannerScreenState extends State<KhatmaPlannerScreen> {
                               ),
                             ),
                             content: Text(
-                              'هل تريد تعديل الخطة الحالية؟ سيؤدي ذلك لإعادة ضبط الأيام والورد من جديد مع الاحتفاظ بالصفحات المقروءة.',
+                              'هل تريد تعديل الخطة الحالية؟ سيؤدي ذلك لإعادة ضبط الأيام والورد من جديد مع الاحتفاظ بالآيات المقروءة.',
                               style: TextStyle(
                                 fontFamily: 'Cairo',
                                 fontSize: 9.sp,
@@ -1078,8 +1078,8 @@ class _KhatmaPlannerScreenState extends State<KhatmaPlannerScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
                   _buildMiniStat(
-                    'الصفحات المقروءة',
-                    '$_totalPagesRead / $_totalQuranPages',
+                    'الآيات المقروءة',
+                    '$_totalAyahsRead / $_totalQuranAyahs',
                   ),
                   Container(
                     width: 1,
@@ -1121,7 +1121,7 @@ class _KhatmaPlannerScreenState extends State<KhatmaPlannerScreen> {
                     ),
                   ),
                   Text(
-                    '$_pagesReadToday / $_dailyPagesNeeded صفحة',
+                    '$_ayahsReadToday / $_dailyAyahsNeeded آية',
                     style: TextStyle(
                       fontSize: 9.sp,
                       fontWeight: FontWeight.bold,
@@ -1135,7 +1135,7 @@ class _KhatmaPlannerScreenState extends State<KhatmaPlannerScreen> {
               ClipRRect(
                 borderRadius: BorderRadius.circular(10.r),
                 child: LinearProgressIndicator(
-                  value: (_pagesReadToday / _dailyPagesNeeded).clamp(0.0, 1.0),
+                  value: (_ayahsReadToday / _dailyAyahsNeeded).clamp(0.0, 1.0),
                   minHeight: 10.h,
                   backgroundColor: AppColors.primary.withValues(alpha: 0.1),
                   valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
@@ -1146,7 +1146,7 @@ class _KhatmaPlannerScreenState extends State<KhatmaPlannerScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    'وصلت إلى الصفحة الحالية: ${_totalPagesRead + 1}',
+                    'الآيات المقروءة حتى الآن: $_totalAyahsRead',
                     style: TextStyle(
                       fontSize: 7.sp,
                       fontFamily: 'Cairo',
@@ -1155,14 +1155,14 @@ class _KhatmaPlannerScreenState extends State<KhatmaPlannerScreen> {
                     ),
                   ),
                   Text(
-                    _pagesReadToday >= _dailyPagesNeeded
+                    _ayahsReadToday >= _dailyAyahsNeeded
                         ? 'أتممت ورد اليوم بنجاح'
-                        : 'المتبقي لليوم: ${(_dailyPagesNeeded - _pagesReadToday).clamp(0, _dailyPagesNeeded)} صفحات',
+                        : 'المتبقي لليوم: ${(_dailyAyahsNeeded - _ayahsReadToday).clamp(0, _dailyAyahsNeeded)} آية',
                     style: TextStyle(
                       fontSize: 9.sp,
                       fontWeight: FontWeight.bold,
                       fontFamily: 'Cairo',
-                      color: _pagesReadToday >= _dailyPagesNeeded
+                      color: _ayahsReadToday >= _dailyAyahsNeeded
                           ? Colors.green
                           : Colors.grey.shade500,
                     ),
@@ -1179,13 +1179,13 @@ class _KhatmaPlannerScreenState extends State<KhatmaPlannerScreen> {
           future: () async {
             final prefs = await SharedPreferences.getInstance();
             final surahNumber = prefs.getInt('khatma_last_read_surah') ?? 1;
-            final page = prefs.getInt('khatma_last_read_page') ?? 0;
+            final page = prefs.getInt('khatma_last_read_ayah') ?? 1;
             final surahs = await QuranService.loadSurahs();
             final surah = surahs.firstWhere((s) => s.number == surahNumber);
             final hasStarted = prefs.getInt('khatma_last_read_surah') != null;
             return {
               'surahName': surah.nameArabic,
-              'page': page + 1,
+              'ayah': page,
               'hasStarted': hasStarted,
             };
           }(),
@@ -1193,7 +1193,7 @@ class _KhatmaPlannerScreenState extends State<KhatmaPlannerScreen> {
             if (!snapshot.hasData) return const SizedBox();
             final data = snapshot.data!;
             final surahName = data['surahName'] as String;
-            final page = data['page'] as int;
+            final ayah = data['ayah'] as int;
             final hasStarted = data['hasStarted'] as bool;
 
             return Container(
@@ -1237,7 +1237,7 @@ class _KhatmaPlannerScreenState extends State<KhatmaPlannerScreen> {
                         SizedBox(height: 4.h),
                         Text(
                           hasStarted
-                              ? 'سورة $surahName (الصفحة $page)'
+                              ? 'سورة $surahName (الآية $ayah)'
                               : 'لم تبدأ القراءة في هذه الختمة بعد (ستبدأ من الفاتحة)',
                           style: TextStyle(
                             fontSize: 8.sp,
@@ -1337,7 +1337,7 @@ class _KhatmaPlannerScreenState extends State<KhatmaPlannerScreen> {
                       ),
                     ),
                     content: Text(
-                      'هل أنت متأكد تماماً من إلغاء وحذف هذه الختمة نهائياً؟ سيؤدي ذلك لمسح كل تقدمك التراكمي بالأيام والصفحات.',
+                      'هل أنت متأكد تماماً من إلغاء وحذف هذه الختمة نهائياً؟ سيؤدي ذلك لمسح كل تقدمك التراكمي بالأيام والآيات.',
                       style: TextStyle(fontFamily: 'Cairo', fontSize: 9.sp),
                     ),
                     actions: [

@@ -5,9 +5,13 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:huda/core/theme/app_colors.dart';
 import 'package:huda/core/widgets/appbars/huda_app_bar.dart';
+import 'package:huda/Routes/AppRoutes.dart';
 import 'package:huda/features/quran/services/quran_service.dart';
 import 'package:huda/features/quran/views/surah_detail_page.dart';
 import 'package:huda/features/Hadith/hadith_service.dart';
+import 'package:huda/features/prophets_stories/models/prophet_story_model.dart';
+import 'package:huda/features/prophets_stories/services/prophets_stories_service.dart';
+import 'package:huda/features/prophets_stories/views/prophet_story_details_screen.dart';
 
 class BookmarksPage extends StatefulWidget {
   const BookmarksPage({super.key});
@@ -22,13 +26,14 @@ class _BookmarksPageState extends State<BookmarksPage> with SingleTickerProvider
   List<Map<String, dynamic>> _savedAyahs = [];
   List<HadithModel> _savedHadiths = [];
   List<Map<String, dynamic>> _savedAzkar = [];
+  List<ProphetStoryModel> _savedStories = [];
   
   bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(length: 4, vsync: this);
     _loadSavedItems();
   }
 
@@ -66,6 +71,12 @@ class _BookmarksPageState extends State<BookmarksPage> with SingleTickerProvider
       _savedAzkar = savedAzkarRaw.map((item) {
         return jsonDecode(item) as Map<String, dynamic>;
       }).toList();
+
+      // Load Prophet Stories Favorites
+      final favoriteStoryIds = prefs.getStringList('favorite_prophet_stories_ids') ?? [];
+      final favoriteIdsSet = favoriteStoryIds.map((idStr) => int.tryParse(idStr)).whereType<int>().toSet();
+      final allStories = await ProphetsStoriesService.loadStories();
+      _savedStories = allStories.where((story) => favoriteIdsSet.contains(story.id)).toList();
 
     } catch (_) {}
     setState(() => _isLoading = false);
@@ -110,6 +121,20 @@ class _BookmarksPageState extends State<BookmarksPage> with SingleTickerProvider
     } catch (_) {}
   }
 
+  Future<void> _deleteStory(int id) async {
+    try {
+      await ProphetsStoriesService.toggleFavorite(id);
+      HapticFeedback.mediumImpact();
+      _loadSavedItems();
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('تم حذف قصة النبي من المفضلة')),
+        );
+      }
+    } catch (_) {}
+  }
+
   Future<void> _goToAyah(int surahNumber, int verseNumber) async {
     showDialog(
       context: context,
@@ -122,20 +147,6 @@ class _BookmarksPageState extends State<BookmarksPage> with SingleTickerProvider
       final surah = surahs.firstWhere((s) => s.number == surahNumber);
       final ayahs = await QuranService.loadAyahs(surahNumber);
       
-      // Calculate containing page index using the same page splitting logic
-      final pages = _splitIntoMushafPages(ayahs);
-      int targetPageIndex = 0;
-      for (int i = 0; i < pages.length; i++) {
-        if (pages[i].any((a) => a.verse == verseNumber)) {
-          targetPageIndex = i;
-          break;
-        }
-      }
-
-      // Save page index so SurahDetailPage opens exactly on it
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setInt('quran_page_$surahNumber', targetPageIndex);
-
       if (!mounted) return;
       Navigator.pop(context); // Pop loading dialog
       
@@ -145,7 +156,7 @@ class _BookmarksPageState extends State<BookmarksPage> with SingleTickerProvider
           builder: (_) => SurahDetailPage(
             surah: surah,
             ayahs: ayahs,
-            initialPage: targetPageIndex,
+            initialAyah: verseNumber,
           ),
         ),
       );
@@ -158,31 +169,6 @@ class _BookmarksPageState extends State<BookmarksPage> with SingleTickerProvider
       }
     }
   }
-
-  List<List<QuranAyah>> _splitIntoMushafPages(List<QuranAyah> ayahs) {
-    final pages = <List<QuranAyah>>[];
-    var current = <QuranAyah>[];
-    var currentLength = 0;
-
-    for (final ayah in ayahs) {
-      final nextLength = currentLength + ayah.text.length;
-      final maxLength = current.isEmpty ? 980 : 920;
-
-      if (current.isNotEmpty && nextLength > maxLength) {
-        pages.add(current);
-        current = <QuranAyah>[];
-        currentLength = 0;
-      }
-
-      current.add(ayah);
-      currentLength += ayah.text.length;
-    }
-
-    if (current.isNotEmpty) pages.add(current);
-    return pages;
-  }
-
-  @override
   Widget build(BuildContext context) {
     return Directionality(
       textDirection: TextDirection.rtl,
@@ -195,11 +181,12 @@ class _BookmarksPageState extends State<BookmarksPage> with SingleTickerProvider
             indicatorWeight: 3.h,
             labelColor: Colors.white,
             unselectedLabelColor: Colors.white70,
-            labelStyle: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.bold),
+            labelStyle: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.bold),
             tabs: const [
               Tab(text: 'الآيات'),
               Tab(text: 'الأحاديث'),
               Tab(text: 'الأذكار'),
+              Tab(text: 'القصص'),
             ],
           ),
         ),
@@ -211,6 +198,7 @@ class _BookmarksPageState extends State<BookmarksPage> with SingleTickerProvider
                   _buildAyahsTab(),
                   _buildHadithsTab(),
                   _buildAzkarTab(),
+                  _buildStoriesTab(),
                 ],
               ),
       ),
@@ -513,6 +501,126 @@ class _BookmarksPageState extends State<BookmarksPage> with SingleTickerProvider
       );
     }
     return const SizedBox.shrink();
+  }
+
+  Widget _buildStoriesTab() {
+    if (_savedStories.isEmpty) {
+      return _buildEmptyState(
+        icon: Icons.import_contacts_outlined,
+        title: 'لا توجد قصص محفوظة حالياً',
+        subtitle: 'يمكنك حفظ قصص الأنبياء التي ترغب بالرجوع إليها لاحقاً بالضغط على النجمة في صفحة قصص الأنبياء.',
+        buttonText: 'تصفح قصص الأنبياء 📖',
+        onTap: () {
+          Navigator.pushNamed(context, AppRoutes.prophetsStories);
+        },
+      );
+    }
+
+    return ListView.builder(
+      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
+      itemCount: _savedStories.length,
+      itemBuilder: (context, index) {
+        final story = _savedStories[index];
+
+        return Container(
+          margin: EdgeInsets.only(bottom: 16.h),
+          decoration: BoxDecoration(
+            color: Theme.of(context).cardColor,
+            borderRadius: BorderRadius.circular(12.r),
+            border: Border.all(
+              color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.1),
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.03),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header of Card
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withValues(alpha: 0.05),
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(12.r)),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'قصة ${story.name}',
+                      style: TextStyle(
+                        fontSize: 13.sp,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.primary,
+                        fontFamily: 'Cairo',
+                      ),
+                    ),
+                    Row(
+                      children: [
+                        IconButton(
+                          icon: Icon(Icons.open_in_new_rounded, size: 18.sp, color: AppColors.primary),
+                          tooltip: 'قراءة القصة كاملة',
+                          onPressed: () async {
+                            await Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => ProphetStoryDetailsScreen(story: story),
+                              ),
+                            );
+                            _loadSavedItems();
+                          },
+                        ),
+                        IconButton(
+                          icon: Icon(Icons.copy_rounded, size: 18.sp, color: AppColors.primary),
+                          tooltip: 'نسخ القصة',
+                          onPressed: () {
+                            final cleanText = story.story.replaceAll('            نبذة:\n\n', '').trim();
+                            Clipboard.setData(ClipboardData(text: '$cleanText\n\n[قصص الأنبياء - ${story.name}]'));
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('تم نسخ القصة الشريفة بنجاح')),
+                            );
+                          },
+                        ),
+                        IconButton(
+                          icon: Icon(Icons.delete_outline_rounded, size: 18.sp, color: Colors.red.shade700),
+                          tooltip: 'حذف القصة',
+                          onPressed: () => _deleteStory(story.id),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              // Body of Card
+              Padding(
+                padding: EdgeInsets.all(16.w),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text(
+                      story.excerpt,
+                      textDirection: TextDirection.rtl,
+                      textAlign: TextAlign.justify,
+                      style: TextStyle(
+                        fontSize: 13.sp,
+                        height: 1.7,
+                        color: Theme.of(context).textTheme.bodyLarge?.color,
+                        fontFamily: 'Cairo',
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   Widget _buildEmptyState({

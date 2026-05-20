@@ -134,6 +134,15 @@ class QuranService {
     return _interpretations!['$surahNumber:$ayahNumber'] ?? '';
   }
 
+  static Future<int> getAbsoluteAyahOffset(int surahNumber, int ayahNumber) async {
+    final surahs = await loadSurahs();
+    int offset = 0;
+    for (int i = 0; i < surahNumber - 1; i++) {
+      offset += surahs[i].versesCount;
+    }
+    return offset + ayahNumber;
+  }
+
   static Future<Map<String, String>> _loadInterpretations() async {
     final raw = await rootBundle.loadString('assets/json/Interpretation.json');
     final decoded = jsonDecode(raw) as List<dynamic>;

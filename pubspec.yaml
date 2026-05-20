@@ -83,6 +83,7 @@ flutter:
     - assets/json/hadith_nawawi.json
     - assets/json/names_of_allah.json
     - assets/json/hisn_almuslim.json
+    - assets/json/Stories/Stories_Prophets.json
     - assets/img/
     - assets/audio/adhan/
   # An image asset can refer to one or more resolution-specific "variants", see

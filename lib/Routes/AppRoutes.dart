@@ -5,6 +5,8 @@ class AppRoutes {
   // ========================= القرآن =========================
   static const quran = '/quran';
   static const surahDetails = '/surah-details';
+  // ========================= قصص الأنبياء =========================
+  static const prophetsStories = '/prophets-stories';
   // ========================= الأذكار =========================
   static const azkarCategories = '/azkar-categories';
   static const zkarDetails = '/zkar-details';

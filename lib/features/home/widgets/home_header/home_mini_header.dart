@@ -104,7 +104,7 @@ class HomeMiniHeader extends StatelessWidget {
         const Spacer(),
         _buildHeaderActionButton(
           context: context,
-          icon: Icons.bookmark_border_rounded,
+          icon: Icons.favorite_outline,
           onPressed: () {
             Navigator.pushNamed(context, AppRoutes.bookmarks);
           },

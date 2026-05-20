@@ -18,6 +18,7 @@ import 'package:huda/features/hisn_almuslim/hisn_categories_screen.dart';
 import 'package:huda/features/hisn_almuslim/hisn_details_screen.dart';
 import 'package:huda/features/hisn_almuslim/model/hisn_category.dart';
 import 'package:huda/features/quran/views/khatma_planner_screen.dart';
+import 'package:huda/features/prophets_stories/views/prophets_list_screen.dart';
 
 class RouteGenerator {
   static Route<dynamic> generate(RouteSettings settings) {
@@ -32,6 +33,11 @@ class RouteGenerator {
 
       case AppRoutes.quran:
         return MaterialPageRoute(builder: (_) => const SurahListPage());
+
+      // ========================= قصص الأنبياء =========================
+
+      case AppRoutes.prophetsStories:
+        return MaterialPageRoute(builder: (_) => const ProphetsListScreen());
 
       // ========================= الأذكار =========================
 

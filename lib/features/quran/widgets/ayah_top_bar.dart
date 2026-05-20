@@ -6,14 +6,9 @@ class MushafTopBar extends StatelessWidget {
   const MushafTopBar({
     super.key,
     required this.surah,
-    required this.currentPage,
-    required this.pagesCount,
   });
 
   final QuranSurah surah;
-  // نحتفظ بهذين الحقلين للتوافق مع الكود القديم لكن نعرض عدد الآيات
-  final int currentPage;
-  final int pagesCount;
 
   @override
   Widget build(BuildContext context) {

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:huda/core/services/recent_actions_service.dart';
 import 'package:huda/core/theme/app_colors.dart';
+import 'package:huda/core/widgets/Text/Responsive_text.dart';
 import 'package:huda/features/home/widgets/home_header/home_mini_header.dart';
 import 'package:huda/features/home/widgets/home_header/home_notifications_sheet.dart';
 import 'package:huda/features/home/widgets/home_header/home_prayer_card.dart';
@@ -208,7 +209,7 @@ class _HomeHeaderState extends State<HomeHeader> {
             child: Padding(
               padding: EdgeInsets.only(
                 left: 10.w,
-                top: 15.h,
+                top: 20.h,
                 right: 10.w,
                 bottom: 30.h,
               ),

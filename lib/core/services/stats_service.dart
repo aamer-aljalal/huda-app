@@ -96,7 +96,7 @@ class StatsService {
           final dateStr = _getDateString(targetDate);
           
           double daySum = 0;
-          for (final metric in ['tasbeeh', 'azkar', 'quran', 'hadith', 'hisn_almuslim']) {
+          for (final metric in ['tasbeeh', 'azkar', 'quran', 'hadith', 'hisn_almuslim', 'prophets_stories']) {
             daySum += (prefs.getInt('stats_${metric}_$dateStr') ?? 0).toDouble();
           }
           rawDaysValues.add(daySum);
@@ -125,6 +125,7 @@ class StatsService {
       final todayCompletedAzkarSingle = prefs.getInt('stats_completed_azkar_single_${_getDateString(now)}') ?? 0;
       final todayCompletedAzkarCategory = prefs.getInt('stats_completed_azkar_category_${_getDateString(now)}') ?? 0;
       final todayHisn = prefs.getInt('stats_hisn_almuslim_${_getDateString(now)}') ?? 0;
+      final todayStories = prefs.getInt('stats_prophets_stories_${_getDateString(now)}') ?? 0;
 
       // Sum for weekly, monthly, yearly
       final weekAzkar = await sumMetric('azkar', 7);
@@ -134,6 +135,7 @@ class StatsService {
       final weekCompletedAzkarSingle = await sumMetric('completed_azkar_single', 7);
       final weekCompletedAzkarCategory = await sumMetric('completed_azkar_category', 7);
       final weekHisn = await sumMetric('hisn_almuslim', 7);
+      final weekStories = await sumMetric('prophets_stories', 7);
 
       final monthAzkar = await sumMetric('azkar', 30);
       final monthTasbeeh = await sumMetric('tasbeeh', 30);
@@ -142,6 +144,7 @@ class StatsService {
       final monthCompletedAzkarSingle = await sumMetric('completed_azkar_single', 30);
       final monthCompletedAzkarCategory = await sumMetric('completed_azkar_category', 30);
       final monthHisn = await sumMetric('hisn_almuslim', 30);
+      final monthStories = await sumMetric('prophets_stories', 30);
 
       final yearAzkar = await sumMetric('azkar', 365);
       final yearTasbeeh = await sumMetric('tasbeeh', 365);
@@ -150,49 +153,54 @@ class StatsService {
       final yearCompletedAzkarSingle = await sumMetric('completed_azkar_single', 365);
       final yearCompletedAzkarCategory = await sumMetric('completed_azkar_category', 365);
       final yearHisn = await sumMetric('hisn_almuslim', 365);
+      final yearStories = await sumMetric('prophets_stories', 365);
 
       final chartVals = await getChartValues(7);
 
       // Determine progress goals dynamically
-      // For Today: e.g. 50 Tasbeeh, 20 Azkar, 2 Quran pages, 1 Hadith, 10 Hisn al-Muslim
+      // For Today: e.g. 50 Tasbeeh, 20 Azkar, 2 Quran pages, 1 Hadith, 10 Hisn al-Muslim, 1 Prophet Story
       double todayProgress = 0.0;
-      if (todayTasbeeh > 0 || todayAzkar > 0 || todayQuran > 0 || todayHadith > 0 || todayHisn > 0) {
+      if (todayTasbeeh > 0 || todayAzkar > 0 || todayQuran > 0 || todayHadith > 0 || todayHisn > 0 || todayStories > 0) {
         double tasbeehProgress = (todayTasbeeh / 50).clamp(0.0, 1.0);
         double azkarProgress = (todayAzkar / 20).clamp(0.0, 1.0);
         double quranProgress = (todayQuran / 2).clamp(0.0, 1.0);
         double hadithProgress = (todayHadith / 1).clamp(0.0, 1.0);
         double hisnProgress = (todayHisn / 10).clamp(0.0, 1.0);
-        todayProgress = (tasbeehProgress + azkarProgress + quranProgress + hadithProgress + hisnProgress) / 5.0;
+        double storiesProgress = (todayStories / 1).clamp(0.0, 1.0);
+        todayProgress = (tasbeehProgress + azkarProgress + quranProgress + hadithProgress + hisnProgress + storiesProgress) / 6.0;
       }
 
       double weekProgress = 0.0;
-      if (weekTasbeeh > 0 || weekAzkar > 0 || weekQuran > 0 || weekHadith > 0 || weekHisn > 0) {
+      if (weekTasbeeh > 0 || weekAzkar > 0 || weekQuran > 0 || weekHadith > 0 || weekHisn > 0 || weekStories > 0) {
         double tasbeehProgress = (weekTasbeeh / 350).clamp(0.0, 1.0);
         double azkarProgress = (weekAzkar / 140).clamp(0.0, 1.0);
         double quranProgress = (weekQuran / 14).clamp(0.0, 1.0);
         double hadithProgress = (weekHadith / 7).clamp(0.0, 1.0);
         double hisnProgress = (weekHisn / 70).clamp(0.0, 1.0);
-        weekProgress = (tasbeehProgress + azkarProgress + quranProgress + hadithProgress + hisnProgress) / 5.0;
+        double storiesProgress = (weekStories / 7).clamp(0.0, 1.0);
+        weekProgress = (tasbeehProgress + azkarProgress + quranProgress + hadithProgress + hisnProgress + storiesProgress) / 6.0;
       }
 
       double monthProgress = 0.0;
-      if (monthTasbeeh > 0 || monthAzkar > 0 || monthQuran > 0 || monthHadith > 0 || monthHisn > 0) {
+      if (monthTasbeeh > 0 || monthAzkar > 0 || monthQuran > 0 || monthHadith > 0 || monthHisn > 0 || monthStories > 0) {
         double tasbeehProgress = (monthTasbeeh / 1500).clamp(0.0, 1.0);
         double azkarProgress = (monthAzkar / 600).clamp(0.0, 1.0);
         double quranProgress = (monthQuran / 60).clamp(0.0, 1.0);
         double hadithProgress = (monthHadith / 30).clamp(0.0, 1.0);
         double hisnProgress = (monthHisn / 300).clamp(0.0, 1.0);
-        monthProgress = (tasbeehProgress + azkarProgress + quranProgress + hadithProgress + hisnProgress) / 5.0;
+        double storiesProgress = (monthStories / 30).clamp(0.0, 1.0);
+        monthProgress = (tasbeehProgress + azkarProgress + quranProgress + hadithProgress + hisnProgress + storiesProgress) / 6.0;
       }
 
       double yearProgress = 0.0;
-      if (yearTasbeeh > 0 || yearAzkar > 0 || yearQuran > 0 || yearHadith > 0 || yearHisn > 0) {
+      if (yearTasbeeh > 0 || yearAzkar > 0 || yearQuran > 0 || yearHadith > 0 || yearHisn > 0 || yearStories > 0) {
         double tasbeehProgress = (yearTasbeeh / 18000).clamp(0.0, 1.0);
         double azkarProgress = (yearAzkar / 7200).clamp(0.0, 1.0);
         double quranProgress = (yearQuran / 720).clamp(0.0, 1.0);
         double hadithProgress = (yearHadith / 365).clamp(0.0, 1.0);
         double hisnProgress = (yearHisn / 3650).clamp(0.0, 1.0);
-        yearProgress = (tasbeehProgress + azkarProgress + quranProgress + hadithProgress + hisnProgress) / 5.0;
+        double storiesProgress = (yearStories / 365).clamp(0.0, 1.0);
+        yearProgress = (tasbeehProgress + azkarProgress + quranProgress + hadithProgress + hisnProgress + storiesProgress) / 6.0;
       }
 
       return {
@@ -205,6 +213,7 @@ class StatsService {
           completedAzkarSingle: todayCompletedAzkarSingle,
           completedAzkarCategory: todayCompletedAzkarCategory,
           hisnAlmuslim: todayHisn,
+          prophetsStories: todayStories,
           progress: todayProgress,
           streak: streak,
           chartValues: chartVals,
@@ -218,6 +227,7 @@ class StatsService {
           completedAzkarSingle: weekCompletedAzkarSingle,
           completedAzkarCategory: weekCompletedAzkarCategory,
           hisnAlmuslim: weekHisn,
+          prophetsStories: weekStories,
           progress: weekProgress,
           streak: streak,
           chartValues: chartVals,
@@ -231,6 +241,7 @@ class StatsService {
           completedAzkarSingle: monthCompletedAzkarSingle,
           completedAzkarCategory: monthCompletedAzkarCategory,
           hisnAlmuslim: monthHisn,
+          prophetsStories: monthStories,
           progress: monthProgress,
           streak: streak,
           chartValues: chartVals,
@@ -244,6 +255,7 @@ class StatsService {
           completedAzkarSingle: yearCompletedAzkarSingle,
           completedAzkarCategory: yearCompletedAzkarCategory,
           hisnAlmuslim: yearHisn,
+          prophetsStories: yearStories,
           progress: yearProgress,
           streak: streak,
           chartValues: chartVals,
@@ -283,6 +295,7 @@ class DynamicStats {
   final int completedAzkarSingle;
   final int completedAzkarCategory;
   final int hisnAlmuslim;
+  final int prophetsStories;
   final double progress;
   final int streak;
   final List<double> chartValues;
@@ -296,6 +309,7 @@ class DynamicStats {
     required this.completedAzkarSingle,
     required this.completedAzkarCategory,
     required this.hisnAlmuslim,
+    required this.prophetsStories,
     required this.progress,
     required this.streak,
     required this.chartValues,
@@ -310,6 +324,7 @@ class DynamicStats {
         completedAzkarSingle: 0,
         completedAzkarCategory: 0,
         hisnAlmuslim: 0,
+        prophetsStories: 0,
         progress: 0.0,
         streak: 0,
         chartValues: [0, 0, 0, 0, 0, 0, 0],

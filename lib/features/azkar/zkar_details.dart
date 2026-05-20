@@ -31,6 +31,13 @@ class _AzkarDetailsScreenState extends State<AzkarDetailsScreen>
   int get _totalRepeat => int.tryParse(currentZekr.count) ?? 1;
   double get _progress => currentZekr.currentCount / _totalRepeat;
 
+  bool get _isAllAzkarCompleted => widget.category.azkar.every((zekr) {
+        final repeat = int.tryParse(zekr.count) ?? 1;
+        return zekr.currentCount >= repeat;
+      });
+
+  bool get _hasStartedReciting => widget.category.azkar.any((zekr) => zekr.currentCount > 0);
+
   late final PageController _pageController;
 
   @override
@@ -126,7 +133,13 @@ class _AzkarDetailsScreenState extends State<AzkarDetailsScreen>
         if (currentZekr.currentCount == _totalRepeat) {
           StatsService.recordAction('completed_azkar_single');
 
-          if (currentZekrIndex < widget.category.azkar.length - 1) {
+          if (_isAllAzkarCompleted) {
+            Future.delayed(const Duration(milliseconds: 250), () {
+              if (mounted) {
+                _showCompletionSheet();
+              }
+            });
+          } else if (currentZekrIndex < widget.category.azkar.length - 1) {
             Future.delayed(const Duration(milliseconds: 300), () {
               if (mounted) {
                 setState(() {
@@ -137,13 +150,6 @@ class _AzkarDetailsScreenState extends State<AzkarDetailsScreen>
                   duration: const Duration(milliseconds: 400),
                   curve: Curves.easeInOut,
                 );
-              }
-            });
-          } else {
-            // It was the last zekr in the list! Show celebratory bottom sheet!
-            Future.delayed(const Duration(milliseconds: 250), () {
-              if (mounted) {
-                _showCompletionSheet();
               }
             });
           }
@@ -497,6 +503,29 @@ class _AzkarDetailsScreenState extends State<AzkarDetailsScreen>
                 fontWeight: FontWeight.w500,
               ),
             ),
+            if (_hasStartedReciting) ...[
+              SizedBox(height: 12.h),
+              TextButton.icon(
+                onPressed: _showResetCategoryDialog,
+                icon: const Icon(Icons.refresh_rounded, color: Colors.redAccent),
+                label: Text(
+                  'بدء من جديد / إعادة تعيين',
+                  style: TextStyle(
+                    fontSize: 13.sp,
+                    color: Colors.redAccent,
+                    fontWeight: FontWeight.bold,
+                    fontFamily: 'Cairo',
+                  ),
+                ),
+                style: TextButton.styleFrom(
+                  padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+                  backgroundColor: Colors.redAccent.withOpacity(0.1),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12.r),
+                  ),
+                ),
+              ),
+            ],
             SizedBox(height: 20.h),
           ],
         ),

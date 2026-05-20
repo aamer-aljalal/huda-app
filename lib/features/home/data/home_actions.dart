@@ -34,6 +34,11 @@ class HomeActions {
       title: 'الأحاديث',
     ),
     AccessListModel(
+      icon: Icons.import_contacts_outlined,
+      route: AppRoutes.prophetsStories,
+      title: 'قصص الأنبياء',
+    ),
+    AccessListModel(
       icon: Icons.timer_outlined,
       route: AppRoutes.tasbeeh,
       title: 'التسبيح',

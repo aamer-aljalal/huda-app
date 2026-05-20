@@ -181,7 +181,6 @@ class _StatsContent extends StatelessWidget {
             ),
           ],
         ),
-        SizedBox(height: 10.h),
         Row(
           children: [
             Expanded(
@@ -199,6 +198,19 @@ class _StatsContent extends StatelessWidget {
                 value: data.hadith.toString(),
                 icon: Icons.auto_stories_rounded,
                 color: Colors.orange.shade700,
+              ),
+            ),
+          ],
+        ),
+        SizedBox(height: 10.h),
+        Row(
+          children: [
+            Expanded(
+              child: _MetricCard(
+                title: 'قصص الأنبياء المقروءة',
+                value: data.prophetsStories.toString(),
+                icon: Icons.import_contacts_outlined,
+                color: Colors.teal.shade700,
               ),
             ),
           ],

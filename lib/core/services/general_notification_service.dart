@@ -89,19 +89,21 @@ class GeneralNotificationService {
           } else if (payload == 'khatma_planner') {
             try {
               final prefs = await SharedPreferences.getInstance();
-              final lastSurahNumber = prefs.getInt('quran_last_read_surah_number');
+              final khatmaSurah = prefs.getInt('khatma_last_read_surah');
+              final khatmaAyah = prefs.getInt('khatma_last_read_ayah');
               
-              if (lastSurahNumber != null) {
+              if (khatmaSurah != null) {
                 final surahs = await QuranService.loadSurahs();
-                final surah = surahs.firstWhere((s) => s.number == lastSurahNumber);
-                final ayahs = await QuranService.loadAyahs(lastSurahNumber);
+                final surah = surahs.firstWhere((s) => s.number == khatmaSurah);
+                final ayahs = await QuranService.loadAyahs(khatmaSurah);
 
                 Huda.navigatorKey.currentState?.push(
                   MaterialPageRoute(
                     builder: (context) => SurahDetailPage(
                       surah: surah,
                       ayahs: ayahs,
-                      resumeLastPage: true,
+                      initialAyah: khatmaAyah,
+                      isKhatmaSession: true,
                     ),
                   ),
                 );

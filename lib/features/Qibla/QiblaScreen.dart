@@ -7,6 +7,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_compass/flutter_compass.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:geocoding/geocoding.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:huda/core/widgets/appbars/huda_app_bar.dart';
 
 class QiblaScreen extends StatefulWidget {
@@ -49,10 +51,10 @@ class _QiblaScreenState extends State<QiblaScreen>
   }
 
   Future<void> _initialize() async {
-    await _requestPermissionsAndLocate();
+    await _requestPermissionsAndLocate(forceRefresh: false);
   }
 
-  Future<void> _requestPermissionsAndLocate() async {
+  Future<void> _requestPermissionsAndLocate({bool forceRefresh = false}) async {
     setState(() {
       _isLoading = true;
       _hasError = false;
@@ -60,6 +62,26 @@ class _QiblaScreenState extends State<QiblaScreen>
     });
 
     try {
+      // 0. التحميل الفوري الأوفلاين من الذاكرة المشتركة إذا كان متوفراً ولم نطلب التحديث الإجباري
+      if (!forceRefresh) {
+        final prefs = await SharedPreferences.getInstance();
+        final double? cachedLat = prefs.getDouble('prayer_lat');
+        final double? cachedLng = prefs.getDouble('prayer_lng');
+        final String? cachedCity = prefs.getString('prayer_city_name');
+
+        if (cachedLat != null && cachedLng != null) {
+          final qibla = _calculateQiblaAngle(cachedLat, cachedLng);
+          setState(() {
+            _qiblaAngle = qibla;
+            _isLoading = false;
+            _statusMessage = 'البوصلة نشطة (أوفلاين بالكامل)';
+            _locationName = cachedCity ?? '${cachedLat.toStringAsFixed(4)}°N, ${cachedLng.toStringAsFixed(4)}°E';
+          });
+          _startCompass();
+          return;
+        }
+      }
+
       // 0. دعم اختبار وتطوير التطبيق على الويندوز Desktop دون انهيار البوصلة
       if (defaultTargetPlatform == TargetPlatform.windows) {
         final qibla = _calculateQiblaAngle(21.4225, 39.8262); // إحداثيات مكة المكرمة كافتراضي
@@ -159,6 +181,28 @@ class _QiblaScreenState extends State<QiblaScreen>
       if (pos != null) {
         final currentPos = pos;
         final qibla = _calculateQiblaAngle(currentPos.latitude, currentPos.longitude);
+
+        // حفظ الموقع الجديد في الذاكرة لتحديث مواقيت الصلاة والقبلة معاً
+        try {
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setDouble('prayer_lat', currentPos.latitude);
+          await prefs.setDouble('prayer_lng', currentPos.longitude);
+          await prefs.setString('last_location_update_time', DateTime.now().toIso8601String());
+          
+          // محاولة جلب اسم المدينة وحفظه
+          String cityName = 'موقعي الحالي';
+          try {
+            final placemarks = await placemarkFromCoordinates(currentPos.latitude, currentPos.longitude);
+            if (placemarks.isNotEmpty) {
+              final place = placemarks.first;
+              cityName = place.locality ??
+                  place.subAdministrativeArea ??
+                  place.administrativeArea ??
+                  'موقعي الحالي';
+            }
+          } catch (_) {}
+          await prefs.setString('prayer_city_name', cityName);
+        } catch (_) {}
 
         setState(() {
           _qiblaAngle = qibla;
@@ -333,7 +377,7 @@ class _QiblaScreenState extends State<QiblaScreen>
             ),
             SizedBox(height: 24.h),
             ElevatedButton.icon(
-              onPressed: _requestPermissionsAndLocate,
+              onPressed: () => _requestPermissionsAndLocate(forceRefresh: true),
               icon: const Icon(Icons.refresh_rounded),
               label: const Text('إعادة المحاولة'),
               style: ElevatedButton.styleFrom(
@@ -640,7 +684,7 @@ class _QiblaScreenState extends State<QiblaScreen>
             ),
             IconButton(
               icon: Icon(Icons.refresh_rounded, size: 18.sp, color: primary),
-              onPressed: _requestPermissionsAndLocate,
+              onPressed: () => _requestPermissionsAndLocate(forceRefresh: true),
               padding: EdgeInsets.zero,
               constraints: const BoxConstraints(),
             ),

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:huda/core/theme/app_colors.dart';
+import 'package:huda/core/widgets/Text/Responsive_text.dart';
 
 class HomePrayerCard extends StatelessWidget {
   const HomePrayerCard({
@@ -58,16 +60,29 @@ class HomePrayerCard extends StatelessWidget {
                     ),
                   ],
                 ),
-                // عنوان مواقيت الصلاة (في اليمين)
-                Text(
-                  'مواقيت الصلاة',
-                  style: TextStyle(
-                    fontSize: 12.sp,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                    fontFamily: 'Cairo',
-                  ),
+
+                ResponsiveText(
+                  content: 'مواقيت الصلاة',
+                  fontSize: 12,
+                  fontFamily: 'Cairo',
+                  maxLines: 1,
+                  color: AppColors.white,
                 ),
+
+                //                 ResponsiveText(
+                //   content: 'صوت المؤذن المختار',
+                //   fontSize: 16,
+                //   color: AppColors.primary,
+                //   fontFamily: 'Cairo', // اختيار الخط المناسب
+                //   decoration: TextDecoration.underline, // وضع خط تحت النص
+                //   shadows: [
+                //     Shadow(
+                //       blurRadius: 4.0,
+                //       color: Colors.black26,
+                //       offset: Offset(2.0, 2.0),
+                //     ),
+                //   ],
+                // )
               ],
             ),
           ),

@@ -8,6 +8,8 @@ import 'package:huda/features/azkar/services/azkar_service.dart';
 import 'package:huda/features/hisn_almuslim/services/hisn_service.dart';
 import 'package:huda/features/quran/services/quran_service.dart';
 import 'package:huda/features/quran/views/surah_detail_page.dart';
+import 'package:huda/features/prophets_stories/services/prophets_stories_service.dart';
+import 'package:huda/features/prophets_stories/views/prophet_story_details_screen.dart';
 import 'package:huda/main.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -54,7 +56,7 @@ class _HomeRecentActionsState extends State<HomeRecentActions> with RouteAware {
     });
   }
 
-  Future<void> _resumeQuran(BuildContext context, int surahNumber) async {
+  Future<void> _resumeQuran(BuildContext context, int surahNumber, {int? recentAyahNumber}) async {
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -64,19 +66,22 @@ class _HomeRecentActionsState extends State<HomeRecentActions> with RouteAware {
     try {
       final prefs = await SharedPreferences.getInstance();
 
-      // تحقق من العلامة المرجعية أولاً
-      final bmSurah = prefs.getInt('quran_bookmark_surah');
-      final bmAyah = prefs.getInt('quran_bookmark_ayah');
+      int? targetAyah = recentAyahNumber;
 
-      // إذا كانت العلامة لسورة مختلفة عن المضغوطة، استخدمها
-      final targetSurahNumber = (bmSurah != null && bmSurah != surahNumber)
-          ? bmSurah
-          : surahNumber;
-      final targetAyah = (bmSurah == targetSurahNumber) ? bmAyah : null;
+      if (targetAyah == null) {
+        final bmSurah = prefs.getInt('quran_bookmark_surah');
+        if (bmSurah == surahNumber) {
+          targetAyah = prefs.getInt('quran_bookmark_ayah');
+        }
+      }
+
+      if (targetAyah == null) {
+        targetAyah = prefs.getInt('quran_ayah_$surahNumber');
+      }
 
       final surahs = await QuranService.loadSurahs();
-      final surah = surahs.firstWhere((s) => s.number == targetSurahNumber);
-      final ayahs = await QuranService.loadAyahs(targetSurahNumber);
+      final surah = surahs.firstWhere((s) => s.number == surahNumber);
+      final ayahs = await QuranService.loadAyahs(surahNumber);
 
       if (context.mounted) {
         Navigator.pop(context); // Close dialog
@@ -86,7 +91,7 @@ class _HomeRecentActionsState extends State<HomeRecentActions> with RouteAware {
             builder: (_) => SurahDetailPage(
               surah: surah,
               ayahs: ayahs,
-              resumeLastPage: true,
+              initialAyah: targetAyah,
             ),
           ),
         );
@@ -185,6 +190,36 @@ class _HomeRecentActionsState extends State<HomeRecentActions> with RouteAware {
     }
   }
 
+  Future<void> _resumeProphetStory(BuildContext context, int storyId) async {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(child: CircularProgressIndicator()),
+    );
+
+    try {
+      final stories = await ProphetsStoriesService.loadStories();
+      final story = stories.firstWhere((s) => s.id == storyId);
+
+      if (context.mounted) {
+        Navigator.pop(context); // Close dialog
+        await Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => ProphetStoryDetailsScreen(story: story),
+          ),
+        );
+      }
+    } catch (_) {
+      if (context.mounted) {
+        Navigator.pop(context); // Close dialog
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('تعذر فتح قصة النبي')));
+      }
+    }
+  }
+
   Future<void> _handleRecentActionTap(
     BuildContext context,
     RecentAction action,
@@ -192,8 +227,9 @@ class _HomeRecentActionsState extends State<HomeRecentActions> with RouteAware {
     HapticFeedback.lightImpact();
     if (action.category == 'quran') {
       final surahNumber = action.extraData['surah_number'] as int?;
+      final ayahNumber = action.extraData['ayah_number'] as int?;
       if (surahNumber != null) {
-        await _resumeQuran(context, surahNumber);
+        await _resumeQuran(context, surahNumber, recentAyahNumber: ayahNumber);
       }
     } else if (action.category == 'azkar') {
       final categoryTitle = action.extraData['category_title'] as String?;
@@ -209,6 +245,11 @@ class _HomeRecentActionsState extends State<HomeRecentActions> with RouteAware {
       final hadithNumber = action.extraData['hadith_number'] as int?;
       if (hadithNumber != null) {
         await _resumeHadith(context, hadithNumber);
+      }
+    } else if (action.category == 'prophets_stories') {
+      final storyId = action.extraData['story_id'] as int?;
+      if (storyId != null) {
+        await _resumeProphetStory(context, storyId);
       }
     }
 
@@ -265,6 +306,8 @@ class _HomeRecentActionsState extends State<HomeRecentActions> with RouteAware {
           return Icons.shield_outlined;
         case 'names_of_allah':
           return Icons.auto_awesome_rounded;
+        case 'prophets_stories':
+          return Icons.import_contacts_rounded;
         default:
           return Icons.history_toggle_off_rounded;
       }
@@ -339,7 +382,7 @@ class _HomeRecentActionsState extends State<HomeRecentActions> with RouteAware {
             ),
             SizedBox(height: 2.h),
             Text(
-              '${action.title.replaceAll('سورة ', '')}',
+              '${action.title.replaceAll('سورة ', '').replaceAll('قصص الأنبياء - ', '')}',
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               textAlign: TextAlign.center,
