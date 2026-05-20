@@ -1,9 +1,9 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:huda/Model/AccessListModel.dart';
-import 'package:huda/features/hisn_almuslim/model/hisn_category.dart';
-import 'package:huda/routes/AppRoutes.dart';
+import 'package:tarteel/Model/AccessListModel.dart';
+import 'package:tarteel/features/hisn_almuslim/model/hisn_category.dart';
+import 'package:tarteel/routes/AppRoutes.dart';
 
 class HisnService {
   static Future<List<HisnCategory>> loadHisn() async {

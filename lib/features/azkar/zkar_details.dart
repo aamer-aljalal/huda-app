@@ -2,15 +2,15 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:huda/core/theme/app_colors.dart';
-import 'package:huda/core/widgets/Text/Responsive_text.dart';
+import 'package:tarteel/core/theme/app_colors.dart';
+import 'package:tarteel/core/widgets/Text/Responsive_text.dart';
 import 'dart:math' as math;
-import 'package:huda/core/services/recent_actions_service.dart';
-import 'package:huda/core/widgets/appbars/huda_app_bar.dart';
-import 'package:huda/features/azkar/model/zekr_category.dart';
+import 'package:tarteel/core/services/recent_actions_service.dart';
+import 'package:tarteel/core/widgets/appbars/tarteel_app_bar.dart';
+import 'package:tarteel/features/azkar/model/zekr_category.dart';
 
-import 'package:huda/core/services/in_app_notification_service.dart';
-import 'package:huda/core/services/stats_service.dart';
+import 'package:tarteel/core/services/in_app_notification_service.dart';
+import 'package:tarteel/core/services/stats_service.dart';
 
 class AzkarDetailsScreen extends StatefulWidget {
   final ZekrCategory category;
@@ -404,7 +404,7 @@ class _AzkarDetailsScreenState extends State<AzkarDetailsScreen>
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: HudaAppBar(
+      appBar: tarteelAppBar(
         titleText: widget.category.title,
         elevation: 0,
         toolbarHeight: 90,

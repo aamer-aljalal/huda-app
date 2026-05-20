@@ -1,9 +1,9 @@
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
-import 'package:huda/Model/AccessListModel.dart';
-import 'package:huda/core/theme/app_colors.dart';
-import 'package:huda/core/theme/app_radius.dart';
+import 'package:tarteel/Model/AccessListModel.dart';
+import 'package:tarteel/core/theme/app_colors.dart';
+import 'package:tarteel/core/theme/app_radius.dart';
 
 class AccessListGrid extends StatelessWidget {
   final List<AccessListModel> actions;

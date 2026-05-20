@@ -1,8 +1,8 @@
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter/material.dart';
-import 'package:huda/core/theme/app_theme.dart';
+import 'package:tarteel/core/theme/app_theme.dart';
 
-/// HudaAppBar
+/// tarteelAppBar
 ///
 /// A flexible, production-ready AppBar designed for the Huda app. Features:
 /// - Works with light/dark themes defined in `AppTheme`/`AppColors`.
@@ -10,7 +10,7 @@ import 'package:huda/core/theme/app_theme.dart';
 /// - Accepts custom `leading`, `actions`, or a full `title` widget.
 /// - Implements `PreferredSizeWidget` so it can be used directly as `appBar:`.
 ///
-class HudaAppBar extends StatelessWidget implements PreferredSizeWidget {
+class tarteelAppBar extends StatelessWidget implements PreferredSizeWidget {
   /// A custom title widget. If provided, `titleText` is ignored.
   final Widget? titleWidget;
 
@@ -63,7 +63,7 @@ class HudaAppBar extends StatelessWidget implements PreferredSizeWidget {
   final double elevation;
   final double toolbarHeight;
 
-  const HudaAppBar({
+  const tarteelAppBar({
     super.key,
     this.titleWidget,
     this.titleText,

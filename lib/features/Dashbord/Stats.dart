@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:huda/core/widgets/appbars/huda_app_bar.dart';
-import 'package:huda/core/services/stats_service.dart';
-import 'package:huda/core/widgets/Text/Responsive_text.dart';
+import 'package:tarteel/core/widgets/appbars/tarteel_app_bar.dart';
+import 'package:tarteel/core/services/stats_service.dart';
+import 'package:tarteel/core/widgets/Text/Responsive_text.dart';
 
 class StatsScreen extends StatefulWidget {
   const StatsScreen({super.key});
@@ -57,7 +57,7 @@ class _StatsScreenState extends State<StatsScreen>
       textDirection: TextDirection.rtl,
       child: Scaffold(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        appBar: const HudaAppBar(
+        appBar: const tarteelAppBar(
           titleText: 'الإحصائيات والنشاط',
           elevation: 0,
           toolbarHeight: 90,

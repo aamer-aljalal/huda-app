@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:huda/core/providers/theme_provider.dart';
-import 'package:huda/core/theme/app_colors.dart';
-import 'package:huda/core/widgets/appbars/huda_app_bar.dart';
-import 'package:huda/features/Settings/pages/adhan_settings_page.dart';
-import 'package:huda/features/Settings/pages/data_maintenance_page.dart';
-import 'package:huda/features/Settings/pages/islamic_notifications_page.dart';
+import 'package:tarteel/core/providers/theme_provider.dart';
+import 'package:tarteel/core/theme/app_colors.dart';
+import 'package:tarteel/core/widgets/appbars/tarteel_app_bar.dart';
+import 'package:tarteel/features/Settings/pages/adhan_settings_page.dart';
+import 'package:tarteel/features/Settings/pages/data_maintenance_page.dart';
+import 'package:tarteel/features/Settings/pages/islamic_notifications_page.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -43,7 +43,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: const HudaAppBar(titleText: 'الإعدادات', elevation: 0),
+      appBar: const tarteelAppBar(titleText: 'الإعدادات', elevation: 0),
       body: SingleChildScrollView(
         physics: const BouncingScrollPhysics(),
         padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),

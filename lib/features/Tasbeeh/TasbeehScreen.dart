@@ -1,14 +1,14 @@
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:huda/core/widgets/appbars/huda_app_bar.dart';
-import 'package:huda/core/theme/app_colors.dart';
+import 'package:tarteel/core/widgets/appbars/tarteel_app_bar.dart';
+import 'package:tarteel/core/theme/app_colors.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:huda/features/Tasbeeh/models/dhikr_model.dart';
-import 'package:huda/features/Tasbeeh/services/tasbeeh_notification_service.dart';
-import 'package:huda/core/widgets/Text/Responsive_text.dart';
+import 'package:tarteel/features/Tasbeeh/models/dhikr_model.dart';
+import 'package:tarteel/features/Tasbeeh/services/tasbeeh_notification_service.dart';
+import 'package:tarteel/core/widgets/Text/Responsive_text.dart';
 
-import 'package:huda/core/services/stats_service.dart';
+import 'package:tarteel/core/services/stats_service.dart';
 
 class TasbeehScreen extends StatefulWidget {
   const TasbeehScreen({super.key});
@@ -963,7 +963,7 @@ class _TasbeehScreenState extends State<TasbeehScreen>
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: HudaAppBar(
+      appBar: tarteelAppBar(
         titleText: 'التسبيح',
         toolbarHeight: 90,
 

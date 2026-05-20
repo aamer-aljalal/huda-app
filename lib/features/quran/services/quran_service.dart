@@ -1,7 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/services.dart';
-import 'package:huda/core/helpers/arabic_search_helper.dart';
+import 'package:tarteel/core/helpers/arabic_search_helper.dart';
 
 class QuranSurah {
   const QuranSurah({

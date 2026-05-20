@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:huda/features/quran/services/quran_service.dart';
+import 'package:tarteel/features/quran/services/quran_service.dart';
 
 class MushafTopBar extends StatelessWidget {
   const MushafTopBar({

@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:huda/core/dialogs/exit_confirmation_dialog.dart';
-import 'package:huda/features/home/data/home_actions.dart';
-import 'package:huda/features/home/widgets/home_azkar_prompt_card.dart';
-import 'package:huda/features/home/widgets/home_header/home_header.dart';
-import 'package:huda/core/widgets/grids/access_list_grid.dart';
+import 'package:tarteel/core/dialogs/exit_confirmation_dialog.dart';
+import 'package:tarteel/features/home/data/home_actions.dart';
+import 'package:tarteel/features/home/widgets/home_azkar_prompt_card.dart';
+import 'package:tarteel/features/home/widgets/home_header/home_header.dart';
+import 'package:tarteel/core/widgets/grids/access_list_grid.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
-import 'package:huda/core/providers/prayer_provider.dart';
+import 'package:tarteel/core/providers/prayer_provider.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});

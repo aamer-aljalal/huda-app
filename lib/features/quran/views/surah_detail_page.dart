@@ -3,14 +3,14 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:huda/features/quran/services/quran_service.dart';
-import 'package:huda/features/quran/widgets/ayah_number.dart';
-import 'package:huda/features/quran/widgets/ayah_top_bar.dart';
+import 'package:tarteel/features/quran/services/quran_service.dart';
+import 'package:tarteel/features/quran/widgets/ayah_number.dart';
+import 'package:tarteel/features/quran/widgets/ayah_top_bar.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:huda/core/services/recent_actions_service.dart';
-import 'package:huda/core/theme/app_colors.dart';
-import 'package:huda/core/services/stats_service.dart';
-import 'package:huda/core/services/in_app_notification_service.dart';
+import 'package:tarteel/core/services/recent_actions_service.dart';
+import 'package:tarteel/core/theme/app_colors.dart';
+import 'package:tarteel/core/services/stats_service.dart';
+import 'package:tarteel/core/services/in_app_notification_service.dart';
 
 class SurahDetailPage extends StatefulWidget {
   const SurahDetailPage({

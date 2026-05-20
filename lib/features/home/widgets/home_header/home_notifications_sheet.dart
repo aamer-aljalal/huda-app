@@ -2,8 +2,8 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:huda/core/services/in_app_notification_service.dart';
-import 'package:huda/core/theme/app_colors.dart';
+import 'package:tarteel/core/services/in_app_notification_service.dart';
+import 'package:tarteel/core/theme/app_colors.dart';
 import 'package:intl/intl.dart';
 
 class HomeNotificationsSheet extends StatelessWidget {

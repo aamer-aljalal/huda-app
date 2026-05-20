@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:huda/core/theme/app_colors.dart';
-import 'package:huda/core/widgets/appbars/huda_app_bar.dart';
-import 'package:huda/features/names_of_allah/models/name_model.dart';
+import 'package:tarteel/core/theme/app_colors.dart';
+import 'package:tarteel/core/widgets/appbars/tarteel_app_bar.dart';
+import 'package:tarteel/features/names_of_allah/models/name_model.dart';
 
 class NamesOfAllahDetailScreen extends StatefulWidget {
   final List<AllahName> names;
@@ -61,7 +61,7 @@ class _NamesOfAllahDetailScreenState extends State<NamesOfAllahDetailScreen> {
       textDirection: TextDirection.rtl,
       child: Scaffold(
         backgroundColor: theme.scaffoldBackgroundColor,
-        appBar: HudaAppBar(
+        appBar: tarteelAppBar(
           titleText: 'أسماء الله الحسنى',
           centerTitle: true,
           elevation: 0,

@@ -1,9 +1,9 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:huda/core/theme/app_colors.dart';
-import 'package:huda/core/widgets/appbars/huda_app_bar.dart';
-import 'package:huda/core/widgets/Text/Responsive_text.dart';
+import 'package:tarteel/core/theme/app_colors.dart';
+import 'package:tarteel/core/widgets/appbars/tarteel_app_bar.dart';
+import 'package:tarteel/core/widgets/Text/Responsive_text.dart';
 import '../models/prophet_story_model.dart';
 import '../services/prophets_stories_service.dart';
 import 'prophet_story_details_screen.dart';
@@ -128,7 +128,7 @@ class _ProphetsListScreenState extends State<ProphetsListScreen>
       textDirection: TextDirection.rtl,
       child: Scaffold(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        appBar: HudaAppBar(
+        appBar: tarteelAppBar(
           titleText: 'قصص الأنبياء',
           showSearch: true,
           searchController: _searchController,

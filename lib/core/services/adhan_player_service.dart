@@ -2,8 +2,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:huda/core/theme/app_colors.dart';
-import 'package:huda/core/services/adhan_notification_service.dart';
+import 'package:tarteel/core/theme/app_colors.dart';
+import 'package:tarteel/core/services/adhan_notification_service.dart';
 
 class AdhanPlayerService {
   static final AdhanPlayerService _instance = AdhanPlayerService._internal();

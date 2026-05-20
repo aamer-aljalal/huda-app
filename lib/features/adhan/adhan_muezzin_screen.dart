@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:huda/core/providers/prayer_provider.dart';
-import 'package:huda/core/services/adhan_notification_service.dart';
-import 'package:huda/core/widgets/appbars/huda_app_bar.dart';
+import 'package:tarteel/core/providers/prayer_provider.dart';
+import 'package:tarteel/core/services/adhan_notification_service.dart';
+import 'package:tarteel/core/widgets/appbars/tarteel_app_bar.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:provider/provider.dart';
 
@@ -92,7 +92,7 @@ class _AdhanMuezzinScreenState extends State<AdhanMuezzinScreen> {
       textDirection: TextDirection.rtl,
       child: Scaffold(
         backgroundColor: theme.scaffoldBackgroundColor,
-        appBar: HudaAppBar(
+        appBar: tarteelAppBar(
           titleText: 'اختيار المؤذن',
           elevation: 0,
           toolbarHeight: 90,

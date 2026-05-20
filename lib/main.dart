@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:huda/Routes/AppRoutes.dart';
-import 'package:huda/Routes/RouteGenerator.dart';
-import 'package:huda/core/database/hive_database.dart';
-import 'package:huda/core/services/adhan_notification_service.dart';
-import 'package:huda/core/services/general_notification_service.dart';
+import 'package:tarteel/Routes/AppRoutes.dart';
+import 'package:tarteel/Routes/RouteGenerator.dart';
+import 'package:tarteel/core/database/hive_database.dart';
+import 'package:tarteel/core/services/adhan_notification_service.dart';
+import 'package:tarteel/core/services/general_notification_service.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -11,9 +11,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'core/theme/app_theme.dart';
 
 import 'package:provider/provider.dart';
-import 'package:huda/core/providers/prayer_provider.dart';
-import 'package:huda/core/services/adhan_player_service.dart';
-import 'package:huda/core/providers/theme_provider.dart';
+import 'package:tarteel/core/providers/prayer_provider.dart';
+import 'package:tarteel/core/services/adhan_player_service.dart';
+import 'package:tarteel/core/providers/theme_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -47,13 +47,13 @@ void main() async {
         ),
         ChangeNotifierProvider.value(value: themeProvider),
       ],
-      child: const Huda(),
+      child: const tarteel(),
     ),
   );
 }
 
-class Huda extends StatelessWidget {
-  const Huda({super.key});
+class tarteel extends StatelessWidget {
+  const tarteel({super.key});
 
   static final GlobalKey<NavigatorState> navigatorKey =
       GlobalKey<NavigatorState>();
@@ -62,7 +62,7 @@ class Huda extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Read the ThemeProvider using Huda's own context (which is directly below MultiProvider)
+    // Read the ThemeProvider using tarteel's own context (which is directly below MultiProvider)
     final themeMode = Provider.of<ThemeProvider>(context).themeMode;
 
     return ScreenUtilInit(

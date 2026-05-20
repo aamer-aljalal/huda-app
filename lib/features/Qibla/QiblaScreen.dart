@@ -9,7 +9,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:huda/core/widgets/appbars/huda_app_bar.dart';
+import 'package:tarteel/core/widgets/appbars/tarteel_app_bar.dart';
 
 class QiblaScreen extends StatefulWidget {
   const QiblaScreen({super.key});
@@ -299,7 +299,7 @@ class _QiblaScreenState extends State<QiblaScreen>
 
     return Scaffold(
       extendBodyBehindAppBar: true,
-      appBar: HudaAppBar(
+      appBar: tarteelAppBar(
         titleText: 'اتجاه القبلة',
         elevation: 0,
         actions: [

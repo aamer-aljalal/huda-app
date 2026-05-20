@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:huda/core/widgets/appbars/huda_app_bar.dart';
-import 'package:huda/features/quran/services/quran_service.dart';
-import 'package:huda/features/quran/views/surah_detail_page.dart';
-import 'package:huda/features/quran/views/quran_verse_search_page.dart';
+import 'package:tarteel/core/widgets/appbars/tarteel_app_bar.dart';
+import 'package:tarteel/features/quran/services/quran_service.dart';
+import 'package:tarteel/features/quran/views/surah_detail_page.dart';
+import 'package:tarteel/features/quran/views/quran_verse_search_page.dart';
 
 class SurahListPage extends StatefulWidget {
   const SurahListPage({super.key});
@@ -87,7 +87,7 @@ class _SurahListPageState extends State<SurahListPage> {
       textDirection: TextDirection.rtl,
       child: Scaffold(
         backgroundColor: theme.scaffoldBackgroundColor,
-        appBar: HudaAppBar(
+        appBar: tarteelAppBar(
           titleText: 'القرآن الكريم',
           showSearch: true,
           searchController: searchController,

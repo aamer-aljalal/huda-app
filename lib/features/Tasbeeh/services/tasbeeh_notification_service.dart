@@ -1,6 +1,6 @@
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/timezone.dart' as tz;
-import 'package:huda/features/Tasbeeh/models/dhikr_model.dart';
+import 'package:tarteel/features/Tasbeeh/models/dhikr_model.dart';
 
 class TasbeehNotificationService {
   TasbeehNotificationService._();

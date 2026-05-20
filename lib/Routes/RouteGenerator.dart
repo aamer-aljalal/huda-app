@@ -1,24 +1,24 @@
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter/material.dart';
-import 'package:huda/features/azkar/model/zekr_category.dart';
-import 'package:huda/Routes/AppRoutes.dart';
-import 'package:huda/features/home/HomePage.dart';
-import 'package:huda/features/azkar/AzkarCategories.dart';
-import 'package:huda/features/azkar/zkar_details.dart';
-import 'package:huda/features/Hadith/HadithScreen.dart';
-import 'package:huda/features/Qibla/QiblaScreen.dart';
-import 'package:huda/features/Settings/Settings.dart';
-import 'package:huda/features/adhan/adhan_muezzin_screen.dart';
-import 'package:huda/features/quran/views/SurahListPage.dart';
-import 'package:huda/features/Tasbeeh/TasbeehScreen.dart';
-import 'package:huda/features/Dashbord/Stats.dart';
-import 'package:huda/features/names_of_allah/views/names_of_allah_screen.dart';
-import 'package:huda/features/bookmarks/views/bookmarks_page.dart';
-import 'package:huda/features/hisn_almuslim/hisn_categories_screen.dart';
-import 'package:huda/features/hisn_almuslim/hisn_details_screen.dart';
-import 'package:huda/features/hisn_almuslim/model/hisn_category.dart';
-import 'package:huda/features/quran/views/khatma_planner_screen.dart';
-import 'package:huda/features/prophets_stories/views/prophets_list_screen.dart';
+import 'package:tarteel/features/azkar/model/zekr_category.dart';
+import 'package:tarteel/Routes/AppRoutes.dart';
+import 'package:tarteel/features/home/HomePage.dart';
+import 'package:tarteel/features/azkar/AzkarCategories.dart';
+import 'package:tarteel/features/azkar/zkar_details.dart';
+import 'package:tarteel/features/Hadith/HadithScreen.dart';
+import 'package:tarteel/features/Qibla/QiblaScreen.dart';
+import 'package:tarteel/features/Settings/Settings.dart';
+import 'package:tarteel/features/adhan/adhan_muezzin_screen.dart';
+import 'package:tarteel/features/quran/views/SurahListPage.dart';
+import 'package:tarteel/features/Tasbeeh/TasbeehScreen.dart';
+import 'package:tarteel/features/Dashbord/Stats.dart';
+import 'package:tarteel/features/names_of_allah/views/names_of_allah_screen.dart';
+import 'package:tarteel/features/bookmarks/views/bookmarks_page.dart';
+import 'package:tarteel/features/hisn_almuslim/hisn_categories_screen.dart';
+import 'package:tarteel/features/hisn_almuslim/hisn_details_screen.dart';
+import 'package:tarteel/features/hisn_almuslim/model/hisn_category.dart';
+import 'package:tarteel/features/quran/views/khatma_planner_screen.dart';
+import 'package:tarteel/features/prophets_stories/views/prophets_list_screen.dart';
 
 class RouteGenerator {
   static Route<dynamic> generate(RouteSettings settings) {

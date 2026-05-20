@@ -3,16 +3,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:huda/core/theme/app_colors.dart';
-import 'package:huda/core/widgets/appbars/huda_app_bar.dart';
-import 'package:huda/core/widgets/Text/Responsive_text.dart';
-import 'package:huda/Routes/AppRoutes.dart';
-import 'package:huda/features/quran/services/quran_service.dart';
-import 'package:huda/features/quran/views/surah_detail_page.dart';
-import 'package:huda/features/Hadith/hadith_service.dart';
-import 'package:huda/features/prophets_stories/models/prophet_story_model.dart';
-import 'package:huda/features/prophets_stories/services/prophets_stories_service.dart';
-import 'package:huda/features/prophets_stories/views/prophet_story_details_screen.dart';
+import 'package:tarteel/core/theme/app_colors.dart';
+import 'package:tarteel/core/widgets/appbars/tarteel_app_bar.dart';
+import 'package:tarteel/core/widgets/Text/Responsive_text.dart';
+import 'package:tarteel/Routes/AppRoutes.dart';
+import 'package:tarteel/features/quran/services/quran_service.dart';
+import 'package:tarteel/features/quran/views/surah_detail_page.dart';
+import 'package:tarteel/features/Hadith/hadith_service.dart';
+import 'package:tarteel/features/prophets_stories/models/prophet_story_model.dart';
+import 'package:tarteel/features/prophets_stories/services/prophets_stories_service.dart';
+import 'package:tarteel/features/prophets_stories/views/prophet_story_details_screen.dart';
 
 class BookmarksPage extends StatefulWidget {
   const BookmarksPage({super.key});
@@ -174,7 +174,7 @@ class _BookmarksPageState extends State<BookmarksPage> with SingleTickerProvider
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        appBar: HudaAppBar(
+        appBar: tarteelAppBar(
           titleText: 'المحفوظات',
           bottom: TabBar(
             controller: _tabController,

@@ -8,8 +8,8 @@ import 'package:intl/intl.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:huda/core/services/adhan_notification_service.dart';
-import 'package:huda/core/services/adhan_player_service.dart';
+import 'package:tarteel/core/services/adhan_notification_service.dart';
+import 'package:tarteel/core/services/adhan_player_service.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class PrayerProvider extends ChangeNotifier {
@@ -166,7 +166,7 @@ class PrayerProvider extends ChangeNotifier {
                 // الوصف
                 Text(
                   isFirstTime
-                      ? 'يرغب تطبيق "هدى" في تحديد موقعك الجغرافي لحساب مواقيت الصلاة والقبلة بدقة متناهية. في حال الرفض أو عدم توفر إنترنت، سيتم اعتماد توقيت مكة المكرمة كخيار افتراضي.'
+                      ? 'يرغب تطبيق "" في تحديد موقعك الجغرافي لحساب مواقيت الصلاة والقبلة بدقة متناهية. في حال الرفض أو عدم توفر إنترنت، سيتم اعتماد توقيت مكة المكرمة كخيار افتراضي.'
                       : 'لقد مر عدة أيام منذ آخر تحديث لموقعك الجغرافي. هل ترغب في تحديث موقعك الحالي لضمان دقة مواقيت الصلاة والأذان (في حال سافرت أو غيرت مكانك)؟',
                   textAlign: TextAlign.center,
                   style: TextStyle(

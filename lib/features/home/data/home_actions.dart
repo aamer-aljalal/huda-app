@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
-import 'package:huda/Model/AccessListModel.dart';
+import 'package:tarteel/Model/AccessListModel.dart';
 
-import 'package:huda/routes/AppRoutes.dart';
+import 'package:tarteel/routes/AppRoutes.dart';
 
 class HomeActions {
   // ========================= الوصول السريع =========================

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:huda/core/services/general_notification_service.dart';
-import 'package:huda/core/theme/app_colors.dart';
-import 'package:huda/core/widgets/appbars/huda_app_bar.dart';
+import 'package:tarteel/core/services/general_notification_service.dart';
+import 'package:tarteel/core/theme/app_colors.dart';
+import 'package:tarteel/core/widgets/appbars/tarteel_app_bar.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class IslamicNotificationsPage extends StatefulWidget {
@@ -52,7 +52,7 @@ class _IslamicNotificationsPageState extends State<IslamicNotificationsPage> {
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: const HudaAppBar(titleText: 'الإشعارات الإسلامية', elevation: 0),
+      appBar: const tarteelAppBar(titleText: 'الإشعارات الإسلامية', elevation: 0),
       body: SingleChildScrollView(
         physics: const BouncingScrollPhysics(),
         padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),

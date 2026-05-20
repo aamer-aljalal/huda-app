@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:huda/core/helpers/arabic_search_helper.dart';
-import 'package:huda/core/theme/app_theme.dart';
-import 'package:huda/core/widgets/appbars/huda_app_bar.dart';
-import 'package:huda/features/quran/services/quran_service.dart';
-import 'package:huda/features/quran/views/surah_detail_page.dart';
+import 'package:tarteel/core/helpers/arabic_search_helper.dart';
+import 'package:tarteel/core/theme/app_theme.dart';
+import 'package:tarteel/core/widgets/appbars/tarteel_app_bar.dart';
+import 'package:tarteel/features/quran/services/quran_service.dart';
+import 'package:tarteel/features/quran/views/surah_detail_page.dart';
 
 class QuranVerseSearchPage extends StatefulWidget {
   const QuranVerseSearchPage({super.key});
@@ -84,7 +84,7 @@ class _QuranVerseSearchPageState extends State<QuranVerseSearchPage> {
       textDirection: TextDirection.rtl,
       child: Scaffold(
         backgroundColor: theme.scaffoldBackgroundColor,
-        appBar: HudaAppBar(
+        appBar: tarteelAppBar(
           titleText: 'البحث في الآيات',
           showSearch: true,
           searchController: _searchController,

@@ -4,11 +4,11 @@ import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
-import 'package:huda/features/quran/views/surah_detail_page.dart';
-import 'package:huda/features/quran/services/quran_service.dart';
-import 'package:huda/features/azkar/zkar_details.dart';
-import 'package:huda/features/azkar/services/azkar_service.dart';
-import 'package:huda/main.dart';
+import 'package:tarteel/features/quran/views/surah_detail_page.dart';
+import 'package:tarteel/features/quran/services/quran_service.dart';
+import 'package:tarteel/features/azkar/zkar_details.dart';
+import 'package:tarteel/features/azkar/services/azkar_service.dart';
+import 'package:tarteel/main.dart';
 
 class GeneralNotificationService {
   GeneralNotificationService._();
@@ -59,7 +59,7 @@ class GeneralNotificationService {
               final kahfSurah = surahs.firstWhere((s) => s.number == 18);
               final ayahs = await QuranService.loadAyahs(18);
 
-              Huda.navigatorKey.currentState?.push(
+              tarteel.navigatorKey.currentState?.push(
                 MaterialPageRoute(
                   builder: (context) => SurahDetailPage(
                     surah: kahfSurah,
@@ -78,7 +78,7 @@ class GeneralNotificationService {
                 (c) => c.title == targetTitle,
               );
 
-              Huda.navigatorKey.currentState?.push(
+              tarteel.navigatorKey.currentState?.push(
                 MaterialPageRoute(
                   builder: (context) => AzkarDetailsScreen(category: match),
                 ),
@@ -97,7 +97,7 @@ class GeneralNotificationService {
                 final surah = surahs.firstWhere((s) => s.number == khatmaSurah);
                 final ayahs = await QuranService.loadAyahs(khatmaSurah);
 
-                Huda.navigatorKey.currentState?.push(
+                tarteel.navigatorKey.currentState?.push(
                   MaterialPageRoute(
                     builder: (context) => SurahDetailPage(
                       surah: surah,
@@ -108,11 +108,11 @@ class GeneralNotificationService {
                   ),
                 );
               } else {
-                Huda.navigatorKey.currentState?.pushNamed('/khatma-planner');
+                tarteel.navigatorKey.currentState?.pushNamed('/khatma-planner');
               }
             } catch (e) {
               debugPrint('Error navigating to Quran from Khatma notification: $e');
-              Huda.navigatorKey.currentState?.pushNamed('/khatma-planner');
+              tarteel.navigatorKey.currentState?.pushNamed('/khatma-planner');
             }
           }
         },

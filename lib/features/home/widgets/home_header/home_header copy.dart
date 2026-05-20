@@ -2,19 +2,19 @@
 // import 'package:flutter_screenutil/flutter_screenutil.dart';
 // import 'package:flutter/material.dart';
 // import 'package:flutter/services.dart';
-// import 'package:huda/core/theme/app_colors.dart';
+// import 'package:tarteel/core/theme/app_colors.dart';
 // import 'package:intl/intl.dart';
 // import 'package:provider/provider.dart';
-// import 'package:huda/core/providers/prayer_provider.dart';
+// import 'package:tarteel/core/providers/prayer_provider.dart';
 // import 'package:adhan/adhan.dart';
 // import 'package:hijri/hijri_calendar.dart';
-// import 'package:huda/routes/AppRoutes.dart';
-// import 'package:huda/core/services/recent_actions_service.dart';
-// import 'package:huda/features/quran/services/quran_service.dart';
-// import 'package:huda/features/quran/views/surah_detail_page.dart';
-// import 'package:huda/features/azkar/services/azkar_service.dart';
-// import 'package:huda/features/azkar/zkar_details.dart';
-// import 'package:huda/core/services/in_app_notification_service.dart';
+// import 'package:tarteel/routes/AppRoutes.dart';
+// import 'package:tarteel/core/services/recent_actions_service.dart';
+// import 'package:tarteel/features/quran/services/quran_service.dart';
+// import 'package:tarteel/features/quran/views/surah_detail_page.dart';
+// import 'package:tarteel/features/azkar/services/azkar_service.dart';
+// import 'package:tarteel/features/azkar/zkar_details.dart';
+// import 'package:tarteel/core/services/in_app_notification_service.dart';
 
 // class HomeHeader extends StatefulWidget {
 //   const HomeHeader({super.key});

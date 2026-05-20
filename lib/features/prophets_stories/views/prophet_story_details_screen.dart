@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:huda/core/theme/app_colors.dart';
-import 'package:huda/core/widgets/appbars/huda_app_bar.dart';
+import 'package:tarteel/core/theme/app_colors.dart';
+import 'package:tarteel/core/widgets/appbars/tarteel_app_bar.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:huda/core/services/recent_actions_service.dart';
-import 'package:huda/core/services/stats_service.dart';
+import 'package:tarteel/core/services/recent_actions_service.dart';
+import 'package:tarteel/core/services/stats_service.dart';
 import '../models/prophet_story_model.dart';
 import '../services/prophets_stories_service.dart';
 
@@ -204,7 +204,7 @@ class _ProphetStoryDetailsScreenState extends State<ProphetStoryDetailsScreen> {
       textDirection: TextDirection.rtl,
       child: Scaffold(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        appBar: HudaAppBar(
+        appBar: tarteelAppBar(
           titleText: widget.story.name,
           actions: [
             IconButton(

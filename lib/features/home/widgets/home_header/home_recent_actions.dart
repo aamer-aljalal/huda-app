@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter/services.dart';
-import 'package:huda/Routes/AppRoutes.dart';
-import 'package:huda/core/services/recent_actions_service.dart';
-import 'package:huda/core/theme/app_colors.dart';
-import 'package:huda/features/azkar/services/azkar_service.dart';
-import 'package:huda/features/hisn_almuslim/services/hisn_service.dart';
-import 'package:huda/features/quran/services/quran_service.dart';
-import 'package:huda/features/quran/views/surah_detail_page.dart';
-import 'package:huda/features/prophets_stories/services/prophets_stories_service.dart';
-import 'package:huda/features/prophets_stories/views/prophet_story_details_screen.dart';
-import 'package:huda/main.dart';
+import 'package:tarteel/Routes/AppRoutes.dart';
+import 'package:tarteel/core/services/recent_actions_service.dart';
+import 'package:tarteel/core/theme/app_colors.dart';
+import 'package:tarteel/features/azkar/services/azkar_service.dart';
+import 'package:tarteel/features/hisn_almuslim/services/hisn_service.dart';
+import 'package:tarteel/features/quran/services/quran_service.dart';
+import 'package:tarteel/features/quran/views/surah_detail_page.dart';
+import 'package:tarteel/features/prophets_stories/services/prophets_stories_service.dart';
+import 'package:tarteel/features/prophets_stories/views/prophet_story_details_screen.dart';
+import 'package:tarteel/main.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class HomeRecentActions extends StatefulWidget {
@@ -34,13 +34,13 @@ class _HomeRecentActionsState extends State<HomeRecentActions> with RouteAware {
     super.didChangeDependencies();
     final route = ModalRoute.of(context);
     if (route is PageRoute) {
-      Huda.routeObserver.subscribe(this, route);
+      tarteel.routeObserver.subscribe(this, route);
     }
   }
 
   @override
   void dispose() {
-    Huda.routeObserver.unsubscribe(this);
+    tarteel.routeObserver.unsubscribe(this);
     super.dispose();
   }
 

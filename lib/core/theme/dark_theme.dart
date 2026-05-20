@@ -2,7 +2,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter/material.dart';
 import 'app_colors.dart';
 
-/// Dark theme for Huda
+/// Dark theme for tarteel
 ///
 /// AMOLED-friendly, calm and minimal dark visuals tuned for comfortable night reading.
 ThemeData buildDarkTheme() {

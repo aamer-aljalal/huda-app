@@ -1,9 +1,9 @@
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter/material.dart';
-import 'package:huda/Model/AccessListModel.dart';
-import 'package:huda/core/widgets/appbars/huda_app_bar.dart';
-import 'package:huda/features/Azkar/services/azkar_service.dart';
-import 'package:huda/core/widgets/grids/access_list_grid.dart';
+import 'package:tarteel/Model/AccessListModel.dart';
+import 'package:tarteel/core/widgets/appbars/tarteel_app_bar.dart';
+import 'package:tarteel/features/Azkar/services/azkar_service.dart';
+import 'package:tarteel/core/widgets/grids/access_list_grid.dart';
 
 /// UI ONLY — No navigation, no logic, only visual design.
 /// Displays a grid of azkar categories with animations.
@@ -41,7 +41,7 @@ class _AzkarCategoriesScreenState extends State<AzkarCategoriesScreen>
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
 
-      appBar: HudaAppBar(
+      appBar: tarteelAppBar(
         titleText: 'الأذكار',
         elevation: 0,
         toolbarHeight: 90,

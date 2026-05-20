@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:huda/Routes/AppRoutes.dart';
-import 'package:huda/core/providers/prayer_provider.dart';
-import 'package:huda/core/services/in_app_notification_service.dart';
-import 'package:huda/core/theme/app_colors.dart';
+import 'package:tarteel/Routes/AppRoutes.dart';
+import 'package:tarteel/core/providers/prayer_provider.dart';
+import 'package:tarteel/core/services/in_app_notification_service.dart';
+import 'package:tarteel/core/theme/app_colors.dart';
 import 'package:intl/intl.dart';
 
 class HomeMiniHeader extends StatelessWidget {

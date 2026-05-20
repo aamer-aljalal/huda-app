@@ -2,12 +2,12 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:huda/Model/AccessListModel.dart';
-import 'package:huda/features/azkar/icons/azkar_icons.dart';
+import 'package:tarteel/Model/AccessListModel.dart';
+import 'package:tarteel/features/azkar/icons/azkar_icons.dart';
 
-import 'package:huda/features/azkar/model/zekr_category.dart';
-import 'package:huda/features/azkar/model/zekr_model%20.dart';
-import 'package:huda/routes/AppRoutes.dart';
+import 'package:tarteel/features/azkar/model/zekr_category.dart';
+import 'package:tarteel/features/azkar/model/zekr_model%20.dart';
+import 'package:tarteel/routes/AppRoutes.dart';
 
 class AzkarService {
   static Future<List<ZekrCategory>> loadAzkar() async {

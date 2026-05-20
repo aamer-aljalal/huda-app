@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:huda/core/theme/app_colors.dart';
-import 'package:huda/core/widgets/Text/Responsive_text.dart';
+import 'package:tarteel/core/theme/app_colors.dart';
+import 'package:tarteel/core/widgets/Text/Responsive_text.dart';
 
 class HomePrayerCard extends StatelessWidget {
   const HomePrayerCard({

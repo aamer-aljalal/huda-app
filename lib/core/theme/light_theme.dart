@@ -2,7 +2,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter/material.dart';
 import 'app_colors.dart';
 
-/// Light theme for Huda
+/// Light theme for tarteel
 ///
 /// Professional, minimal and calm visual language tuned for long reading
 ThemeData buildLightTheme() {

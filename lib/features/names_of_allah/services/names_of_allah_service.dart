@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/services.dart';
-import 'package:huda/features/names_of_allah/models/name_model.dart';
+import 'package:tarteel/features/names_of_allah/models/name_model.dart';
 
 class NamesOfAllahService {
   static Future<List<AllahName>> loadNames() async {

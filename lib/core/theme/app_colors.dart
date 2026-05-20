@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 /// AppColors
 ///
-/// Centralized immutable color palette for the Huda app.
+/// Centralized immutable color palette for the tarteel app.
 /// - All colors are defined as `static const` so they're easy to reuse and change.
 /// - Avoids using Material predefined colors; uses explicit hex values.
 class AppColors {
