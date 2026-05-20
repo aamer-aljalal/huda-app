@@ -225,7 +225,7 @@ class _HomeHeaderState extends State<HomeHeader> {
                     },
                   ),
 
-                  const Spacer(flex: 2),
+                  // const Spacer(flex: 2),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [

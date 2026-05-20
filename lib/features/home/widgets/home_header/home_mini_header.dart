@@ -101,7 +101,10 @@ class HomeMiniHeader extends StatelessWidget {
             ],
           ),
         ),
+
         const Spacer(),
+
+        SizedBox(width: 6.w),
         _buildHeaderActionButton(
           context: context,
           icon: Icons.favorite_outline,
@@ -110,7 +113,7 @@ class HomeMiniHeader extends StatelessWidget {
           },
         ),
 
-        SizedBox(width: 8.w),
+        SizedBox(width: 2.w),
 
         _buildHeaderActionButton(
           context: context,
@@ -119,8 +122,16 @@ class HomeMiniHeader extends StatelessWidget {
             Navigator.pushNamed(context, AppRoutes.settings);
           },
         ),
+        SizedBox(width: 2.w),
 
-        SizedBox(width: 8.w),
+        _buildHeaderActionButton(
+          context: context,
+          icon: Icons.explore_outlined,
+          onPressed: () {
+            Navigator.pushNamed(context, AppRoutes.qibla);
+          },
+        ),
+        SizedBox(width: 2.w),
 
         Stack(
           clipBehavior: Clip.none,
@@ -142,7 +153,7 @@ class HomeMiniHeader extends StatelessWidget {
                     color: Colors.red,
                     shape: BoxShape.circle,
                   ),
-                  constraints: BoxConstraints(minWidth: 16.w, minHeight: 16.h),
+                  constraints: BoxConstraints(minWidth: 12.w, minHeight: 15.h),
                   child: Text(
                     '${activeNotifications.length}',
                     textAlign: TextAlign.center,
@@ -168,10 +179,12 @@ class HomeMiniHeader extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
 
     return Container(
+      width: 42.w,
+      height: 42.h,
       decoration: BoxDecoration(
         // border: Border.all(color: AppColors.goldAccent),
-        // border: Border.all(color: AppColors.darkPrimaryText),
-        color: colorScheme.surface.withValues(alpha: 0.2),
+        border: Border.all(color: AppColors.darkPrimaryText),
+        color: colorScheme.surface.withValues(alpha: 0.3),
         shape: BoxShape.circle,
       ),
 

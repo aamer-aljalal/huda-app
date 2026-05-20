@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:huda/core/theme/app_colors.dart';
-import 'package:huda/core/widgets/Text/Auto_text.dart';
+import 'package:huda/core/widgets/Text/Responsive_text.dart';
 import 'dart:math' as math;
 import 'package:huda/core/services/recent_actions_service.dart';
 import 'package:huda/core/widgets/appbars/huda_app_bar.dart';
@@ -615,10 +615,17 @@ class _AzkarDetailsScreenState extends State<AzkarDetailsScreen>
                 physics: const BouncingScrollPhysics(),
                 child: Column(
                   children: [
-                    AutoText(
+                    ResponsiveText(
                       content: zekr.content,
-                      color: isDark ? Colors.white : const Color(0xFF2E5C2E),
+                      fontSize: _activeMaxFontSize,
                       maxFontSize: _activeMaxFontSize,
+                      minFontSize: 14,
+                      fontFamily: 'Amiri',
+                      fontWeight: FontWeight.bold,
+                      height: 1.8,
+                      textAlign: TextAlign.center,
+                      maxLines: 12,
+                      color: isDark ? Colors.white : const Color(0xFF2E5C2E),
                     ),
                     if (zekr.description.isNotEmpty) ...[
                       SizedBox(height: 20.h),

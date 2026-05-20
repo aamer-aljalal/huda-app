@@ -68,21 +68,6 @@ class HomePrayerCard extends StatelessWidget {
                   maxLines: 1,
                   color: AppColors.white,
                 ),
-
-                //                 ResponsiveText(
-                //   content: 'صوت المؤذن المختار',
-                //   fontSize: 16,
-                //   color: AppColors.primary,
-                //   fontFamily: 'Cairo', // اختيار الخط المناسب
-                //   decoration: TextDecoration.underline, // وضع خط تحت النص
-                //   shadows: [
-                //     Shadow(
-                //       blurRadius: 4.0,
-                //       color: Colors.black26,
-                //       offset: Offset(2.0, 2.0),
-                //     ),
-                //   ],
-                // )
               ],
             ),
           ),
@@ -94,11 +79,7 @@ class HomePrayerCard extends StatelessWidget {
                 duration: const Duration(milliseconds: 300),
                 padding: EdgeInsets.symmetric(vertical: isNext ? 4 : 0),
                 decoration: BoxDecoration(
-                  // border: Border.all(
-                  //   color: isNext
-                  //       ? AppColors.goldAccent
-                  //       : Colors.transparent,
-                  // ),
+                
                   color: isNext
                       ? colorScheme.surface.withOpacity(0.3)
                       : Colors.transparent,

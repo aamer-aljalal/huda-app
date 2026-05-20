@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:huda/core/widgets/appbars/huda_app_bar.dart';
 import 'package:huda/core/services/stats_service.dart';
+import 'package:huda/core/widgets/Text/Responsive_text.dart';
 
 class StatsScreen extends StatefulWidget {
   const StatsScreen({super.key});
@@ -67,9 +68,11 @@ class _StatsScreenState extends State<StatsScreen>
               )
             : _statsData.isEmpty
                 ? const Center(
-                    child: Text(
-                      'لا توجد بيانات إحصائية متوفرة حالياً',
-                      style: TextStyle(fontFamily: 'Cairo'),
+                    child: ResponsiveText(
+                      content: 'لا توجد بيانات إحصائية متوفرة حالياً',
+                      fontSize: 14,
+                      fontWeight: FontWeight.normal,
+                      fontFamily: 'Cairo',
                     ),
                   )
                 : Column(
@@ -233,13 +236,11 @@ class _StatsContent extends StatelessWidget {
                   children: [
                     Icon(Icons.shield_outlined, color: const Color(0xFF1A8C6E), size: 22.sp),
                     SizedBox(width: 8.w),
-                    Text(
-                      'نشاط الأذكار وحصن المسلم 🛡️',
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w800,
-                        fontSize: 15.sp,
-                        fontFamily: 'Cairo',
-                      ),
+                    ResponsiveText(
+                      content: 'نشاط الأذكار وحصن المسلم 🛡️',
+                      fontSize: 15,
+                      fontWeight: FontWeight.w800,
+                      fontFamily: 'Cairo',
                     ),
                   ],
                 ),
@@ -292,14 +293,12 @@ class _StatsContent extends StatelessWidget {
                           Icon(Icons.check_circle_outline_rounded, color: const Color(0xFF1A8C6E), size: 18.sp),
                           SizedBox(width: 8.w),
                           Expanded(
-                            child: Text(
-                              'أتممت قراءة أقسام أذكار كاملة: ${data.completedAzkarCategory} مرّة',
-                              style: TextStyle(
-                                fontSize: 11.sp,
-                                fontWeight: FontWeight.bold,
-                                fontFamily: 'Cairo',
-                                color: const Color(0xFF1A8C6E),
-                              ),
+                            child: ResponsiveText(
+                              content: 'أتممت قراءة أقسام أذكار كاملة: ${data.completedAzkarCategory} مرّة',
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                              fontFamily: 'Cairo',
+                              color: const Color(0xFF1A8C6E),
                             ),
                           ),
                         ],
@@ -353,14 +352,12 @@ class _OverviewCard extends StatelessWidget {
               Icon(Icons.insights_outlined, color: Colors.white, size: 24.sp),
               SizedBox(width: 8.w),
               Expanded(
-                child: Text(
-                  'ملخص نشاطك الإيماني',
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w800,
-                    fontSize: 16.sp,
-                    fontFamily: 'Cairo',
-                  ),
+                child: ResponsiveText(
+                  content: 'ملخص نشاطك الإيماني',
+                  fontSize: 16,
+                  fontWeight: FontWeight.w800,
+                  fontFamily: 'Cairo',
+                  color: Colors.white,
                 ),
               ),
               Text(
@@ -393,14 +390,12 @@ class _OverviewCard extends StatelessWidget {
                 size: 20.sp,
               ),
               SizedBox(width: 6.w),
-              Text(
-                'سلسلة الالتزام: ${data.streak} أيام متتالية',
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: Colors.white.withValues(alpha: 0.9),
-                  fontSize: 12.sp,
-                  fontWeight: FontWeight.w600,
-                  fontFamily: 'Cairo',
-                ),
+              ResponsiveText(
+                content: 'سلسلة الالتزام: ${data.streak} أيام متتالية',
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                fontFamily: 'Cairo',
+                color: Colors.white.withOpacity(0.9),
               ),
             ],
           ),
@@ -464,16 +459,13 @@ class _MetricCard extends StatelessWidget {
                   ),
                 ),
                 SizedBox(height: 2.h),
-                Text(
-                  title,
+                ResponsiveText(
+                  content: title,
                   maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: colorScheme.onSurfaceVariant,
-                    fontSize: 11.sp,
-                    fontWeight: FontWeight.w600,
-                    fontFamily: 'Cairo',
-                  ),
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  fontFamily: 'Cairo',
+                  color: colorScheme.onSurfaceVariant,
                 ),
               ],
             ),
@@ -509,13 +501,12 @@ class _ChartCard extends StatelessWidget {
             children: [
               Icon(Icons.bar_chart, color: colorScheme.primary, size: 22.sp),
               SizedBox(width: 8.w),
-              Text(
-                'النشاط الإجمالي خلال آخر 7 أيام',
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w800,
-                  fontSize: 15.sp,
-                  fontFamily: 'Cairo',
-                ),
+              ResponsiveText(
+                content: 'النشاط الإجمالي خلال آخر 7 أيام',
+                fontSize: 15,
+                fontWeight: FontWeight.w800,
+                fontFamily: 'Cairo',
+                color: colorScheme.onSurface,
               ),
             ],
           ),

@@ -5,6 +5,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:huda/core/theme/app_colors.dart';
 import 'package:huda/core/widgets/appbars/huda_app_bar.dart';
+import 'package:huda/core/widgets/Text/Responsive_text.dart';
 import 'package:huda/Routes/AppRoutes.dart';
 import 'package:huda/features/quran/services/quran_service.dart';
 import 'package:huda/features/quran/views/surah_detail_page.dart';
@@ -300,16 +301,14 @@ class _BookmarksPageState extends State<BookmarksPage> with SingleTickerProvider
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Text(
-                      ayahText,
-                      textDirection: TextDirection.rtl,
+                    ResponsiveText(
+                      content: ayahText,
                       textAlign: TextAlign.justify,
-                      style: TextStyle(
-                        fontSize: 17.sp,
-                        fontWeight: FontWeight.w600,
-                        color: Theme.of(context).textTheme.bodyLarge?.color,
-                        height: 1.8,
-                      ),
+                      fontSize: 17,
+                      fontWeight: FontWeight.w600,
+                      color: Theme.of(context).textTheme.bodyLarge?.color,
+                      height: 1.8,
+                      fontFamily: 'Amiri',
                     ),
                     if (interpretation.isNotEmpty) ...[
                       SizedBox(height: 12.h),
@@ -324,14 +323,13 @@ class _BookmarksPageState extends State<BookmarksPage> with SingleTickerProvider
                         ),
                       ),
                       SizedBox(height: 4.h),
-                      Text(
-                        interpretation,
+                      ResponsiveText(
+                        content: interpretation,
                         textAlign: TextAlign.justify,
-                        style: TextStyle(
-                          fontSize: 13.sp,
-                          color: Theme.of(context).textTheme.bodyMedium?.color?.withValues(alpha: 0.8),
-                          height: 1.6,
-                        ),
+                        fontSize: 13,
+                        color: Theme.of(context).textTheme.bodyMedium?.color?.withValues(alpha: 0.8),
+                        height: 1.6,
+                        fontFamily: 'Cairo',
                       ),
                     ],
                   ],
@@ -429,17 +427,14 @@ class _BookmarksPageState extends State<BookmarksPage> with SingleTickerProvider
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Text(
-                      hadith.textOnly,
-                      textDirection: TextDirection.rtl,
+                    ResponsiveText(
+                      content: hadith.textOnly,
                       textAlign: TextAlign.justify,
-                      style: TextStyle(
-                        fontSize: 16.sp,
-                        fontWeight: FontWeight.w500,
-                        color: Theme.of(context).textTheme.bodyLarge?.color,
-                        height: 1.8,
-                        fontFamily: 'Amiri',
-                      ),
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                      color: Theme.of(context).textTheme.bodyLarge?.color,
+                      height: 1.8,
+                      fontFamily: 'Amiri',
                     ),
                     if (hadith.description.isNotEmpty) ...[
                       SizedBox(height: 12.h),
@@ -464,15 +459,13 @@ class _BookmarksPageState extends State<BookmarksPage> with SingleTickerProvider
                               ),
                             ),
                             SizedBox(height: 6.h),
-                            Text(
-                              hadith.description,
+                            ResponsiveText(
+                              content: hadith.description,
                               textAlign: TextAlign.justify,
-                              style: TextStyle(
-                                fontSize: 12.sp,
-                                color: Theme.of(context).textTheme.bodyMedium?.color?.withValues(alpha: 0.9),
-                                height: 1.6,
-                                fontFamily: 'Cairo',
-                              ),
+                              fontSize: 12,
+                              color: Theme.of(context).textTheme.bodyMedium?.color?.withValues(alpha: 0.9),
+                              height: 1.6,
+                              fontFamily: 'Cairo',
                             ),
                           ],
                         ),
@@ -602,16 +595,13 @@ class _BookmarksPageState extends State<BookmarksPage> with SingleTickerProvider
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Text(
-                      story.excerpt,
-                      textDirection: TextDirection.rtl,
+                    ResponsiveText(
+                      content: story.excerpt,
                       textAlign: TextAlign.justify,
-                      style: TextStyle(
-                        fontSize: 13.sp,
-                        height: 1.7,
-                        color: Theme.of(context).textTheme.bodyLarge?.color,
-                        fontFamily: 'Cairo',
-                      ),
+                      fontSize: 13,
+                      height: 1.7,
+                      color: Theme.of(context).textTheme.bodyLarge?.color,
+                      fontFamily: 'Cairo',
                     ),
                   ],
                 ),

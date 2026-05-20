@@ -1,4 +1,4 @@
-package com.example.huda
+package com.tarteel.app
 
 import io.flutter.embedding.android.FlutterActivity
 

@@ -107,11 +107,11 @@ class AccessListGrid extends StatelessWidget {
                     // SizedBox(height: 3.h),
                     Expanded(
                       child: Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 8.w),
+                        padding: EdgeInsets.symmetric(horizontal: 7.w),
                         child: AutoSizeText(
                           item.title,
                           maxLines: 3,
-                          minFontSize: 10,
+                          minFontSize: 7,
                           maxFontSize: 16,
                           stepGranularity: 0.5,
                           overflow: TextOverflow.ellipsis,

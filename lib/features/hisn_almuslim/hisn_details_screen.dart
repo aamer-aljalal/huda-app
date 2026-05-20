@@ -185,7 +185,12 @@ class _HisnDetailsScreenState extends State<HisnDetailsScreen> {
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         appBar: HudaAppBar(
           titleText: widget.category.title,
+          titleTextStyle: TextStyle(
+            fontSize: 10.sp,
+            fontWeight: FontWeight.bold,
+          ),
           toolbarHeight: 80.h,
+
           actions: [
             IconButton(
               icon: const Icon(Icons.restart_alt_rounded, color: Colors.white),

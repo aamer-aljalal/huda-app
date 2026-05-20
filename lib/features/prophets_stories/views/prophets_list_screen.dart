@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:huda/core/theme/app_colors.dart';
 import 'package:huda/core/widgets/appbars/huda_app_bar.dart';
+import 'package:huda/core/widgets/Text/Responsive_text.dart';
 import '../models/prophet_story_model.dart';
 import '../services/prophets_stories_service.dart';
 import 'prophet_story_details_screen.dart';
@@ -415,16 +416,14 @@ class _ProphetCard extends StatelessWidget {
                         ],
                       ),
                       SizedBox(height: 6.h),
-                      Text(
-                        story.excerpt,
+                      ResponsiveText(
+                        content: story.excerpt,
                         maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 12.sp,
-                          height: 1.6,
-                          color: isDark ? AppColors.darkSecondaryText : AppColors.lightSecondaryText,
-                          fontFamily: 'Cairo',
-                        ),
+                        fontSize: 12,
+                        height: 1.6,
+                        color: isDark ? AppColors.darkSecondaryText : AppColors.lightSecondaryText,
+                        fontFamily: 'Cairo',
+                        textAlign: TextAlign.right,
                       ),
                       SizedBox(height: 10.h),
                       Row(

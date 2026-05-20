@@ -6,7 +6,7 @@ import 'package:huda/core/theme/app_colors.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:huda/features/Tasbeeh/models/dhikr_model.dart';
 import 'package:huda/features/Tasbeeh/services/tasbeeh_notification_service.dart';
-import 'package:huda/core/widgets/Text/Auto_text.dart';
+import 'package:huda/core/widgets/Text/Responsive_text.dart';
 
 import 'package:huda/core/services/stats_service.dart';
 
@@ -1067,8 +1067,16 @@ class _TasbeehScreenState extends State<TasbeehScreen>
                       ],
                     ),
                     child: Center(
-                      child: AutoText(
+                      child: ResponsiveText(
                         content: _currentZekr,
+                        fontSize: 24,
+                        maxFontSize: 28,
+                        minFontSize: 12,
+                        fontFamily: 'Amiri',
+                        fontWeight: FontWeight.bold,
+                        height: 1.8,
+                        textAlign: TextAlign.center,
+                        maxLines: 8,
                         color: isDark
                             ? AppColors.goldAccent
                             : AppColors.primary,

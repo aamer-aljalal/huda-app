@@ -50,6 +50,9 @@ class HudaAppBar extends StatelessWidget implements PreferredSizeWidget {
   /// Hint text for the search field.
   final String? searchHint;
 
+  /// Optional style for the title text.
+  final TextStyle? titleTextStyle;
+
   /// Text alignment for the search field (use TextAlign.right for Arabic).
   final TextAlign searchTextAlign;
 
@@ -66,6 +69,7 @@ class HudaAppBar extends StatelessWidget implements PreferredSizeWidget {
     this.titleText,
     this.leading,
     this.actions,
+    this.titleTextStyle,
     this.centerTitle = true,
     this.backgroundColor,
     this.shape,
@@ -198,7 +202,8 @@ class HudaAppBar extends StatelessWidget implements PreferredSizeWidget {
           titleText!,
           style:
               (theme.appBarTheme.titleTextStyle ?? theme.textTheme.titleLarge)
-                  ?.copyWith(
+                  ?.merge(titleTextStyle)
+                  .copyWith(
                     fontWeight: FontWeight.bold,
                     color: Colors.white,
                     fontFamily: 'Cairo',

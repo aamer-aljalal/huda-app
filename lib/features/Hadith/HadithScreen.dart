@@ -9,6 +9,7 @@ import 'package:huda/features/Hadith/hadith_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:huda/core/services/recent_actions_service.dart';
 import 'package:huda/core/services/stats_service.dart';
+import 'package:huda/core/widgets/Text/Responsive_text.dart';
 
 class HadithScreen extends StatefulWidget {
   const HadithScreen({super.key});
@@ -414,14 +415,12 @@ class _HadithCard extends StatelessWidget {
                     _HadithNumber(number: hadith.number),
                     SizedBox(width: 14.w),
                     Expanded(
-                      child: Text(
-                        hadith.shortTitle,
-                        style: TextStyle(
-                          fontSize: 13.sp,
-                          fontWeight: FontWeight.w900,
-                          color: AppColors.primary,
-                          fontFamily: 'Cairo',
-                        ),
+                      child: ResponsiveText(
+                        content: hadith.shortTitle,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w900,
+                        color: AppColors.primary,
+                        fontFamily: 'Cairo',
                       ),
                     ),
                     IconButton(
@@ -444,31 +443,26 @@ class _HadithCard extends StatelessWidget {
                   ],
                 ),
                 SizedBox(height: 10.h),
-                Text(
-                  hadith.textOnly,
+                ResponsiveText(
+                  content: hadith.textOnly,
                   maxLines: 4,
-                  overflow: TextOverflow.ellipsis,
                   textAlign: TextAlign.right,
-                  style: TextStyle(
-                    fontSize: 15.sp,
-                    height: 1.8,
-                    color: isDark ? Colors.white70 : Colors.black87,
-                    fontWeight: FontWeight.w500,
-                    fontFamily: 'Amiri',
-                  ),
+                  fontSize: 15,
+                  height: 1.8,
+                  color: isDark ? Colors.white70 : Colors.black87,
+                  fontWeight: FontWeight.w500,
+                  fontFamily: 'Amiri',
                 ),
                 SizedBox(height: 10.h),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-                    Text(
-                      'عرض الشرح والفوائد',
-                      style: TextStyle(
-                        color: AppColors.goldAccent,
-                        fontSize: 10.sp,
-                        fontWeight: FontWeight.bold,
-                        fontFamily: 'Cairo',
-                      ),
+                    ResponsiveText(
+                      content: 'عرض الشرح والفوائد',
+                      color: AppColors.goldAccent,
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                      fontFamily: 'Cairo',
                     ),
                     Icon(
                       Icons.arrow_back_ios_new_rounded,
@@ -646,17 +640,14 @@ class _HadithDetailsSheet extends StatelessWidget {
                         ],
                       ),
                       SizedBox(height: 10.h),
-                      Text(
-                        hadith.textOnly,
-                        textDirection: TextDirection.rtl,
+                      ResponsiveText(
+                        content: hadith.textOnly,
                         textAlign: TextAlign.justify,
-                        style: TextStyle(
-                          fontSize: 16.sp,
-                          height: 1.9,
-                          fontWeight: FontWeight.w500,
-                          color: isDark ? Colors.white : Colors.black87,
-                          fontFamily: 'Amiri',
-                        ),
+                        fontSize: 16,
+                        height: 1.9,
+                        fontWeight: FontWeight.w500,
+                        color: isDark ? Colors.white : Colors.black87,
+                        fontFamily: 'Amiri',
                       ),
                     ],
                   ),
@@ -697,15 +688,14 @@ class _HadithDetailsSheet extends StatelessWidget {
                           ],
                         ),
                         SizedBox(height: 12.h),
-                        Text(
-                          hadith.description,
-                          textDirection: TextDirection.rtl,
+                        ResponsiveText(
+                          content: hadith.description,
                           textAlign: TextAlign.justify,
-                          style: TextStyle(
-                            fontSize: 13.sp,
-                            height: 1.7,
-                            color: isDark ? Colors.white70 : Colors.black87,
-                          ),
+                          fontSize: 13,
+                          height: 1.7,
+                          fontWeight: FontWeight.w500,
+                          color: isDark ? Colors.white70 : Colors.black87,
+                          fontFamily: 'Cairo',
                         ),
                       ],
                     ),

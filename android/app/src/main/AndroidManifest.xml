@@ -7,7 +7,7 @@
     <uses-feature android:name="android.hardware.sensor.compass" android:required="false" />
 
     <application
-        android:label="huda"
+        android:label="ترتيل"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

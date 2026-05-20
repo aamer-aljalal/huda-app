@@ -49,11 +49,11 @@ class HomeActions {
       route: AppRoutes.adhanMuezzin,
       title: 'المؤذن',
     ),
-    AccessListModel(
-      icon: Icons.explore_outlined,
-      route: AppRoutes.qibla,
-      title: 'البوصلة',
-    ),
+    // AccessListModel(
+    //   icon: Icons.explore_outlined,
+    //   route: AppRoutes.qibla,
+    //   title: 'البوصلة',
+    // ),
 
     AccessListModel(
       icon: Icons.analytics_outlined,
