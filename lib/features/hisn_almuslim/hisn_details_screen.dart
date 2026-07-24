@@ -110,7 +110,7 @@ class _HisnDetailsScreenState extends State<HisnDetailsScreen> {
     final shareContent =
         '$text\n\n'
         'المصدر: كتاب حصن المسلم - باب "${widget.category.title}"\n'
-        'تمت المشاركة من تطبيق هُدى الإسلامي';
+        'تمت المشاركة من تطبيق ترتيل الإسلامي';
 
     await SharePlus.instance.share(
       ShareParams(text: shareContent, subject: 'دعاء من حصن المسلم'),

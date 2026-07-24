@@ -4,7 +4,7 @@ import 'package:tarteel/core/theme/app_theme.dart';
 
 /// tarteelAppBar
 ///
-/// A flexible, production-ready AppBar designed for the Huda app. Features:
+/// A flexible, production-ready AppBar designed for the tarteel app. Features:
 /// - Works with light/dark themes defined in `AppTheme`/`AppColors`.
 /// - Optional built-in bottom search bar (Arabic-friendly by default).
 /// - Accepts custom `leading`, `actions`, or a full `title` widget.

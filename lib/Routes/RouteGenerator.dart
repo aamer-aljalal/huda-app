@@ -19,6 +19,7 @@ import 'package:tarteel/features/hisn_almuslim/hisn_details_screen.dart';
 import 'package:tarteel/features/hisn_almuslim/model/hisn_category.dart';
 import 'package:tarteel/features/quran/views/khatma_planner_screen.dart';
 import 'package:tarteel/features/prophets_stories/views/prophets_list_screen.dart';
+import 'package:tarteel/features/splash/splash_screen.dart';
 
 class RouteGenerator {
   static Route<dynamic> generate(RouteSettings settings) {
@@ -26,6 +27,8 @@ class RouteGenerator {
       // ========================= الرئيسية =========================
 
       case AppRoutes.splash:
+        return MaterialPageRoute(builder: (_) => const SplashScreen());
+        
       case AppRoutes.homePage:
         return MaterialPageRoute(builder: (_) => const HomePage());
 

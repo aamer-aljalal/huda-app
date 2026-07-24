@@ -13,6 +13,7 @@ class HomeActions {
       route: AppRoutes.quran,
       title: 'القرآن',
     ),
+    
     AccessListModel(
       icon: Icons.auto_awesome_outlined,
       route: AppRoutes.namesOfAllah,

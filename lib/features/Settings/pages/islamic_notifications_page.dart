@@ -34,13 +34,13 @@ class _IslamicNotificationsPageState extends State<IslamicNotificationsPage> {
 
     if (!mounted) return;
     setState(() {
-      _notificationsAzkar = prefs.getBool('notifications_azkar') ?? false;
+      _notificationsAzkar = prefs.getBool('notifications_azkar') ?? true;
       _notificationsCustom = prefs.getBool('notifications_custom') ?? false;
-      _notificationsFriday = prefs.getBool('notifications_friday') ?? false;
+      _notificationsFriday = prefs.getBool('notifications_friday') ?? true;
       _notificationsFasting = prefs.getBool('notifications_fasting') ?? false;
       _notificationsDuha = prefs.getBool('notifications_duha') ?? false;
       _notificationsQiyam = prefs.getBool('notifications_qiyam') ?? false;
-      _notificationsDailyContent = prefs.getBool('notifications_daily_content') ?? false;
+      _notificationsDailyContent = prefs.getBool('notifications_daily_content') ?? true;
       _hapticFeedback = prefs.getBool('haptic_feedback') ?? true;
     });
   }

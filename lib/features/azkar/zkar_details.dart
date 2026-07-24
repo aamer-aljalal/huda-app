@@ -25,18 +25,19 @@ class _AzkarDetailsScreenState extends State<AzkarDetailsScreen>
   double _buttonScale = 1.0;
   int currentZekrIndex = 0;
   bool _hapticEnabled = true;
-  double _activeMaxFontSize = 24.0;
+  double _activeMaxFontSize = 14.0;
 
   dynamic get currentZekr => widget.category.azkar[currentZekrIndex];
   int get _totalRepeat => int.tryParse(currentZekr.count) ?? 1;
   double get _progress => currentZekr.currentCount / _totalRepeat;
 
   bool get _isAllAzkarCompleted => widget.category.azkar.every((zekr) {
-        final repeat = int.tryParse(zekr.count) ?? 1;
-        return zekr.currentCount >= repeat;
-      });
+    final repeat = int.tryParse(zekr.count) ?? 1;
+    return zekr.currentCount >= repeat;
+  });
 
-  bool get _hasStartedReciting => widget.category.azkar.any((zekr) => zekr.currentCount > 0);
+  bool get _hasStartedReciting =>
+      widget.category.azkar.any((zekr) => zekr.currentCount > 0);
 
   late final PageController _pageController;
 
@@ -64,10 +65,11 @@ class _AzkarDetailsScreenState extends State<AzkarDetailsScreen>
       final now = DateTime.now();
       final todayStr = '${now.year}-${now.month}-${now.day}';
       final savedDate = prefs.getString('azkar_date_${widget.category.title}');
-      
+
       if (savedDate == todayStr) {
         for (int i = 0; i < widget.category.azkar.length; i++) {
-          final countVal = prefs.getInt('azkar_count_${widget.category.title}_$i') ?? 0;
+          final countVal =
+              prefs.getInt('azkar_count_${widget.category.title}_$i') ?? 0;
           widget.category.azkar[i].currentCount = countVal;
         }
       } else {
@@ -125,9 +127,14 @@ class _AzkarDetailsScreenState extends State<AzkarDetailsScreen>
         final targetIndex = currentZekrIndex;
         final categoryTitle = widget.category.title;
         final newCount = currentZekr.currentCount;
-        SharedPreferences.getInstance().then((prefs) {
-          prefs.setInt('azkar_count_${categoryTitle}_$targetIndex', newCount);
-        }).catchError((_) {});
+        SharedPreferences.getInstance()
+            .then((prefs) {
+              prefs.setInt(
+                'azkar_count_${categoryTitle}_$targetIndex',
+                newCount,
+              );
+            })
+            .catchError((_) {});
 
         // When the single zekr count is fully completed!
         if (currentZekr.currentCount == _totalRepeat) {
@@ -171,7 +178,7 @@ class _AzkarDetailsScreenState extends State<AzkarDetailsScreen>
   }
 
   void _onZoomIn() {
-    if (_activeMaxFontSize < 38.0) {
+    if (_activeMaxFontSize < 25.0) {
       setState(() {
         _activeMaxFontSize += 2.0;
       });
@@ -180,7 +187,7 @@ class _AzkarDetailsScreenState extends State<AzkarDetailsScreen>
   }
 
   void _onZoomOut() {
-    if (_activeMaxFontSize > 16.0) {
+    if (_activeMaxFontSize > 12.0) {
       setState(() {
         _activeMaxFontSize -= 2.0;
       });
@@ -199,7 +206,7 @@ class _AzkarDetailsScreenState extends State<AzkarDetailsScreen>
         '${currentZekr.content}\n\n'
         'فضل الذكر: ${currentZekr.description.isNotEmpty ? currentZekr.description : "من الأذكار النبوية"}\n'
         'المصدر: ${currentZekr.reference.isNotEmpty ? currentZekr.reference : "حصن المسلم"}\n\n'
-        'تمت المشاركة من تطبيق هُدى الإسلامي';
+        'تمت المشاركة من تطبيق ترتيل الإسلامي';
     await Clipboard.setData(ClipboardData(text: text));
     if (_hapticEnabled) HapticFeedback.mediumImpact();
     _showMessage('تم نسخ نص الذكر والفضل لمشاركته فوراً');
@@ -216,11 +223,13 @@ class _AzkarDetailsScreenState extends State<AzkarDetailsScreen>
       }
     });
 
-    SharedPreferences.getInstance().then((prefs) async {
-      for (int i = 0; i < widget.category.azkar.length; i++) {
-        await prefs.remove('azkar_count_${widget.category.title}_$i');
-      }
-    }).catchError((_) {});
+    SharedPreferences.getInstance()
+        .then((prefs) async {
+          for (int i = 0; i < widget.category.azkar.length; i++) {
+            await prefs.remove('azkar_count_${widget.category.title}_$i');
+          }
+        })
+        .catchError((_) {});
 
     _saveRecentAzkarAction();
     _showMessage('تمت إعادة تعيين العدادات بالكامل 🔄');
@@ -507,7 +516,10 @@ class _AzkarDetailsScreenState extends State<AzkarDetailsScreen>
               SizedBox(height: 12.h),
               TextButton.icon(
                 onPressed: _showResetCategoryDialog,
-                icon: const Icon(Icons.refresh_rounded, color: Colors.redAccent),
+                icon: const Icon(
+                  Icons.refresh_rounded,
+                  color: Colors.redAccent,
+                ),
                 label: Text(
                   'بدء من جديد / إعادة تعيين',
                   style: TextStyle(
@@ -518,7 +530,10 @@ class _AzkarDetailsScreenState extends State<AzkarDetailsScreen>
                   ),
                 ),
                 style: TextButton.styleFrom(
-                  padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 16.w,
+                    vertical: 8.h,
+                  ),
                   backgroundColor: Colors.redAccent.withOpacity(0.1),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12.r),
@@ -553,7 +568,7 @@ class _AzkarDetailsScreenState extends State<AzkarDetailsScreen>
         ),
       ),
       child: Padding(
-        padding: EdgeInsets.all(20.w),
+        padding: EdgeInsets.only(top: 10, bottom: 10, left: 15.w, right: 15),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -607,7 +622,7 @@ class _AzkarDetailsScreenState extends State<AzkarDetailsScreen>
                 ),
               ],
             ),
-            SizedBox(height: 16.h),
+            // SizedBox(height: 16.h),
 
             // Content scroll area to prevent overflow of long azkar paragraphs!
             Expanded(
@@ -619,18 +634,18 @@ class _AzkarDetailsScreenState extends State<AzkarDetailsScreen>
                       content: zekr.content,
                       fontSize: _activeMaxFontSize,
                       maxFontSize: _activeMaxFontSize,
-                      minFontSize: 14,
+                      minFontSize: 10,
                       fontFamily: 'Amiri',
                       fontWeight: FontWeight.bold,
-                      height: 1.8,
+                      height: 2.8,
                       textAlign: TextAlign.center,
-                      maxLines: 12,
+                      maxLines: 10,
                       color: isDark ? Colors.white : const Color(0xFF2E5C2E),
                     ),
                     if (zekr.description.isNotEmpty) ...[
-                      SizedBox(height: 20.h),
+                      SizedBox(height: 8.h),
                       Container(
-                        padding: EdgeInsets.all(12.w),
+                        padding: EdgeInsets.all(10.w),
                         decoration: BoxDecoration(
                           color: AppColors.goldAccent.withValues(alpha: 0.05),
                           borderRadius: BorderRadius.circular(16.r),
@@ -643,7 +658,7 @@ class _AzkarDetailsScreenState extends State<AzkarDetailsScreen>
                           zekr.description,
                           textAlign: TextAlign.center,
                           style: TextStyle(
-                            fontSize: 13.sp,
+                            fontSize: 12.sp,
                             color: isDark
                                 ? Colors.grey.shade400
                                 : Colors.grey.shade700,

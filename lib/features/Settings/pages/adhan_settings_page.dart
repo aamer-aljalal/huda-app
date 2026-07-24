@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:tarteel/core/providers/prayer_provider.dart';
 import 'package:tarteel/core/services/adhan_notification_service.dart';
+import 'package:tarteel/core/services/native_alarm_service.dart';
 import 'package:tarteel/core/theme/app_colors.dart';
 import 'package:tarteel/core/widgets/appbars/tarteel_app_bar.dart';
 import 'package:just_audio/just_audio.dart';
@@ -20,6 +21,9 @@ class _AdhanSettingsPageState extends State<AdhanSettingsPage> {
   bool _soundEnabled = true;
   AdhanMuezzin? _activeMuezzin;
   bool _hapticFeedback = true;
+  double _adhanVolume = 1.0;
+  bool _vibrationEnabled = true;
+  bool _isTestingAdhan = false;
 
   @override
   void initState() {
@@ -38,6 +42,8 @@ class _AdhanSettingsPageState extends State<AdhanSettingsPage> {
       _soundEnabled = notificationsEnabled;
       _activeMuezzin = activeMuezzin;
       _hapticFeedback = prefs.getBool('haptic_feedback') ?? true;
+      _adhanVolume = prefs.getDouble('adhan_volume') ?? 1.0;
+      _vibrationEnabled = prefs.getBool('adhan_vibration_enabled') ?? true;
     });
   }
 
@@ -55,6 +61,69 @@ class _AdhanSettingsPageState extends State<AdhanSettingsPage> {
       await prayerProvider.scheduleAdhanNotifications();
     } else {
       await AdhanNotificationService.cancelPrayerAdhan();
+    }
+  }
+
+  Future<void> _updateAdhanVolume(double val) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setDouble('adhan_volume', val);
+    setState(() {
+      _adhanVolume = val;
+    });
+    // إعادة جدولة المنبهات بالصوت الجديد
+    if (mounted) {
+      final prayerProvider = context.read<PrayerProvider>();
+      await prayerProvider.scheduleAdhanNotifications();
+    }
+  }
+
+  Future<void> _updateVibrationEnabled(bool val) async {
+    if (_hapticFeedback) HapticFeedback.lightImpact();
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('adhan_vibration_enabled', val);
+    setState(() {
+      _vibrationEnabled = val;
+    });
+    if (_isTestingAdhan) {
+      await NativeAlarmService.updateTestVibration(val);
+    }
+    // إعادة جدولة المنبهات بالاهتزاز الجديد
+    if (mounted) {
+      final prayerProvider = context.read<PrayerProvider>();
+      await prayerProvider.scheduleAdhanNotifications();
+    }
+  }
+
+  Future<void> _toggleTestAdhan() async {
+    if (_isTestingAdhan) {
+      await NativeAlarmService.stopActiveAlarm();
+      setState(() {
+        _isTestingAdhan = false;
+      });
+    } else {
+      if (_activeMuezzin == null) return;
+      if (_hapticFeedback) HapticFeedback.mediumImpact();
+
+      setState(() {
+        _isTestingAdhan = true;
+      });
+
+      final success = await NativeAlarmService.playTestAdhan(
+        audioFile: _activeMuezzin!.rawResourceName,
+        volume: _adhanVolume,
+        vibrate: _vibrationEnabled,
+      );
+
+      if (!success) {
+        setState(() {
+          _isTestingAdhan = false;
+        });
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('فشل تشغيل الأذان التجريبي')),
+          );
+        }
+      }
     }
   }
 
@@ -87,7 +156,9 @@ class _AdhanSettingsPageState extends State<AdhanSettingsPage> {
                     height: 4.h,
                     margin: EdgeInsets.only(bottom: 16.h),
                     decoration: BoxDecoration(
-                      color: isDark ? Colors.grey.shade800 : Colors.grey.shade300,
+                      color: isDark
+                          ? Colors.grey.shade800
+                          : Colors.grey.shade300,
                       borderRadius: BorderRadius.circular(10.r),
                     ),
                   ),
@@ -120,7 +191,9 @@ class _AdhanSettingsPageState extends State<AdhanSettingsPage> {
                           border: Border.all(
                             color: isSelected
                                 ? AppColors.primary.withValues(alpha: 0.3)
-                                : (isDark ? Colors.grey.shade800 : Colors.grey.shade200),
+                                : (isDark
+                                      ? Colors.grey.shade800
+                                      : Colors.grey.shade200),
                           ),
                         ),
                         child: ListTile(
@@ -232,7 +305,10 @@ class _AdhanSettingsPageState extends State<AdhanSettingsPage> {
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: const tarteelAppBar(titleText: 'إعدادات الأذان والصلوات', elevation: 0),
+      appBar: const tarteelAppBar(
+        titleText: 'إعدادات الأذان والصلوات',
+        elevation: 0,
+      ),
       body: SingleChildScrollView(
         physics: const BouncingScrollPhysics(),
         padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
@@ -244,7 +320,8 @@ class _AdhanSettingsPageState extends State<AdhanSettingsPage> {
               children: [
                 _buildSwitchTile(
                   title: 'تفعيل تنبيهات الأذان والصلوات',
-                  subtitle: 'تشغيل صوت المؤذن عند دخول وقت الصلاة وتنبيه الأذان',
+                  subtitle:
+                      'تشغيل صوت المؤذن عند دخول وقت الصلاة وتنبيه الأذان',
                   value: _soundEnabled,
                   icon: Icons.notifications_active_outlined,
                   onChanged: (value) => _updateSoundEnabled(value),
@@ -262,7 +339,159 @@ class _AdhanSettingsPageState extends State<AdhanSettingsPage> {
                 ],
               ],
             ),
-            SizedBox(height: 30.h),
+            SizedBox(height: 20.h),
+            if (_soundEnabled) ...[
+              _buildSection(
+                title: 'خيارات الصوت والاهتزاز',
+                isDark: isDark,
+                children: [
+                  _buildSwitchTile(
+                    title: 'الاهتزاز مع الأذان',
+                    subtitle: 'تفعيل اهتزاز الهاتف عند تشغيل الأذان',
+                    value: _vibrationEnabled,
+                    icon: Icons.vibration_rounded,
+                    onChanged: (value) => _updateVibrationEnabled(value),
+                    iconColor: Colors.blueGrey,
+                  ),
+                  const Divider(height: 1, indent: 60, endIndent: 20),
+                  Padding(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 16.w,
+                      vertical: 12.h,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              padding: EdgeInsets.all(10.w),
+                              decoration: BoxDecoration(
+                                color: Colors.amber.withValues(alpha: 0.1),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(
+                                Icons.volume_up_rounded,
+                                color: Colors.amber,
+                                size: 20.sp,
+                              ),
+                            ),
+                            SizedBox(width: 14.w),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'مستوى صوت الأذان',
+                                    style: TextStyle(
+                                      fontSize: 13.5.sp,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                  SizedBox(height: 4.h),
+                                  Text(
+                                    'تحديد شدة صوت الأذان عند الرنين',
+                                    style: TextStyle(
+                                      fontSize: 10.5.sp,
+                                      color: Colors.grey.shade500,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Text(
+                              '${(_adhanVolume * 100).toInt()}%',
+                              style: TextStyle(
+                                fontSize: 13.5.sp,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.primary,
+                              ),
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: 8.h),
+                        Slider(
+                          value: _adhanVolume,
+                          min: 0.0,
+                          max: 1.0,
+                          divisions: 10,
+                          activeColor: AppColors.primary,
+                          inactiveColor: AppColors.primary.withValues(
+                            alpha: 0.2,
+                          ),
+                          onChanged: (val) {
+                            setState(() {
+                              _adhanVolume = val;
+                            });
+                            if (_isTestingAdhan) {
+                              NativeAlarmService.updateTestVolume(val);
+                            }
+                          },
+                          onChangeEnd: (val) {
+                            _updateAdhanVolume(val);
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Divider(height: 1, indent: 60, endIndent: 20),
+                  Padding(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 16.w,
+                      vertical: 8.h,
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            _isTestingAdhan
+                                ? 'جاري تشغيل الأذان التجريبي...'
+                                : 'اختبر صوت ورنين الأذان الآن',
+                            style: TextStyle(
+                              fontSize: 12.sp,
+                              fontWeight: FontWeight.w500,
+                              color: _isTestingAdhan
+                                  ? Colors.red
+                                  : Colors.grey.shade600,
+                            ),
+                          ),
+                        ),
+                        ElevatedButton.icon(
+                          onPressed: _toggleTestAdhan,
+                          icon: Icon(
+                            _isTestingAdhan
+                                ? Icons.stop_rounded
+                                : Icons.play_arrow_rounded,
+                            color: Colors.white,
+                          ),
+                          label: Text(
+                            _isTestingAdhan ? 'إيقاف الأذان' : 'تشغيل تجريبي',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: _isTestingAdhan
+                                ? Colors.red.shade600
+                                : AppColors.primary,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12.r),
+                            ),
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 16.w,
+                              vertical: 10.h,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: 20.h),
+            ],
             // Premium Info Box
             Container(
               padding: EdgeInsets.all(16.w),

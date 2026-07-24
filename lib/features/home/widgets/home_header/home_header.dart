@@ -1,9 +1,7 @@
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:tarteel/core/services/recent_actions_service.dart';
 import 'package:tarteel/core/theme/app_colors.dart';
-import 'package:tarteel/core/widgets/Text/Responsive_text.dart';
 import 'package:tarteel/features/home/widgets/home_header/home_mini_header.dart';
 import 'package:tarteel/features/home/widgets/home_header/home_notifications_sheet.dart';
 import 'package:tarteel/features/home/widgets/home_header/home_prayer_card.dart';
@@ -54,16 +52,6 @@ class _HomeHeaderState extends State<HomeHeader> {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) {
-        // return StatefulBuilder(
-        //   builder: (context, setModalState) {
-        //     final isDark = Theme.of(context).brightness == Brightness.dark;
-        //     final cardBg = isDark
-        //         ? const Color(0xFF2C2C2C)
-        //         : Colors.grey.shade50;
-
-        //     return;
-        //   },
-        // );
         return HomeNotificationsSheet(
           notifications: _activeNotifications,
           onNotificationTap: (notification) async {
@@ -225,7 +213,6 @@ class _HomeHeaderState extends State<HomeHeader> {
                     },
                   ),
 
-                  // const Spacer(flex: 2),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -249,7 +236,7 @@ class _HomeHeaderState extends State<HomeHeader> {
                               _getHijriDate(_isNumericFormat),
                               style: TextStyle(
                                 color: Colors.white,
-                                fontSize: 13.sp,
+                                fontSize: 16.sp,
                                 fontFamily: 'Amiri',
                               ),
                             ),
@@ -273,7 +260,7 @@ class _HomeHeaderState extends State<HomeHeader> {
                           _getGregorianDate(_isNumericFormat),
                           style: TextStyle(
                             color: Colors.white70,
-                            fontSize: 13.sp,
+                            fontSize: 18.sp,
                             fontFamily: 'Amiri',
                           ),
                         ),
@@ -286,7 +273,7 @@ class _HomeHeaderState extends State<HomeHeader> {
                         ),
                         decoration: BoxDecoration(
                           // استخدام لون السطح مع شفافية ليتناسب مع الوضعين
-                          color: colorScheme.surface.withOpacity(0.25),
+                          color: colorScheme.surface.withOpacity(0.30),
                           borderRadius: BorderRadius.circular(30.r),
                         ),
                         child: Row(
@@ -304,7 +291,7 @@ class _HomeHeaderState extends State<HomeHeader> {
                                   : prayerProvider.cityName,
                               style: TextStyle(
                                 color: Colors.white,
-                                fontSize: 10.sp,
+                                fontSize: 12.sp,
                                 fontFamily: 'Cairo',
                               ),
                             ),

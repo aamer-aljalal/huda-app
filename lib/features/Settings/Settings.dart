@@ -229,7 +229,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                   SizedBox(height: 12.h),
                   Text(
-                    'تطبيق هُدى الإسلامي',
+                    'تطبيق ترتيل الإسلامي',
                     style: TextStyle(
                       fontSize: 16.sp,
                       fontWeight: FontWeight.bold,

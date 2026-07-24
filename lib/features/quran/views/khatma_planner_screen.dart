@@ -606,7 +606,7 @@ class _KhatmaPlannerScreenState extends State<KhatmaPlannerScreen> {
                   Text(
                     'مدة تحدي الختمة (بالأيام)',
                     style: TextStyle(
-                      fontSize: 13.sp,
+                      fontSize: 15.sp,
                       fontWeight: FontWeight.w800,
                       fontFamily: 'Cairo',
                       color: isDark ? Colors.white : Colors.black87,
@@ -943,7 +943,7 @@ class _KhatmaPlannerScreenState extends State<KhatmaPlannerScreen> {
                       Text(
                         'تحدي الختمة والورد',
                         style: TextStyle(
-                          fontSize: 10.sp,
+                          fontSize: 15.sp,
                           fontWeight: FontWeight.w900,
                           fontFamily: 'Cairo',
                           color: isDark ? Colors.white : Colors.black87,
@@ -953,7 +953,7 @@ class _KhatmaPlannerScreenState extends State<KhatmaPlannerScreen> {
                       Text(
                         'الخطة الكاملة: ${_daysSliderValue.toInt()} يوماً',
                         style: TextStyle(
-                          fontSize: 9.sp,
+                          fontSize: 13.sp,
                           fontFamily: 'Cairo',
                           color: Colors.grey,
                         ),
@@ -981,7 +981,7 @@ class _KhatmaPlannerScreenState extends State<KhatmaPlannerScreen> {
                               'تعديل الخطة الحالية',
                               style: TextStyle(
                                 fontFamily: 'Cairo',
-                                fontSize: 14.sp,
+                                fontSize: 15.sp,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
@@ -989,7 +989,7 @@ class _KhatmaPlannerScreenState extends State<KhatmaPlannerScreen> {
                               'هل تريد تعديل الخطة الحالية؟ سيؤدي ذلك لإعادة ضبط الأيام والورد من جديد مع الاحتفاظ بالآيات المقروءة.',
                               style: TextStyle(
                                 fontFamily: 'Cairo',
-                                fontSize: 9.sp,
+                                fontSize: 11.sp,
                               ),
                             ),
                             actions: [
@@ -1061,7 +1061,7 @@ class _KhatmaPlannerScreenState extends State<KhatmaPlannerScreen> {
                       Text(
                         'مكتمل من المصحف',
                         style: TextStyle(
-                          fontSize: 7.sp,
+                          fontSize: 10.sp,
                           fontFamily: 'Cairo',
                           color: Colors.grey,
                           fontWeight: FontWeight.bold,
@@ -1114,7 +1114,7 @@ class _KhatmaPlannerScreenState extends State<KhatmaPlannerScreen> {
                   Text(
                     'الورد المطلوب اليوم',
                     style: TextStyle(
-                      fontSize: 10.sp,
+                      fontSize: 13.sp,
                       fontWeight: FontWeight.w800,
                       fontFamily: 'Cairo',
                       color: isDark ? Colors.white : Colors.black87,
@@ -1123,7 +1123,7 @@ class _KhatmaPlannerScreenState extends State<KhatmaPlannerScreen> {
                   Text(
                     '$_ayahsReadToday / $_dailyAyahsNeeded آية',
                     style: TextStyle(
-                      fontSize: 9.sp,
+                      fontSize: 11.sp,
                       fontWeight: FontWeight.bold,
                       fontFamily: 'Cairo',
                       color: AppColors.primary,
@@ -1136,7 +1136,7 @@ class _KhatmaPlannerScreenState extends State<KhatmaPlannerScreen> {
                 borderRadius: BorderRadius.circular(10.r),
                 child: LinearProgressIndicator(
                   value: (_ayahsReadToday / _dailyAyahsNeeded).clamp(0.0, 1.0),
-                  minHeight: 10.h,
+                  minHeight: 13.h,
                   backgroundColor: AppColors.primary.withValues(alpha: 0.1),
                   valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
                 ),
@@ -1148,7 +1148,7 @@ class _KhatmaPlannerScreenState extends State<KhatmaPlannerScreen> {
                   Text(
                     'الآيات المقروءة حتى الآن: $_totalAyahsRead',
                     style: TextStyle(
-                      fontSize: 7.sp,
+                      fontSize: 10.sp,
                       fontFamily: 'Cairo',
                       color: Colors.grey.shade500,
                       fontWeight: FontWeight.bold,
@@ -1159,7 +1159,7 @@ class _KhatmaPlannerScreenState extends State<KhatmaPlannerScreen> {
                         ? 'أتممت ورد اليوم بنجاح'
                         : 'المتبقي لليوم: ${(_dailyAyahsNeeded - _ayahsReadToday).clamp(0, _dailyAyahsNeeded)} آية',
                     style: TextStyle(
-                      fontSize: 9.sp,
+                      fontSize: 10.sp,
                       fontWeight: FontWeight.bold,
                       fontFamily: 'Cairo',
                       color: _ayahsReadToday >= _dailyAyahsNeeded
@@ -1228,7 +1228,7 @@ class _KhatmaPlannerScreenState extends State<KhatmaPlannerScreen> {
                         Text(
                           'آخر موضع وصلت إليه',
                           style: TextStyle(
-                            fontSize: 9.sp,
+                            fontSize: 12.sp,
                             fontWeight: FontWeight.w800,
                             fontFamily: 'Cairo',
                             color: isDark ? Colors.white : Colors.black87,
@@ -1240,7 +1240,7 @@ class _KhatmaPlannerScreenState extends State<KhatmaPlannerScreen> {
                               ? 'سورة $surahName (الآية $ayah)'
                               : 'لم تبدأ القراءة في هذه الختمة بعد (ستبدأ من الفاتحة)',
                           style: TextStyle(
-                            fontSize: 8.sp,
+                            fontSize: 11.sp,
                             fontWeight: FontWeight.bold,
                             fontFamily: 'Cairo',
                             color: hasStarted
@@ -1301,7 +1301,7 @@ class _KhatmaPlannerScreenState extends State<KhatmaPlannerScreen> {
                     'اذهب لقراءة القرآن الكريم الآن',
                     style: TextStyle(
                       color: Colors.white,
-                      fontSize: 9.sp,
+                      fontSize: 11.sp,
                       fontWeight: FontWeight.w900,
                       fontFamily: 'Cairo',
                     ),

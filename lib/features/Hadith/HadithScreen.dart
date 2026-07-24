@@ -447,7 +447,7 @@ class _HadithCard extends StatelessWidget {
                   content: hadith.textOnly,
                   maxLines: 4,
                   textAlign: TextAlign.right,
-                  fontSize: 15,
+                  fontSize: 20,
                   height: 1.8,
                   color: isDark ? Colors.white70 : Colors.black87,
                   fontWeight: FontWeight.w500,

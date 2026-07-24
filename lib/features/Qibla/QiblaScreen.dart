@@ -118,6 +118,7 @@ class _QiblaScreenState extends State<QiblaScreen>
           _hasError = true;
           _statusMessage = 'صلاحية الموقع مرفوضة دائماً.\nيرجى تفعيلها من إعدادات الهاتف.';
         });
+        await Geolocator.openAppSettings();
         return;
       }
 
@@ -131,6 +132,7 @@ class _QiblaScreenState extends State<QiblaScreen>
           _hasError = true;
           _statusMessage = 'يرجى تفعيل خدمة الموقع (GPS) في إعدادات الهاتف.';
         });
+        await Geolocator.openLocationSettings();
         return;
       }
 

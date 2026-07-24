@@ -60,7 +60,7 @@ class HomeMiniHeader extends StatelessWidget {
     return Row(
       children: [
         Container(
-          padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
+          padding: EdgeInsets.symmetric(horizontal: 9.w, vertical: 6.h),
           decoration: BoxDecoration(
             border: Border.all(
               color: brightness == Brightness.dark
@@ -83,12 +83,13 @@ class HomeMiniHeader extends StatelessWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(
-                Icons.access_time,
-                size: 17.sp,
-                color: colorScheme.primary, // اللون الأساسي للتطبيق
-              ),
-              SizedBox(width: 6.w),
+              // Icon(
+              //   Icons.access_time,
+              //   size: 17.sp,
+              //   color: colorScheme.primary, // اللون الأساسي للتطبيق
+              // ),
+              _SizeBoxWidth(),
+
               Text(
                 '$currentTime  •  $dayName',
                 style: TextStyle(
@@ -104,7 +105,8 @@ class HomeMiniHeader extends StatelessWidget {
 
         const Spacer(),
 
-        SizedBox(width: 6.w),
+        _SizeBoxWidth(),
+
         _buildHeaderActionButton(
           context: context,
           icon: Icons.favorite_outline,
@@ -113,7 +115,7 @@ class HomeMiniHeader extends StatelessWidget {
           },
         ),
 
-        SizedBox(width: 2.w),
+        _SizeBoxWidth(),
 
         _buildHeaderActionButton(
           context: context,
@@ -122,7 +124,7 @@ class HomeMiniHeader extends StatelessWidget {
             Navigator.pushNamed(context, AppRoutes.settings);
           },
         ),
-        SizedBox(width: 2.w),
+        _SizeBoxWidth(),
 
         _buildHeaderActionButton(
           context: context,
@@ -131,7 +133,7 @@ class HomeMiniHeader extends StatelessWidget {
             Navigator.pushNamed(context, AppRoutes.qibla);
           },
         ),
-        SizedBox(width: 2.w),
+        _SizeBoxWidth(),
 
         Stack(
           clipBehavior: Clip.none,
@@ -167,9 +169,12 @@ class HomeMiniHeader extends StatelessWidget {
               ),
           ],
         ),
+        SizedBox(width: 15.w),
       ],
     );
   }
+
+  SizedBox _SizeBoxWidth() => SizedBox(width: 6.w);
 
   Widget _buildHeaderActionButton({
     required BuildContext context,

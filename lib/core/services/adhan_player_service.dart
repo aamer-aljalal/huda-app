@@ -230,7 +230,8 @@ class _AdhanPlayingScreenState extends State<AdhanPlayingScreen>
                     return AnimatedBuilder(
                       animation: _rippleController,
                       builder: (context, child) {
-                        final progress = (_rippleController.value + index / 3) % 1.0;
+                        final progress =
+                            (_rippleController.value + index / 3) % 1.0;
                         return Container(
                           width: (120 + progress * 140).w,
                           height: (120 + progress * 140).h,
@@ -253,10 +254,7 @@ class _AdhanPlayingScreenState extends State<AdhanPlayingScreen>
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       color: AppColors.primary.withValues(alpha: 0.9),
-                      border: Border.all(
-                        color: AppColors.goldAccent,
-                        width: 2,
-                      ),
+                      border: Border.all(color: AppColors.goldAccent, width: 2),
                       boxShadow: [
                         BoxShadow(
                           color: AppColors.goldAccent.withValues(alpha: 0.3),
@@ -297,7 +295,9 @@ class _AdhanPlayingScreenState extends State<AdhanPlayingScreen>
                             ? Icons.volume_off_rounded
                             : Icons.volume_up_rounded,
                         label: widget.isMuted ? 'تشغيل الصوت' : 'كتم الصوت',
-                        color: widget.isMuted ? Colors.grey : AppColors.goldAccent,
+                        color: widget.isMuted
+                            ? Colors.grey
+                            : AppColors.goldAccent,
                         onPressed: widget.onMuteToggle,
                       ),
                       // Stop / Close Button

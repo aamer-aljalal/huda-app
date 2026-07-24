@@ -503,7 +503,7 @@ class _SurahDetailPageState extends State<SurahDetailPage> {
                 MushafTopBar(surah: widget.surah),
                 Expanded(
                   child: Container(
-                    padding: EdgeInsets.only(top: 65.h, bottom: 60.h),
+                    padding: EdgeInsets.only(top: 60.h, bottom: 50.h),
                     decoration: const BoxDecoration(
                       image: DecorationImage(
                         image: AssetImage('assets/img/surah_detail_green.png'),
@@ -626,8 +626,8 @@ class _MushafPageState extends State<_MushafPage> {
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           color: const Color(0xFF1E1A12),
-                          fontSize: textScale.scale(15.sp),
-                          fontWeight: FontWeight.w700,
+                          fontSize: textScale.scale(18.sp),
+                          fontWeight: FontWeight.w900,
                           height: 0.5.h,
                           fontFamily: 'Amiri',
                         ),
@@ -645,7 +645,7 @@ class _MushafPageState extends State<_MushafPage> {
                       text: TextSpan(
                         style: TextStyle(
                           color: const Color(0xFF1A1710),
-                          fontSize: textScale.scale(18.sp),
+                          fontSize: textScale.scale(25.sp),
                           height: 2.05,
                           fontWeight: FontWeight.w500,
                           fontFamily: 'Amiri',
@@ -778,7 +778,7 @@ class _AyahActionsSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.fromLTRB(18.w, 10.h, 18.w, 22.h),
+      padding: EdgeInsets.fromLTRB(18.w, 10.h, 18.w, 100.h),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.vertical(top: Radius.circular(14.r)),
@@ -790,7 +790,7 @@ class _AyahActionsSheet extends StatelessWidget {
           Center(
             child: Container(
               width: 44.w,
-              height: 4.h,
+              height: 15.h,
               decoration: BoxDecoration(
                 color: Colors.black.withValues(alpha: 0.18),
                 borderRadius: BorderRadius.circular(20.r),
@@ -839,8 +839,8 @@ class _AyahActionsSheet extends StatelessWidget {
               SizedBox(width: 8.w),
               Expanded(
                 child: _SheetActionButton(
-                  icon: Icons.bookmark_add_outlined,
-                  label: 'حفظ الآية',
+                  icon: Icons.favorite_border,
+                  label: 'المفضلة',
                   onTap: onSave,
                 ),
               ),

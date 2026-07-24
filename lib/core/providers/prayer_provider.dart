@@ -13,6 +13,27 @@ import 'package:tarteel/core/services/adhan_player_service.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class PrayerProvider extends ChangeNotifier {
+  PrayerProvider() {
+    _initLocationListener();
+  }
+
+  StreamSubscription<ServiceStatus>? _serviceStatusSubscription;
+
+  void _initLocationListener() {
+    if (defaultTargetPlatform == TargetPlatform.windows) return;
+    try {
+      _serviceStatusSubscription = Geolocator.getServiceStatusStream().listen((
+        ServiceStatus status,
+      ) {
+        if (status == ServiceStatus.enabled) {
+          silentlyUpdateLocation();
+        }
+      });
+    } catch (e) {
+      debugPrint("Error initializing service status stream: $e");
+    }
+  }
+
   // موقع مكة المكرمة الافتراضي والاحتياطي
   String _cityName = 'مكة المكرمة';
   double _lat = 21.4225;
@@ -58,7 +79,11 @@ class PrayerProvider extends ChangeNotifier {
 
       // 2. حساب المواقيت فوراً وبشكل أوفلاين 100% باستخدام مكتبة adhan
       _calculatePrayerTimes();
+      await scheduleAdhanNotifications();
       _startTimer();
+
+      // 3. تحديث الموقع تلقائياً وبصمت في الخلفية إذا كانت الصلاحيات مفعلة والـ GPS يعمل
+      silentlyUpdateLocation();
     } catch (e) {
       _errorMessage = 'حدث خطأ أثناء جلب البيانات: $e';
     } finally {
@@ -76,7 +101,8 @@ class PrayerProvider extends ChangeNotifier {
 
     try {
       final prefs = await SharedPreferences.getInstance();
-      final bool hasAskedPermissionBefore = prefs.getBool('asked_location_permission') ?? false;
+      final bool hasAskedPermissionBefore =
+          prefs.getBool('asked_location_permission') ?? false;
 
       if (!hasAskedPermissionBefore) {
         // المرة الأولى: تنبيه المستخدم بلطف لأخذ إذن الموقع
@@ -89,7 +115,7 @@ class PrayerProvider extends ChangeNotifier {
         if (lastUpdateStr != null) {
           final lastUpdate = DateTime.parse(lastUpdateStr);
           final daysDifference = DateTime.now().difference(lastUpdate).inDays;
-          
+
           if (daysDifference >= 4) {
             // نتحقق من توفر الإنترنت أولاً في الخلفية قبل مقاطعة المستخدم بسؤاله
             final hasInternet = await _checkInternetConnection();
@@ -107,8 +133,9 @@ class PrayerProvider extends ChangeNotifier {
   /// فحص وجود اتصال بالإنترنت بطريقة سريعة وآمنة
   Future<bool> _checkInternetConnection() async {
     try {
-      final result = await InternetAddress.lookup('google.com')
-          .timeout(const Duration(seconds: 3));
+      final result = await InternetAddress.lookup(
+        'google.com',
+      ).timeout(const Duration(seconds: 3));
       if (result.isNotEmpty && result[0].rawAddress.isNotEmpty) {
         return true;
       }
@@ -117,12 +144,16 @@ class PrayerProvider extends ChangeNotifier {
   }
 
   /// عرض نافذة التنبيه الأنيقة والمتناسقة مع هوية التطبيق
-  Future<void> _showLocationSetupDialog(BuildContext context, {required bool isFirstTime}) async {
+  Future<void> _showLocationSetupDialog(
+    BuildContext context, {
+    required bool isFirstTime,
+  }) async {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    
+
     await showDialog(
       context: context,
-      barrierDismissible: !isFirstTime, // إجبار التحديد في المرة الأولى أو الرفض يدوياً
+      barrierDismissible:
+          !isFirstTime, // إجبار التحديد في المرة الأولى أو الرفض يدوياً
       builder: (context) {
         return Directionality(
           textDirection: ui.TextDirection.rtl,
@@ -149,10 +180,12 @@ class PrayerProvider extends ChangeNotifier {
                   ),
                 ),
                 SizedBox(height: 16.h),
-                
+
                 // العنوان
                 Text(
-                  isFirstTime ? 'تحديد مواقيت الصلاة بدقة' : 'تحديث موقعك الحالي',
+                  isFirstTime
+                      ? 'تحديد مواقيت الصلاة بدقة'
+                      : 'تحديث موقعك الحالي',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontFamily: 'Cairo',
@@ -162,11 +195,10 @@ class PrayerProvider extends ChangeNotifier {
                   ),
                 ),
                 SizedBox(height: 12.h),
-                
-                // الوصف
+
                 Text(
                   isFirstTime
-                      ? 'يرغب تطبيق "" في تحديد موقعك الجغرافي لحساب مواقيت الصلاة والقبلة بدقة متناهية. في حال الرفض أو عدم توفر إنترنت، سيتم اعتماد توقيت مكة المكرمة كخيار افتراضي.'
+                      ? 'يرغب تطبيق "ترتيل" في تحديد موقعك الجغرافي لحساب مواقيت الصلاة والقبلة بدقة متناهية. في حال الرفض أو عدم توفر إنترنت، سيتم اعتماد توقيت مكة المكرمة كخيار افتراضي.'
                       : 'لقد مر عدة أيام منذ آخر تحديث لموقعك الجغرافي. هل ترغب في تحديث موقعك الحالي لضمان دقة مواقيت الصلاة والأذان (في حال سافرت أو غيرت مكانك)؟',
                   textAlign: TextAlign.center,
                   style: TextStyle(
@@ -177,7 +209,7 @@ class PrayerProvider extends ChangeNotifier {
                   ),
                 ),
                 SizedBox(height: 24.h),
-                
+
                 // أزرار التحكم
                 Row(
                   children: [
@@ -207,7 +239,7 @@ class PrayerProvider extends ChangeNotifier {
                       ),
                     ),
                     SizedBox(width: 10.w),
-                    
+
                     // زر الرفض
                     Expanded(
                       child: OutlinedButton(
@@ -223,19 +255,32 @@ class PrayerProvider extends ChangeNotifier {
                         onPressed: () async {
                           Navigator.pop(context);
                           final prefs = await SharedPreferences.getInstance();
-                          await prefs.setBool('asked_location_permission', true);
-                          
+                          await prefs.setBool(
+                            'asked_location_permission',
+                            true,
+                          );
+
                           if (isFirstTime) {
                             // حفظ مكة المكرمة كافتراضي
-                            await _saveLocationToPrefs(21.4225, 39.8262, 'مكة المكرمة');
-                            await prefs.setString('last_location_update_time', DateTime.now().toIso8601String());
+                            await _saveLocationToPrefs(
+                              21.4225,
+                              39.8262,
+                              'مكة المكرمة',
+                            );
+                            await prefs.setString(
+                              'last_location_update_time',
+                              DateTime.now().toIso8601String(),
+                            );
                             _lat = 21.4225;
                             _lng = 39.8262;
                             _cityName = 'مكة المكرمة';
                             _coordinates = Coordinates(_lat, _lng);
                             _calculatePrayerTimes();
                             notifyListeners();
-                            _showToast(context, 'تم حفظ توقيت مكة المكرمة كخيار افتراضي');
+                            _showToast(
+                              context,
+                              'تم حفظ توقيت مكة المكرمة كخيار افتراضي',
+                            );
                           }
                         },
                         child: Text(
@@ -272,7 +317,11 @@ class PrayerProvider extends ChangeNotifier {
       final isServiceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!isServiceEnabled) {
         if (context.mounted) {
-          _showToast(context, 'الرجاء تفعيل خدمة تحديد الموقع (GPS) أولاً في إعدادات الهاتف');
+          _showToast(
+            context,
+            'الرجاء تفعيل خدمة تحديد الموقع (GPS) أولاً في إعدادات الهاتف',
+          );
+          await Geolocator.openLocationSettings();
         }
         _isLoading = false;
         notifyListeners();
@@ -285,13 +334,29 @@ class PrayerProvider extends ChangeNotifier {
         permission = await Geolocator.requestPermission();
       }
 
+      if (permission == LocationPermission.deniedForever) {
+        if (context.mounted) {
+          _showToast(
+            context,
+            'تم رفض الوصول للموقع بشكل دائم، يرجى تفعيله من إعدادات التطبيق',
+          );
+          await Geolocator.openAppSettings();
+        }
+      }
+
       if (permission == LocationPermission.denied ||
           permission == LocationPermission.deniedForever) {
         if (context.mounted) {
-          _showToast(context, 'تم رفض الوصول للموقع، سيتم الاستمرار بتوقيت مكة المكرمة كافتراضي');
+          _showToast(
+            context,
+            'تم رفض الوصول للموقع، سيتم الاستمرار بتوقيت مكة المكرمة كافتراضي',
+          );
         }
         await _saveLocationToPrefs(21.4225, 39.8262, 'مكة المكرمة');
-        await prefs.setString('last_location_update_time', DateTime.now().toIso8601String());
+        await prefs.setString(
+          'last_location_update_time',
+          DateTime.now().toIso8601String(),
+        );
         _lat = 21.4225;
         _lng = 39.8262;
         _cityName = 'مكة المكرمة';
@@ -314,9 +379,7 @@ class PrayerProvider extends ChangeNotifier {
               accuracy: LocationAccuracy.low,
               forceLocationManager: true,
             )
-          : const LocationSettings(
-              accuracy: LocationAccuracy.low,
-            );
+          : const LocationSettings(accuracy: LocationAccuracy.low);
 
       pos ??= await Geolocator.getCurrentPosition(
         locationSettings: locationSettings,
@@ -332,7 +395,8 @@ class PrayerProvider extends ChangeNotifier {
           final placemarks = await placemarkFromCoordinates(_lat, _lng);
           if (placemarks.isNotEmpty) {
             final place = placemarks.first;
-            _cityName = place.locality ??
+            _cityName =
+                place.locality ??
                 place.subAdministrativeArea ??
                 place.administrativeArea ??
                 'موقعي الحالي';
@@ -343,18 +407,24 @@ class PrayerProvider extends ChangeNotifier {
 
         // حفظ الإحداثيات والمدينة في الذاكرة لتشغيل أوفلاين للأبد
         await _saveLocationToPrefs(_lat, _lng, _cityName);
-        await prefs.setString('last_location_update_time', DateTime.now().toIso8601String());
+        await prefs.setString(
+          'last_location_update_time',
+          DateTime.now().toIso8601String(),
+        );
 
         _calculatePrayerTimes();
         await scheduleAdhanNotifications();
-        
+
         if (context.mounted) {
           _showToast(context, 'تم تحديد موقعك بنجاح: $_cityName');
         }
       }
     } catch (e) {
       if (context.mounted) {
-        _showToast(context, 'تعذر الحصول على موقعك الحالي، تم الاستمرار بالبيانات السابقة');
+        _showToast(
+          context,
+          'تعذر الحصول على موقعك الحالي، تم الاستمرار بالبيانات السابقة',
+        );
       }
     } finally {
       _isLoading = false;
@@ -363,7 +433,11 @@ class PrayerProvider extends ChangeNotifier {
   }
 
   /// حفظ البيانات المشتركة
-  Future<void> _saveLocationToPrefs(double lat, double lng, String cityName) async {
+  Future<void> _saveLocationToPrefs(
+    double lat,
+    double lng,
+    String cityName,
+  ) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setDouble('prayer_lat', lat);
     await prefs.setDouble('prayer_lng', lng);
@@ -379,12 +453,17 @@ class PrayerProvider extends ChangeNotifier {
           textDirection: ui.TextDirection.rtl,
           child: Text(
             message,
-            style: const TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold),
+            style: const TextStyle(
+              fontFamily: 'Cairo',
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ),
         duration: const Duration(seconds: 4),
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.r)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10.r),
+        ),
       ),
     );
   }
@@ -414,7 +493,7 @@ class PrayerProvider extends ChangeNotifier {
       if (next == Prayer.none) {
         // إذا انتهت صلوات اليوم، فالصلاة القادمة هي الفجر غداً
         _nextPrayer = Prayer.fajr;
-        
+
         // حساب وقت الفجر للغد
         final tomorrow = DateTime.now().add(const Duration(days: 1));
         final tomorrowTimes = PrayerTimes(
@@ -441,7 +520,11 @@ class PrayerProvider extends ChangeNotifier {
           final enteredPrayer = _nextPrayer!;
           if (enteredPrayer != Prayer.sunrise) {
             final prayerName = getPrayerName(enteredPrayer);
-            AdhanPlayerService().playAdhan(prayerName);
+            // لتفادي الصوت المزدوج في الأندرويد، نمنع تشغيل الصوت من فلاتر
+            // لأن نظام التنبيه الأصلي الجديد (Native Alarm) سيتكفل بالرنين الكامل.
+            if (!Platform.isAndroid) {
+              AdhanPlayerService().playAdhan(prayerName);
+            }
           }
 
           // إذا حان وقت الصلاة، نعيد حساب الصلاة التي تليها
@@ -483,9 +566,78 @@ class PrayerProvider extends ChangeNotifier {
     }
   }
 
+  /// تحديث الموقع تلقائياً وبصمت دون إزعاج المستخدم إذا كانت الصلاحية ممنوحة مسبقاً
+  Future<void> silentlyUpdateLocation() async {
+    if (defaultTargetPlatform == TargetPlatform.windows) {
+      return;
+    }
+
+    try {
+      // التحقق من صلاحيات الموقع
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.always ||
+          permission == LocationPermission.whileInUse) {
+        // التحقق من تفعيل الـ GPS بالهاتف
+        final isServiceEnabled = await Geolocator.isLocationServiceEnabled();
+        if (isServiceEnabled) {
+          final locationSettings =
+              defaultTargetPlatform == TargetPlatform.android
+              ? AndroidSettings(
+                  accuracy: LocationAccuracy.low,
+                  forceLocationManager: true,
+                )
+              : const LocationSettings(accuracy: LocationAccuracy.low);
+
+          Position? pos = await Geolocator.getCurrentPosition(
+            locationSettings: locationSettings,
+          ).timeout(const Duration(seconds: 6));
+
+          if (pos != null) {
+            _lat = pos.latitude;
+            _lng = pos.longitude;
+            _coordinates = Coordinates(_lat, _lng);
+
+            // جلب الاسم الجغرافي للمدينة
+            try {
+              final placemarks = await placemarkFromCoordinates(_lat, _lng);
+              if (placemarks.isNotEmpty) {
+                final place = placemarks.first;
+                _cityName =
+                    place.locality ??
+                    place.subAdministrativeArea ??
+                    place.administrativeArea ??
+                    'موقعي الحالي';
+              }
+            } catch (_) {
+              if (_cityName == 'مكة المكرمة') {
+                _cityName = 'موقعي الحالي';
+              }
+            }
+
+            // حفظ الإحداثيات والمدينة في الذاكرة لتشغيل أوفلاين للأبد
+            await _saveLocationToPrefs(_lat, _lng, _cityName);
+
+            final prefs = await SharedPreferences.getInstance();
+            await prefs.setString(
+              'last_location_update_time',
+              DateTime.now().toIso8601String(),
+            );
+
+            _calculatePrayerTimes();
+            await scheduleAdhanNotifications();
+            notifyListeners();
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint("Error in silentlyUpdateLocation: $e");
+    }
+  }
+
   @override
   void dispose() {
     _timer?.cancel();
+    _serviceStatusSubscription?.cancel();
     super.dispose();
   }
 }

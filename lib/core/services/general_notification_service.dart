@@ -137,7 +137,7 @@ class GeneralNotificationService {
     final prefs = await SharedPreferences.getInstance();
 
     // 1. Azkar (Morning, Evening, Sleep)
-    if (prefs.getBool('notifications_azkar') ?? false) {
+    if (prefs.getBool('notifications_azkar') ?? true) {
       await scheduleAzkarNotifications();
     } else {
       await cancelAzkarNotifications();
@@ -151,7 +151,7 @@ class GeneralNotificationService {
     }
 
     // 3. Friday Reminder
-    if (prefs.getBool('notifications_friday') ?? false) {
+    if (prefs.getBool('notifications_friday') ?? true) {
       await scheduleFridayReminder();
     } else {
       await _notifications.cancel(id: idFridayKahf);
@@ -180,7 +180,7 @@ class GeneralNotificationService {
     }
 
     // 7. Daily Verse & Hadith
-    if (prefs.getBool('notifications_daily_content') ?? false) {
+    if (prefs.getBool('notifications_daily_content') ?? true) {
       await scheduleDailyContentReminder();
     } else {
       await _notifications.cancel(id: idDailyContent);

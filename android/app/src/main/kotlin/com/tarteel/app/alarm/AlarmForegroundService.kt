@@ -1,0 +1,395 @@
+package com.tarteel.app.alarm
+
+import android.app.Notification
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.PendingIntent
+import android.app.Service
+import android.content.Context
+import android.content.Intent
+import android.content.pm.ServiceInfo
+import android.media.AudioAttributes
+import android.media.AudioManager
+import android.media.MediaPlayer
+import android.os.Build
+import android.os.IBinder
+import android.os.VibrationEffect
+import android.os.Vibrator
+import android.util.Log
+import androidx.core.app.NotificationCompat
+
+/**
+ * ============================================================================
+ * اسم الملف: AlarmForegroundService.kt
+ * المسؤولية: تشغيل صوت الأذان/المنبه بالخلفية وإظهار إشعار ذو أولوية قصوى وفتح شاشة الرنين.
+ * سبب الإنشاء: المكون الوحيد القادر على إبقاء عملية التشغيل نشطة بالخلفية وتخطي قيود السبات.
+ * متى يستخدم: عند رنين المنبه وبدء تشغيل الخدمة الخلفية.
+ * من يستدعيه: AlarmReceiver.kt
+ * الملفات التي يتواصل معها: AlarmReceiver.kt, AlarmActivity.kt, AlarmBridge.kt (لقراءة البيانات)
+ * ============================================================================
+ */
+class AlarmForegroundService : Service() {
+
+    private var mediaPlayer: MediaPlayer? = null
+    private var vibrator: Vibrator? = null
+    private var currentAlarmData: AlarmData? = null
+    private var originalAlarmVolume: Int? = null
+
+    companion object {
+        private const val TAG = "AlarmService"
+        private const val NOTIFICATION_ID = 9999
+        private const val CHANNEL_ID = "adhan_alarm_channel_v1"
+
+        // مفاتيح الأوامر الخاصة بالتحكم بالخدمة
+        const val ACTION_START = "com.tarteel.app.alarm.ACTION_START"
+        const val ACTION_STOP = "com.tarteel.app.alarm.ACTION_STOP"
+        const val ACTION_MUTE = "com.tarteel.app.alarm.ACTION_MUTE"
+        const val ACTION_UPDATE_VOLUME = "com.tarteel.app.alarm.ACTION_UPDATE_VOLUME"
+        const val ACTION_UPDATE_VIBRATION = "com.tarteel.app.alarm.ACTION_UPDATE_VIBRATION"
+    }
+
+    override fun onBind(intent: Intent?): IBinder? {
+        return null // هذه الخدمة لا تدعم الربط المباشر بالأنشطة (Bound Service)
+    }
+
+    /**
+     * الدالة الرئيسية لاستقبال الأوامر والتحكم بالخدمة.
+     */
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        val action = intent?.action
+        val alarmId = intent?.getStringExtra("alarm_id")
+        val alarmJson = intent?.getStringExtra("alarm_json")
+
+        Log.d(TAG, "تم استدعاء الخدمة الخلفية بالأمر: $action لمعرف منبه: $alarmId أو نص JSON: $alarmJson")
+
+        // 1. معالجة أوامر التحكم المباشرة (إيقاف، كتم، أو تحديث فوري)
+        if (action == ACTION_STOP) {
+            stopAlarm()
+            return START_NOT_STICKY
+        }
+        if (action == ACTION_MUTE) {
+            muteAlarm()
+            return START_STICKY
+        }
+        if (action == ACTION_UPDATE_VOLUME) {
+            val volume = intent?.getFloatExtra("volume", 1.0f) ?: 1.0f
+            updateVolume(volume)
+            return START_STICKY
+        }
+        if (action == ACTION_UPDATE_VIBRATION) {
+            val vibrate = intent?.getBooleanExtra("vibrate", true) ?: true
+            updateVibration(vibrate)
+            return START_STICKY
+        }
+
+        // 2. التحقق من صحة المعرف وبدء رنين منبه جديد أو أذان تجريبي
+        if (alarmJson != null) {
+            try {
+                val alarmData = AlarmData.fromJson(alarmJson)
+                currentAlarmData = alarmData
+                startAlarm(alarmData)
+            } catch (e: Exception) {
+                Log.e(TAG, "فشل فك بيانات المنبه التجريبي: ${e.message}")
+                stopSelf()
+            }
+        } else if (alarmId != null) {
+            // جلب تفاصيل المنبه من ذاكرة الهاتف
+            val sharedPrefs = getSharedPreferences("native_alarm_prefs", Context.MODE_PRIVATE)
+            val jsonStr = sharedPrefs.getString("alarm_$alarmId", null)
+            
+            if (jsonStr != null) {
+                try {
+                    val alarmData = AlarmData.fromJson(jsonStr)
+                    currentAlarmData = alarmData
+                    startAlarm(alarmData)
+                } catch (e: Exception) {
+                    Log.e(TAG, "فشل فك بيانات المنبه: ${e.message}")
+                    stopSelf()
+                }
+            } else {
+                Log.e(TAG, "لم يتم العثور على منبه بالمعرف: $alarmId في الذاكرة")
+                stopSelf()
+            }
+        } else {
+            // إذا بدأت الخدمة بدون معرف وبدون أمر، نقوم بإيقافها فوراً
+            stopSelf()
+        }
+
+        return START_STICKY
+    }
+
+    private fun startAlarm(alarmData: AlarmData) {
+        currentAlarmData = alarmData
+        Log.d(TAG, "بدء رنين المنبه: ${alarmData.title}")
+
+        // نقوم أولاً بإيقاف وتفريغ أي مشغل أو هزاز نشط لتفادي تداخل الأصوات وتراكمها
+        try {
+            mediaPlayer?.stop()
+            mediaPlayer?.release()
+            mediaPlayer = null
+        } catch (e: Exception) {
+            // تجاهل الخطأ
+        }
+        try {
+            vibrator?.cancel()
+            vibrator = null
+        } catch (e: Exception) {
+            // تجاهل الخطأ
+        }
+
+        // 1. إعداد الإشعار وتفعيل الخدمة كخدمة أمامية فقط للمنبهات غير التجريبية
+        val isTest = alarmData.id == "adhan_test_preview"
+        if (!isTest) {
+            // إنشاء قناة الإشعارات (مهم جداً لأندرويد 8+)
+            createNotificationChannel()
+
+            // إعداد النيات (Intents) لأزرار الإيقاف والكتم في الإشعار
+            val stopIntent = Intent(this, AlarmForegroundService::class.java).apply {
+                action = ACTION_STOP
+            }
+            val stopPendingIntent = PendingIntent.getService(
+                this,
+                alarmData.id.hashCode() + 1,
+                stopIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+
+            val muteIntent = Intent(this, AlarmForegroundService::class.java).apply {
+                action = ACTION_MUTE
+            }
+            val mutePendingIntent = PendingIntent.getService(
+                this,
+                alarmData.id.hashCode() + 2,
+                muteIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+
+            // إعداد النية لفتح واجهة المنبه الكاملة AlarmActivity فوق قفل الشاشة
+            val fullScreenIntent = Intent(this, AlarmActivity::class.java).apply {
+                putExtra("alarm_id", alarmData.id)
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            }
+            val fullScreenPendingIntent = PendingIntent.getActivity(
+                this,
+                alarmData.id.hashCode(),
+                fullScreenIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+
+            // بناء الإشعار ذو الأولوية القصوى مع أزرار تفاعلية ونية الشاشة الكاملة
+            val notification: Notification = NotificationCompat.Builder(this, CHANNEL_ID)
+                .setSmallIcon(android.R.drawable.ic_lock_idle_alarm) // أيقونة منبه افتراضية آمنة
+                .setContentTitle(alarmData.title)
+                .setContentText(alarmData.subtitle)
+                .setPriority(NotificationCompat.PRIORITY_MAX)
+                .setCategory(NotificationCompat.CATEGORY_ALARM)
+                .setFullScreenIntent(fullScreenPendingIntent, true) // تفعيل الظهور بملء الشاشة فوق القفل
+                .setOngoing(true) // منع المستخدم من مسح الإشعار يدوياً أثناء الرنين
+                .setAutoCancel(false)
+                .setContentIntent(fullScreenPendingIntent) // فتح الواجهة عند الضغط على الإشعار
+                .addAction(android.R.drawable.ic_menu_close_clear_cancel, "إيقاف", stopPendingIntent)
+                .addAction(android.R.drawable.ic_lock_silent_mode, "كتم", mutePendingIntent)
+                .build()
+
+            // إعلان تشغيل الخدمة بالخلفية فوراً لحمايتها من القتل
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                startForeground(
+                    NOTIFICATION_ID,
+                    notification,
+                    ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK
+                )
+            } else {
+                startForeground(NOTIFICATION_ID, notification)
+            }
+        }
+
+        // 6. تشغيل الهزاز إذا كان مفعلاً
+        if (alarmData.vibrate) {
+            vibrator = getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                vibrator?.vibrate(VibrationEffect.createWaveform(longArrayOf(0, 1000, 1000), 0))
+            } else {
+                @Suppress("DEPRECATION")
+                vibrator?.vibrate(longArrayOf(0, 1000, 1000), 0)
+            }
+        }
+
+        // 7. ضبط مستوى صوت المنبه في النظام وتحديد خصائص الصوت
+        val audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
+        try {
+            originalAlarmVolume = audioManager.getStreamVolume(AudioManager.STREAM_ALARM)
+            val maxVolume = audioManager.getStreamMaxVolume(AudioManager.STREAM_ALARM)
+            // حساب مستوى الصوت المطلوب لتيار المنبه (STREAM_ALARM)
+            val targetVolume = (alarmData.volume * maxVolume).toInt()
+            audioManager.setStreamVolume(AudioManager.STREAM_ALARM, targetVolume, 0)
+            Log.d(TAG, "تم ضبط مستوى صوت المنبه بالنظام مؤقتاً إلى: $targetVolume من أصل $maxVolume (السابق: $originalAlarmVolume)")
+        } catch (e: Exception) {
+            Log.e(TAG, "فشل تعيين مستوى صوت المنبه بالنظام: ${e.message}")
+        }
+
+        val audioAttributes = AudioAttributes.Builder()
+            .setUsage(AudioAttributes.USAGE_ALARM)
+            .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+            .build()
+
+        // 8. تشغيل ملف الصوت المخصص باستخدام MediaPlayer
+        try {
+            // البحث عن ملف الصوت المخصص في مجلد res/raw
+            val resourceId = resources.getIdentifier(alarmData.audioFile, "raw", packageName)
+            
+            mediaPlayer = if (resourceId != 0) {
+                // إنشاء المشغل بملف الأذان المخصص مع تحديد خصائص الصوت
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                    MediaPlayer.create(this, resourceId, audioAttributes, 0)
+                } else {
+                    MediaPlayer.create(this, resourceId).apply {
+                        @Suppress("DEPRECATION")
+                        setAudioStreamType(AudioManager.STREAM_ALARM)
+                    }
+                }
+            } else {
+                // إذا لم يتم العثور على الملف المخصص، نستخدم نغمة المنبه الافتراضية للنظام لتفادي السكوت
+                val defaultUri = android.media.RingtoneManager.getDefaultUri(android.media.RingtoneManager.TYPE_ALARM)
+                MediaPlayer().apply {
+                    setAudioAttributes(audioAttributes)
+                    setDataSource(this@AlarmForegroundService, defaultUri)
+                    prepare()
+                }
+            }
+
+            mediaPlayer?.apply {
+                isLooping = alarmData.loopAudio
+                setVolume(alarmData.volume, alarmData.volume)
+                start()
+
+                // مستمع لإنهاء الصوت لإغلاق الخدمة تلقائياً إذا كان التكرار معطلاً
+                if (!alarmData.loopAudio) {
+                    setOnCompletionListener {
+                        stopAlarm()
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "فشل تشغيل مشغل الصوت: ${e.message}")
+        }
+    }
+
+    /**
+     * كتم صوت الرنين دون إغلاق الواجهة أو الإشعار.
+     */
+    private fun muteAlarm() {
+        Log.d(TAG, "تم كتم صوت المنبه")
+        try {
+            if (mediaPlayer?.isPlaying == true) {
+                mediaPlayer?.pause()
+            }
+            vibrator?.cancel()
+        } catch (e: Exception) {
+            Log.e(TAG, "فشل كتم صوت المنبه: ${e.message}")
+        }
+    }
+
+    /**
+     * إيقاف تشغيل المنبه بالكامل ومسح الهزاز والإشعارات وإغلاق الخدمة.
+     */
+    private fun stopAlarm() {
+        Log.d(TAG, "إيقاف المنبه بالكامل وإنهاء الخدمة")
+        try {
+            mediaPlayer?.stop()
+            mediaPlayer?.release()
+            mediaPlayer = null
+        } catch (e: Exception) {
+            Log.e(TAG, "خطأ أثناء إيقاف MediaPlayer: ${e.message}")
+        }
+
+        try {
+            vibrator?.cancel()
+        } catch (e: Exception) {
+            Log.e(TAG, "خطأ أثناء إيقاف الهزاز: ${e.message}")
+        }
+
+        originalAlarmVolume?.let {
+            try {
+                val audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
+                audioManager.setStreamVolume(AudioManager.STREAM_ALARM, it, 0)
+                Log.d(TAG, "تمت استعادة مستوى صوت المنبه بالنظام إلى: $it")
+            } catch (e: Exception) {
+                Log.e(TAG, "فشل استعادة مستوى صوت المنبه بالنظام: ${e.message}")
+            }
+            originalAlarmVolume = null
+        }
+
+        // إيقاف نمط الخدمة الخلفية ومسح الإشعار
+        stopForeground(true)
+        // إيقاف الخدمة الحالية
+        stopSelf()
+    }
+
+    /**
+     * إنشاء قناة الإشعارات الخاصة بالمنبه (متطلب إلزامي في أندرويد 8+).
+     */
+    private fun createNotificationChannel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val name = "تنبيهات الصلوات والمنبهات"
+            val descriptionText = "قناة مخصصة لتشغيل نغمات الأذان والصلوات في وقتها"
+            val importance = NotificationManager.IMPORTANCE_HIGH
+            val channel = NotificationChannel(CHANNEL_ID, name, importance).apply {
+                description = descriptionText
+                lockscreenVisibility = Notification.VISIBILITY_PUBLIC
+                enableLights(true)
+                enableVibration(false) // نتحكم بالهزاز يدوياً لتفادي تداخل نغمة القناة الافتراضية
+                // تعيين قناة الصوت لتشغيل الأذان كمنبه لتخطي الأوضاع الصامتة
+                setSound(
+                    null, // نلغي الصوت الافتراضي للقناة لأننا نشغله يدوياً وبدقة عبر MediaPlayer
+                    AudioAttributes.Builder()
+                        .setUsage(AudioAttributes.USAGE_ALARM)
+                        .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                        .build()
+                )
+            }
+            val notificationManager: NotificationManager =
+                getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            notificationManager.createNotificationChannel(channel)
+        }
+    }
+
+    private fun updateVolume(volume: Float) {
+        try {
+            mediaPlayer?.setVolume(volume, volume)
+            val audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
+            val maxVolume = audioManager.getStreamMaxVolume(AudioManager.STREAM_ALARM)
+            val targetVolume = (volume * maxVolume).toInt()
+            audioManager.setStreamVolume(AudioManager.STREAM_ALARM, targetVolume, 0)
+            Log.d(TAG, "تحديث مستوى صوت الأذان تجريبياً لحظياً إلى: $targetVolume")
+        } catch (e: Exception) {
+            Log.e(TAG, "فشل تحديث مستوى الصوت لحظياً: ${e.message}")
+        }
+    }
+
+    private fun updateVibration(vibrate: Boolean) {
+        try {
+            if (vibrate) {
+                if (vibrator == null) {
+                    vibrator = getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                        vibrator?.vibrate(VibrationEffect.createWaveform(longArrayOf(0, 1000, 1000), 0))
+                    } else {
+                        @Suppress("DEPRECATION")
+                        vibrator?.vibrate(longArrayOf(0, 1000, 1000), 0)
+                    }
+                }
+            } else {
+                vibrator?.cancel()
+                vibrator = null
+            }
+            Log.d(TAG, "تحديث حالة الاهتزاز تجريبياً لحظياً إلى: $vibrate")
+        } catch (e: Exception) {
+            Log.e(TAG, "فشل تحديث الاهتزاز لحظياً: ${e.message}")
+        }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        stopAlarm()
+    }
+}
