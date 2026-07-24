@@ -84,7 +84,7 @@ class AccessListGrid extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.center,
 
                   children: [
-                    SizedBox(height: 8.h),
+                    SizedBox(height: 12.h),
 
                     Container(
                       padding: EdgeInsets.all(10.w),
@@ -98,21 +98,21 @@ class AccessListGrid extends StatelessWidget {
 
                       child: Icon(
                         item.icon,
-                        size: 25.sp,
+                        size: 20.sp,
                         color: AppColors.greenBorder,
                         // color: AppColors.goldAccent,
                       ),
                     ),
 
-                    // SizedBox(height: 3.h),
+                    SizedBox(height: 10.h),
                     Expanded(
                       child: Padding(
                         padding: EdgeInsets.symmetric(horizontal: 7.w),
                         child: AutoSizeText(
                           item.title,
                           maxLines: 3,
-                          minFontSize: 7,
-                          maxFontSize: 16,
+                          minFontSize: 5,
+                          maxFontSize: 10,
                           stepGranularity: 0.5,
                           overflow: TextOverflow.ellipsis,
                           textAlign: TextAlign.center,

@@ -127,6 +127,27 @@ class _AdhanSettingsPageState extends State<AdhanSettingsPage> {
     }
   }
 
+  Future<void> _startTestAdhanWithVolume(double val) async {
+    if (_isTestingAdhan) return;
+    if (_activeMuezzin == null) return;
+
+    setState(() {
+      _isTestingAdhan = true;
+    });
+
+    final success = await NativeAlarmService.playTestAdhan(
+      audioFile: _activeMuezzin!.rawResourceName,
+      volume: val,
+      vibrate: _vibrationEnabled,
+    );
+
+    if (!success) {
+      setState(() {
+        _isTestingAdhan = false;
+      });
+    }
+  }
+
   void _showMuezzinSelectionSheet() async {
     final activeMuezzin = await AdhanNotificationService.selectedMuezzin();
     final AudioPlayer previewPlayer = AudioPlayer();
@@ -425,6 +446,8 @@ class _AdhanSettingsPageState extends State<AdhanSettingsPage> {
                             });
                             if (_isTestingAdhan) {
                               NativeAlarmService.updateTestVolume(val);
+                            } else {
+                              _startTestAdhanWithVolume(val);
                             }
                           },
                           onChangeEnd: (val) {

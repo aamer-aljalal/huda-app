@@ -33,6 +33,7 @@ class AlarmForegroundService : Service() {
     private var mediaPlayer: MediaPlayer? = null
     private var vibrator: Vibrator? = null
     private var currentAlarmData: AlarmData? = null
+    private var isMuted = false
     private var originalAlarmVolume: Int? = null
 
     companion object {
@@ -87,6 +88,7 @@ class AlarmForegroundService : Service() {
             try {
                 val alarmData = AlarmData.fromJson(alarmJson)
                 currentAlarmData = alarmData
+                isMuted = false // تصفير كتم الصوت عند بدء منبه جديد
                 startAlarm(alarmData)
             } catch (e: Exception) {
                 Log.e(TAG, "فشل فك بيانات المنبه التجريبي: ${e.message}")
@@ -101,6 +103,7 @@ class AlarmForegroundService : Service() {
                 try {
                     val alarmData = AlarmData.fromJson(jsonStr)
                     currentAlarmData = alarmData
+                    isMuted = false // تصفير كتم الصوت عند بدء منبه جديد
                     startAlarm(alarmData)
                 } catch (e: Exception) {
                     Log.e(TAG, "فشل فك بيانات المنبه: ${e.message}")
@@ -275,17 +278,41 @@ class AlarmForegroundService : Service() {
     }
 
     /**
-     * كتم صوت الرنين دون إغلاق الواجهة أو الإشعار.
+     * كتم أو إلغاء كتم صوت الرنين دون إغلاق الواجهة أو الإشعار.
      */
     private fun muteAlarm() {
-        Log.d(TAG, "تم كتم صوت المنبه")
         try {
-            if (mediaPlayer?.isPlaying == true) {
-                mediaPlayer?.pause()
+            if (isMuted) {
+                // إلغاء الكتم: استئناف تشغيل الصوت والهزاز
+                isMuted = false
+                Log.d(TAG, "تم إلغاء كتم صوت المنبه")
+                mediaPlayer?.start()
+                
+                // استئناف الهزاز إذا كان مفعلاً
+                currentAlarmData?.let { alarmData ->
+                    if (alarmData.vibrate) {
+                        if (vibrator == null) {
+                            vibrator = getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+                        }
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                            vibrator?.vibrate(VibrationEffect.createWaveform(longArrayOf(0, 1000, 1000), 0))
+                        } else {
+                            @Suppress("DEPRECATION")
+                            vibrator?.vibrate(longArrayOf(0, 1000, 1000), 0)
+                        }
+                    }
+                }
+            } else {
+                // كتم الصوت: إيقاف مؤقت للصوت والهزاز
+                isMuted = true
+                Log.d(TAG, "تم كتم صوت المنبه")
+                if (mediaPlayer?.isPlaying == true) {
+                    mediaPlayer?.pause()
+                }
+                vibrator?.cancel()
             }
-            vibrator?.cancel()
         } catch (e: Exception) {
-            Log.e(TAG, "فشل كتم صوت المنبه: ${e.message}")
+            Log.e(TAG, "فشل تعديل حالة الكتم/التشغيل: ${e.message}")
         }
     }
 

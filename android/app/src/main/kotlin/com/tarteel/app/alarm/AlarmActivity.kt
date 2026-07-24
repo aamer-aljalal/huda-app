@@ -7,22 +7,25 @@ import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import android.util.TypedValue
 import android.view.Gravity
+import android.view.View
 import android.view.ViewGroup
 import android.view.WindowManager
-import android.widget.Button
+import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.LinearLayout
+import android.widget.RelativeLayout
 import android.widget.TextView
 
 /**
  * ============================================================================
  * اسم الملف: AlarmActivity.kt
  * المسؤولية: الشاشة الأصلية التي تظهر فوق شاشة قفل الهاتف لعرض تفاصيل الصلاة وأزرار التحكم.
- * سبب الإنشاء: المكون الأساسي لعرض واجهة المنبه التفاعلية بملء الشاشة عند قفل الهاتف.
+ * سبب الإنشاء: المكون الأساسي لعرض واجهة المنبه التفاعلية بملء الشاشة عند قفل الهاتف بتصميم متناسق.
  * متى يستخدم: يتم فتحه تلقائياً بواسطة نظام التشغيل عند رنين المنبه/الأذان.
- * من يستدعيه: نظام التشغيل أندرويد عبر نية الشاشة الكاملة (FullScreenIntent).
+ * من يستدعيه: نظام تشغيل أندرويد عبر نية الشاشة الكاملة (FullScreenIntent).
  * الملفات التي يتواصل معها: AlarmForegroundService.kt (لإرسال الأوامر)، AlarmBridge.kt (لقراءة البيانات).
  * ============================================================================
  */
@@ -32,16 +35,17 @@ class AlarmActivity : Activity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        
+        // 2. استخراج معرف المنبه القادم مع النية
+        alarmId = intent.getStringExtra("alarm_id")
+        Log.d("AlarmActivity", "تم بدء onCreate لمعرف منبه: $alarmId")
 
         // 1. إعداد شاشة الهاتف لإيقاظها وتخطي قفل الهاتف الأمني
         setupLockScreenFlags()
 
-        // 2. استخراج معرف المنبه القادم مع النية
-        alarmId = intent.getStringExtra("alarm_id")
-
         // 3. جلب بيانات التنبيه من الذاكرة المشتركة SharedPreferences
         var alarmTitle = "حان الآن موعد الصلاة"
-        var alarmSubtitle = "الله أكبر"
+        var alarmSubtitle = "نداء للأذان"
         
         if (alarmId != null) {
             val sharedPrefs = getSharedPreferences("native_alarm_prefs", Context.MODE_PRIVATE)
@@ -57,54 +61,321 @@ class AlarmActivity : Activity() {
             }
         }
 
-        // 4. بناء الواجهة الرسومية برمجياً بنسق داكن وراقي (دون الحاجة لملفات XML)
-        val rootLayout = buildRootLayout()
+        // 4. بناء الواجهة الرسومية برمجياً بنسق داكن ملكي راقي يحاكي واجهة التطبيق الداخلية
+        val rootLayout = RelativeLayout(this).apply {
+            setBackgroundColor(Color.parseColor("#0B0F19"))
+            layoutParams = ViewGroup.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT
+            )
+            setPadding(dpToPx(24), dpToPx(32), dpToPx(24), dpToPx(32))
+        }
+
+        // أ. الحاوية العلوية للعناوين (Title & Subtitle)
+        val headerLayout = LinearLayout(this).apply {
+            id = View.generateViewId()
+            orientation = LinearLayout.VERTICAL
+            gravity = Gravity.CENTER
+            val params = RelativeLayout.LayoutParams(
+                RelativeLayout.LayoutParams.MATCH_PARENT,
+                RelativeLayout.LayoutParams.WRAP_CONTENT
+            ).apply {
+                addRule(RelativeLayout.ALIGN_PARENT_TOP)
+                topMargin = dpToPx(48)
+            }
+            layoutParams = params
+        }
         
-        // أ. إضافة أيقونة المنبه/المسجد الافتراضية
-        val iconView = buildIconView()
-        rootLayout.addView(iconView)
-
-        // ب. إضافة عنوان الصلاة (مثال: حان الآن موعد صلاة الظهر)
-        val titleView = buildTextView(alarmTitle, 24f, "#FFFFFF", true)
-        rootLayout.addView(titleView)
-
-        // ج. إضافة اسم المؤذن أو التفاصيل (مثال: بصوت الشيخ إسلام صبحي)
-        val subtitleView = buildTextView(alarmSubtitle, 16f, "#90A4AE", false)
-        // إعطاء مساحة فارغة صغيرة أسفل الوصف
-        val subtitleParams = subtitleView.layoutParams as LinearLayout.LayoutParams
-        subtitleParams.setMargins(0, dpToPx(8), 0, dpToPx(48))
-        subtitleView.layoutParams = subtitleParams
-        rootLayout.addView(subtitleView)
-
-        // د. إضافة زر إيقاف الأذان باللون الأحمر الداكن
-        val stopButton = buildButton("إيقاف الأذان", "#EF5350") {
-            sendActionToService(AlarmForegroundService.ACTION_STOP)
-            finish() // إغلاق الشاشة الحالية
+        val mainTitleView = TextView(this).apply {
+            text = "حان الآن موعد الأذان"
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 24f)
+            setTextColor(Color.parseColor("#FFD700")) // لون ذهبي متألق للعنوان الرئيسي
+            gravity = Gravity.CENTER
+            setTypeface(typeface, android.graphics.Typeface.BOLD)
+            layoutParams = LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+            )
         }
-        rootLayout.addView(stopButton)
+        headerLayout.addView(mainTitleView)
 
-        // هـ. إضافة زر كتم الصوت باللون الأزرق الرمادي الداكن
-        val muteButton = buildButton("كتم الصوت", "#37474F") {
+        val subTitleView = TextView(this).apply {
+            text = "نداء لـ $alarmTitle\n$alarmSubtitle"
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 16f)
+            setTextColor(Color.parseColor("#B0BEC5")) // لون رمادي فاتح مريح للوصف
+            gravity = Gravity.CENTER
+            layoutParams = LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+            ).apply {
+                topMargin = dpToPx(12)
+            }
+        }
+        headerLayout.addView(subTitleView)
+        rootLayout.addView(headerLayout)
+
+        // ب. حاوية المسجد والتموجات المتحركة (Center Container)
+        val centerContainer = FrameLayout(this).apply {
+            id = View.generateViewId()
+            val params = RelativeLayout.LayoutParams(
+                dpToPx(280),
+                dpToPx(280)
+            ).apply {
+                addRule(RelativeLayout.CENTER_IN_PARENT)
+            }
+            layoutParams = params
+        }
+
+        // إنشاء التموجات الجمالية الثلاثة حول المسجد
+        val rippleShape = GradientDrawable().apply {
+            shape = GradientDrawable.OVAL
+            setStroke(dpToPx(1.5f), Color.parseColor("#4DFFD700")) // إطار ذهبي شبه شفاف (30%)
+        }
+
+        val ripple1 = View(this).apply {
+            background = rippleShape
+            layoutParams = FrameLayout.LayoutParams(dpToPx(140), dpToPx(140)).apply {
+                gravity = Gravity.CENTER
+            }
+        }
+        val ripple2 = View(this).apply {
+            background = rippleShape
+            layoutParams = FrameLayout.LayoutParams(dpToPx(140), dpToPx(140)).apply {
+                gravity = Gravity.CENTER
+            }
+        }
+        val ripple3 = View(this).apply {
+            background = rippleShape
+            layoutParams = FrameLayout.LayoutParams(dpToPx(140), dpToPx(140)).apply {
+                gravity = Gravity.CENTER
+            }
+        }
+        centerContainer.addView(ripple1)
+        centerContainer.addView(ripple2)
+        centerContainer.addView(ripple3)
+
+        // دائرة المسجد الوسطى
+        val mosqueCircle = FrameLayout(this).apply {
+            val circleBg = GradientDrawable().apply {
+                shape = GradientDrawable.OVAL
+                setColor(Color.parseColor("#121929")) // لون داكن أفتح قليلاً من الخلفية العامة
+                setStroke(dpToPx(2f), Color.parseColor("#FFD700")) // إطار ذهبي
+            }
+            background = circleBg
+            layoutParams = FrameLayout.LayoutParams(dpToPx(140), dpToPx(140)).apply {
+                gravity = Gravity.CENTER
+            }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                elevation = dpToPx(12).toFloat()
+            }
+        }
+
+        val mosqueIcon = ImageView(this).apply {
+            val resId = resources.getIdentifier("ic_mosque", "drawable", packageName)
+            if (resId != 0) {
+                setImageResource(resId)
+            } else {
+                setImageResource(android.R.drawable.ic_lock_idle_alarm)
+            }
+            setColorFilter(Color.parseColor("#FFD700"))
+            layoutParams = FrameLayout.LayoutParams(dpToPx(64), dpToPx(64)).apply {
+                gravity = Gravity.CENTER
+            }
+        }
+        mosqueCircle.addView(mosqueIcon)
+        centerContainer.addView(mosqueCircle)
+        rootLayout.addView(centerContainer)
+
+        // ج. تشغيل تموجات الحركة الجمالية فوراً
+        centerContainer.post {
+            startRippleAnimation(ripple1, 0)
+            startRippleAnimation(ripple2, 1000)
+            startRippleAnimation(ripple3, 2000)
+        }
+
+        // د. حاوية الأزرار السفلية (كتم على اليسار وإيقاف على اليمين)
+        val buttonsContainer = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER
+            val params = RelativeLayout.LayoutParams(
+                RelativeLayout.LayoutParams.MATCH_PARENT,
+                RelativeLayout.LayoutParams.WRAP_CONTENT
+            ).apply {
+                addRule(RelativeLayout.ALIGN_PARENT_BOTTOM)
+                bottomMargin = dpToPx(48)
+            }
+            layoutParams = params
+        }
+
+        // إعداد وتصميم الأزرار التفاعلية الدائرية
+        var isMuted = false
+        lateinit var muteButtonContainer: LinearLayout
+        
+        val toggleMuteClick = {
+            isMuted = !isMuted
+            Log.d("AlarmActivity", "تم الضغط على كتم الصوت. الحالة الجديدة للمكتوم: $isMuted")
             sendActionToService(AlarmForegroundService.ACTION_MUTE)
-            // نكتم الصوت ولكن نبقي الشاشة مفتوحة لكي يستطيع المستخدم الإيقاف لاحقاً
+            
+            val circle = muteButtonContainer.getChildAt(0) as FrameLayout
+            val icon = circle.getChildAt(0) as ImageView
+            val label = muteButtonContainer.getChildAt(1) as TextView
+            
+            if (isMuted) {
+                val mutedColor = "#90A4AE"
+                val bg = GradientDrawable().apply {
+                    shape = GradientDrawable.OVAL
+                    setColor(adjustAlpha(mutedColor, 0.15f))
+                    setStroke(dpToPx(1.5f), Color.parseColor(mutedColor))
+                }
+                circle.background = bg
+                icon.setColorFilter(Color.parseColor(mutedColor))
+                val resId = resources.getIdentifier("ic_volume_off", "drawable", packageName)
+                if (resId != 0) icon.setImageResource(resId)
+                label.text = "تشغيل الصوت"
+                label.setTextColor(Color.parseColor(mutedColor))
+            } else {
+                val normalColor = "#FFD700"
+                val bg = GradientDrawable().apply {
+                    shape = GradientDrawable.OVAL
+                    setColor(adjustAlpha(normalColor, 0.15f))
+                    setStroke(dpToPx(1.5f), Color.parseColor(normalColor))
+                }
+                circle.background = bg
+                icon.setColorFilter(Color.parseColor(normalColor))
+                val resId = resources.getIdentifier("ic_volume_up", "drawable", packageName)
+                if (resId != 0) icon.setImageResource(resId)
+                label.text = "كتم الصوت"
+                label.setTextColor(Color.parseColor("#B0BEC5"))
+            }
         }
-        val muteParams = muteButton.layoutParams as LinearLayout.LayoutParams
-        muteParams.setMargins(0, dpToPx(16), 0, 0)
-        muteButton.layoutParams = muteParams
-        rootLayout.addView(muteButton)
+
+        muteButtonContainer = createControlButton("كتم الصوت", "ic_volume_up", "#FFD700") {
+            toggleMuteClick()
+        }
+
+        val stopButtonContainer = createControlButton("إيقاف الأذان", "ic_stop", "#EF5350") {
+            Log.d("AlarmActivity", "تم الضغط على زر إيقاف الأذان")
+            sendActionToService(AlarmForegroundService.ACTION_STOP)
+            finish()
+        }
+
+        buttonsContainer.addView(muteButtonContainer)
+        
+        // مسافة فارغة لتفريق الأزرار
+        val space = View(this).apply {
+            layoutParams = LinearLayout.LayoutParams(dpToPx(48), 1)
+        }
+        buttonsContainer.addView(space)
+        
+        buttonsContainer.addView(stopButtonContainer)
+        rootLayout.addView(buttonsContainer)
 
         setContentView(rootLayout)
     }
 
     /**
-     * إعدادات النوافذ لإيقاظ شاشة الهاتف وتخطي شاشة القفل.
+     * تشغيل الرسوم المتحركة للتموجات الدائرية المتكررة.
      */
+    private fun startRippleAnimation(ripple: View, delay: Long) {
+        ripple.scaleX = 1.0f
+        ripple.scaleY = 1.0f
+        ripple.alpha = 1.0f
+
+        val scaleX = android.animation.ObjectAnimator.ofFloat(ripple, "scaleX", 1.0f, 2.2f)
+        val scaleY = android.animation.ObjectAnimator.ofFloat(ripple, "scaleY", 1.0f, 2.2f)
+        val alpha = android.animation.ObjectAnimator.ofFloat(ripple, "alpha", 1.0f, 0.0f)
+
+        scaleX.repeatCount = android.animation.ValueAnimator.INFINITE
+        scaleY.repeatCount = android.animation.ValueAnimator.INFINITE
+        alpha.repeatCount = android.animation.ValueAnimator.INFINITE
+
+        val animatorSet = android.animation.AnimatorSet().apply {
+            playTogether(scaleX, scaleY, alpha)
+            duration = 3000
+            startDelay = delay
+        }
+        animatorSet.start()
+    }
+
+    /**
+     * دالة مساعدة لإنشاء الأزرار التفاعلية الدائرية ذات التسمية السفلية.
+     */
+    private fun createControlButton(
+        labelStr: String,
+        iconResName: String,
+        colorHex: String,
+        onClick: () -> Unit
+    ): LinearLayout {
+        val container = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            gravity = Gravity.CENTER
+            layoutParams = LinearLayout.LayoutParams(
+                dpToPx(120),
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+        }
+
+        val buttonCircle = FrameLayout(this).apply {
+            val bg = GradientDrawable().apply {
+                shape = GradientDrawable.OVAL
+                setColor(adjustAlpha(colorHex, 0.15f))
+                setStroke(dpToPx(1.5f), Color.parseColor(colorHex))
+            }
+            background = bg
+            layoutParams = LinearLayout.LayoutParams(dpToPx(70), dpToPx(70)).apply {
+                gravity = Gravity.CENTER_HORIZONTAL
+            }
+            isClickable = true
+            isFocusable = true
+            setOnClickListener { onClick() }
+        }
+
+        val iconView = ImageView(this).apply {
+            val resId = resources.getIdentifier(iconResName, "drawable", packageName)
+            if (resId != 0) {
+                setImageResource(resId)
+            } else {
+                setImageResource(android.R.drawable.ic_menu_close_clear_cancel)
+            }
+            setColorFilter(Color.parseColor(colorHex))
+            layoutParams = FrameLayout.LayoutParams(dpToPx(30), dpToPx(30)).apply {
+                gravity = Gravity.CENTER
+            }
+        }
+        buttonCircle.addView(iconView)
+        container.addView(buttonCircle)
+
+        val labelView = TextView(this).apply {
+            text = labelStr
+            setTextColor(Color.parseColor("#B0BEC5"))
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 12f)
+            gravity = Gravity.CENTER
+            setTypeface(typeface, android.graphics.Typeface.BOLD)
+            layoutParams = LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+            ).apply {
+                topMargin = dpToPx(10)
+            }
+        }
+        container.addView(labelView)
+
+        return container
+    }
+
+    private fun adjustAlpha(colorHex: String, factor: Float): Int {
+        val color = Color.parseColor(colorHex)
+        val alpha = Math.round(Color.alpha(color) * factor)
+        val red = Color.red(color)
+        val green = Color.green(color)
+        val blue = Color.blue(color)
+        return Color.argb(alpha, red, green, blue)
+    }
+
     private fun setupLockScreenFlags() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
             setShowWhenLocked(true)
             setTurnScreenOn(true)
-            val windowManager = getSystemService(Context.WINDOW_SERVICE) as WindowManager
-            // إبقاء الشاشة مضيئة طوال فترة رنين المنبه
             window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         } else {
             @Suppress("DEPRECATION")
@@ -117,91 +388,6 @@ class AlarmActivity : Activity() {
         }
     }
 
-    /**
-     * بناء وتنسيق الحاوية الرئيسية للواجهة.
-     */
-    private fun buildRootLayout(): LinearLayout {
-        return LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            gravity = Gravity.CENTER
-            setBackgroundColor(Color.parseColor("#0B0F19")) // ثيم داكن ملكي فاخر
-            layoutParams = ViewGroup.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.MATCH_PARENT
-            )
-            setPadding(dpToPx(24), dpToPx(24), dpToPx(24), dpToPx(24))
-        }
-    }
-
-    /**
-     * بناء أيقونة المنبه الجمالية في وسط الشاشة.
-     */
-    private fun buildIconView(): ImageView {
-        return ImageView(this).apply {
-            setImageResource(android.R.drawable.ic_lock_idle_alarm)
-            layoutParams = LinearLayout.LayoutParams(dpToPx(96), dpToPx(96)).apply {
-                gravity = Gravity.CENTER_HORIZONTAL
-                setMargins(0, 0, 0, dpToPx(32))
-            }
-            // صبغ الأيقونة باللون الأبيض ليتناسب مع الخلفية الداكنة
-            setColorFilter(Color.WHITE)
-        }
-    }
-
-    /**
-     * بناء حقول النصوص بشكل موحد.
-     */
-    private fun buildTextView(text: String, sizeSp: Float, colorHex: String, isBold: Boolean): TextView {
-        return TextView(this).apply {
-            this.text = text
-            setTextSize(TypedValue.COMPLEX_UNIT_SP, sizeSp)
-            setTextColor(Color.parseColor(colorHex))
-            gravity = Gravity.CENTER
-            layoutParams = LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT
-            )
-            if (isBold) {
-                setTypeface(typeface, android.graphics.Typeface.BOLD)
-            }
-        }
-    }
-
-    /**
-     * بناء الأزرار وتصميم زواياها الدائرية برمجياً باستخدام TextView لتفادي مشاكل ثيمات Material.
-     */
-    private fun buildButton(text: String, colorHex: String, onClick: () -> Unit): TextView {
-        return TextView(this).apply {
-            this.text = text
-            setTextColor(Color.WHITE)
-            setTextSize(TypedValue.COMPLEX_UNIT_SP, 16f)
-            gravity = Gravity.CENTER
-            
-            // تصميم خلفية دائرية راقية للزر برمجياً (Rounded Button Background)
-            val shape = GradientDrawable().apply {
-                shape = GradientDrawable.RECTANGLE
-                cornerRadius = dpToPx(24).toFloat() // زوايا دائرية ناعمة
-                setColor(Color.parseColor(colorHex))
-            }
-            background = shape
-            
-            // إعطاء الزر عرضاً ثابتاً ومناسباً
-            layoutParams = LinearLayout.LayoutParams(
-                dpToPx(240),
-                dpToPx(48)
-            ).apply {
-                gravity = Gravity.CENTER_HORIZONTAL
-            }
-
-            isClickable = true
-            isFocusable = true
-            setOnClickListener { onClick() }
-        }
-    }
-
-    /**
-     * إرسال الأمر للخدمة الخلفية للتحكم بالرنين (إيقاف أو كتم).
-     */
     private fun sendActionToService(action: String) {
         val serviceIntent = Intent(this, AlarmForegroundService::class.java).apply {
             this.action = action
@@ -210,9 +396,6 @@ class AlarmActivity : Activity() {
         startService(serviceIntent)
     }
 
-    /**
-     * دالة تحويل المقاسات من DP إلى البكسل لتناسب شاشات الهواتف المختلفة.
-     */
     private fun dpToPx(dp: Int): Int {
         return TypedValue.applyDimension(
             TypedValue.COMPLEX_UNIT_DIP,
@@ -221,10 +404,15 @@ class AlarmActivity : Activity() {
         ).toInt()
     }
 
-    /**
-     * منع إغلاق الشاشة بالضغط على زر الرجوع الافتراضي للهاتف لضمان بقاء المنبه نشطاً.
-     */
+    private fun dpToPx(dp: Float): Int {
+        return TypedValue.applyDimension(
+            TypedValue.COMPLEX_UNIT_DIP,
+            dp,
+            resources.displayMetrics
+        ).toInt()
+    }
+
     override fun onBackPressed() {
-        // لا نفعل شيئاً؛ يجب على المستخدم تفاعل الأزرار الظاهرة فقط
+        // لا نفعل شيئاً؛ إجباري التفاعل مع الأزرار للسلامة
     }
 }

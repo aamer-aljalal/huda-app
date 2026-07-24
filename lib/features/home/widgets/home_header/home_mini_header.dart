@@ -60,7 +60,7 @@ class HomeMiniHeader extends StatelessWidget {
     return Row(
       children: [
         Container(
-          padding: EdgeInsets.symmetric(horizontal: 9.w, vertical: 6.h),
+          padding: EdgeInsets.symmetric(horizontal: 9.w, vertical: 4.h),
           decoration: BoxDecoration(
             border: Border.all(
               color: brightness == Brightness.dark
@@ -83,11 +83,6 @@ class HomeMiniHeader extends StatelessWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Icon(
-              //   Icons.access_time,
-              //   size: 17.sp,
-              //   color: colorScheme.primary, // اللون الأساسي للتطبيق
-              // ),
               _SizeBoxWidth(),
 
               Text(
@@ -95,7 +90,7 @@ class HomeMiniHeader extends StatelessWidget {
                 style: TextStyle(
                   color: colorScheme.primary, // اللون الأساسي للتطبيق
                   fontWeight: FontWeight.bold,
-                  fontSize: 12.sp,
+                  fontSize: 10.sp,
                   fontFamily: 'Cairo',
                 ),
               ),
@@ -184,8 +179,8 @@ class HomeMiniHeader extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
 
     return Container(
-      width: 42.w,
-      height: 42.h,
+      width: 35.w,
+      height: 35.h,
       decoration: BoxDecoration(
         // border: Border.all(color: AppColors.goldAccent),
         border: Border.all(color: AppColors.darkPrimaryText),
@@ -198,7 +193,7 @@ class HomeMiniHeader extends StatelessWidget {
         onPressed: onPressed,
         padding: EdgeInsets.zero,
         constraints: const BoxConstraints(),
-        iconSize: 22,
+        iconSize: 20,
       ),
     );
   }
