@@ -5,6 +5,7 @@ import 'package:tarteel/core/theme/app_colors.dart';
 import 'package:tarteel/features/home/widgets/home_header/home_mini_header.dart';
 import 'package:tarteel/features/home/widgets/home_header/home_notifications_sheet.dart';
 import 'package:tarteel/features/home/widgets/home_header/home_prayer_card.dart';
+import 'package:tarteel/features/home/widgets/home_azkar_prompt_card.dart';
 import 'package:tarteel/features/home/widgets/home_header/home_recent_actions.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
@@ -202,7 +203,7 @@ class _HomeHeaderState extends State<HomeHeader> with RouteAware {
         : '--:--';
     return SliverAppBar(
       automaticallyImplyLeading: false,
-      toolbarHeight: 390.h,
+      toolbarHeight: 410.h,
 
       pinned: false,
       // pinned: true,
@@ -355,6 +356,7 @@ class _HomeHeaderState extends State<HomeHeader> with RouteAware {
                   ),
 
                   const HomeRecentActions(),
+                  const HomeAzkarPromptCard(),
                 ],
               ),
             ),

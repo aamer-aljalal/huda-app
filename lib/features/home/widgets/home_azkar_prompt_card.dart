@@ -106,78 +106,59 @@ class _PromptCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    // final colorScheme = theme.colorScheme;
+    final colorScheme = theme.colorScheme;
 
     return Padding(
-      padding: EdgeInsets.only(top: 5.h),
+      padding: EdgeInsets.only(top: 3.h),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(8.r),
-          child: Ink(
+          borderRadius: BorderRadius.circular(5.r),
+          child: Container(
             width: double.infinity,
-            padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+            padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 5.h),
             decoration: BoxDecoration(
-              color: AppColors.lightSecondaryText,
-              borderRadius: BorderRadius.circular(8.r),
-              boxShadow: [
-                BoxShadow(
-                  color: theme.shadowColor.withValues(alpha: 0.12),
-                  blurRadius: 12,
-                  offset: const Offset(0, 5),
-                ),
-              ],
+              color: colorScheme.surface.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(12.r),
+              border: Border.all(
+                color: colorScheme.onSurface.withValues(alpha: 0.1),
+              ),
             ),
             child: Row(
               children: [
                 Container(
-                  width: 40.w,
-                  height: 40.w,
+                  width: 30.w,
+                  height: 30.w,
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.14),
+                    color: colorScheme.surface.withValues(alpha: 0.22),
                     shape: BoxShape.circle,
-
-                    border: Border.all(color: AppColors.goldAccent),
+                    border: Border.all(
+                      color: AppColors.goldAccent.withValues(alpha: 0.5),
+                      width: 1.w,
+                    ),
                   ),
-                  child: Icon(prompt.icon, color: Colors.white, size: 22.sp),
+                  child: Icon(prompt.icon, color: Colors.white, size: 14.sp),
                 ),
                 SizedBox(width: 10.w),
                 Expanded(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        prompt.title,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w700,
-                          fontSize: 13.sp,
-                          height: 1.25,
-                        ),
-                      ),
-                      SizedBox(height: 2.h),
-                      Text(
-                        prompt.subtitle,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: Colors.white.withValues(alpha: 0.86),
-                          fontSize: 10.sp,
-                          height: 1.25,
-                        ),
-                      ),
-                    ],
+                  child: Text(
+                    prompt.title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 10.sp,
+                      fontFamily: 'Cairo',
+                    ),
                   ),
                 ),
                 SizedBox(width: 6.w),
                 Icon(
                   Icons.arrow_back_ios_new,
-                  color: Colors.white,
-                  size: 14.sp,
+                  color: Colors.white70,
+                  size: 12.sp,
                 ),
               ],
             ),

@@ -43,7 +43,7 @@ class AccessListGrid extends StatelessWidget {
       itemBuilder: (context, index) {
         final item = actions[index];
 
-        // 🛠️ حل مشكلة توقف التطبيق (Crash):
+        // حل مشكلة توقف التطبيق (Crash):
         // نقوم بضرب مؤشر العنصر (index) في قيمة تأخير صغيرة، ونحد من قيمتها القصوى باستخدام clamp لتكون أقل من 1.0 دائماً (الحد الأقصى المسموح به في Interval هو 1.0).
         // هذا يضمن تشغيل التدرج الحركي بشكل رائع للعناصر الأولى، ويمنع التطبيق من الانهيار مع القوائم الطويلة مثل فصول حصن المسلم.
         final animationDelay = (index * 0.04).clamp(0.0, 0.95);

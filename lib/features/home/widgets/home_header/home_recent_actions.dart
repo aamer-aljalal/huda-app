@@ -56,7 +56,11 @@ class _HomeRecentActionsState extends State<HomeRecentActions> with RouteAware {
     });
   }
 
-  Future<void> _resumeQuran(BuildContext context, int surahNumber, {int? recentAyahNumber}) async {
+  Future<void> _resumeQuran(
+    BuildContext context,
+    int surahNumber, {
+    int? recentAyahNumber,
+  }) async {
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -268,7 +272,7 @@ class _HomeRecentActionsState extends State<HomeRecentActions> with RouteAware {
         }
         final actions = snapshot.data!;
         return Container(
-          padding: EdgeInsets.symmetric(horizontal: 10.w),
+          padding: EdgeInsets.symmetric(horizontal: 5.w),
           decoration: BoxDecoration(
             color: colorScheme.surface.withValues(alpha: 0.15),
             borderRadius: BorderRadius.circular(12.r),
@@ -326,34 +330,32 @@ class _HomeRecentActionsState extends State<HomeRecentActions> with RouteAware {
       //     default:
       //       return Colors.white;
       //   }
-      // }
-
-      //   switch (action.category) {
-      //     case 'quran':
-      //       return Colors.white;
-      //     case 'azkar':
-      //       return Colors.white;
-      //     case 'hadith':
-      //       return Colors.white;
-      //     case 'names_of_allah':
-      //       return Colors.white;
-      //     default:
-      //       return Colors.white;
-      //   }
-      // }
 
       switch (action.category) {
         case 'quran':
-          return Colors.black;
+          return Colors.white;
         case 'azkar':
-          return Colors.black;
+          return Colors.white;
         case 'hadith':
-          return Colors.black;
+          return Colors.white;
         case 'names_of_allah':
-          return Colors.black;
+          return Colors.white;
         default:
-          return Colors.black;
+          return Colors.white;
       }
+
+      // switch (action.category) {
+      //   case 'quran':
+      //     return Colors.black;
+      //   case 'azkar':
+      //     return Colors.black;
+      //   case 'hadith':
+      //     return Colors.black;
+      //   case 'names_of_allah':
+      //     return Colors.black;
+      //   default:
+      //     return Colors.black;
+      // }
     }
 
     return Expanded(
@@ -364,18 +366,18 @@ class _HomeRecentActionsState extends State<HomeRecentActions> with RouteAware {
           // mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              padding: EdgeInsets.all(6.w),
+              padding: EdgeInsets.all(4.w),
               decoration: BoxDecoration(
                 border: Border.all(color: AppColors.darkPrimaryText),
 
                 color: Theme.of(
                   context,
-                ).colorScheme.surface.withValues(alpha: 0.22),
+                ).colorScheme.surface.withValues(alpha: 0.25),
                 shape: BoxShape.circle,
               ),
               child: Icon(
                 getIcon(),
-                size: 16.sp,
+                size: 14.sp,
                 color: getCategoryColor(Theme.of(context).colorScheme),
                 // color: Colors.white,
               ),
@@ -388,7 +390,7 @@ class _HomeRecentActionsState extends State<HomeRecentActions> with RouteAware {
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: Colors.white,
-                fontSize: 7.5.sp,
+                fontSize: 6.sp,
                 fontWeight: FontWeight.bold,
                 fontFamily: 'Cairo',
               ),

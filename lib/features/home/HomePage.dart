@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:tarteel/core/dialogs/exit_confirmation_dialog.dart';
 import 'package:tarteel/features/home/data/home_actions.dart';
-import 'package:tarteel/features/home/widgets/home_azkar_prompt_card.dart';
 import 'package:tarteel/features/home/widgets/home_header/home_header.dart';
 import 'package:tarteel/core/widgets/grids/access_list_grid.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -80,7 +79,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const HomeAzkarPromptCard(),
                     AccessListGrid(
                       actions: HomeActions.quickActionsList,
                       controller: _gridAnimationController,
