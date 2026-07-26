@@ -132,4 +132,4 @@ flutter_launcher_icons:
   image_path: "assets/img/icon/app.jpg"
   adaptive_icon_background: "#FFFFFF"
   adaptive_icon_foreground: "assets/img/icon/app.jpg"
-  adaptive_icon_foreground_inset: 10
+  adaptive_icon_foreground_inset: 7

@@ -17,6 +17,7 @@ import 'package:tarteel/features/quran/views/surah_detail_page.dart';
 import 'package:tarteel/features/azkar/services/azkar_service.dart';
 import 'package:tarteel/features/azkar/zkar_details.dart';
 import 'package:tarteel/core/services/in_app_notification_service.dart';
+import 'package:tarteel/main.dart';
 
 class HomeHeader extends StatefulWidget {
   const HomeHeader({super.key});
@@ -25,7 +26,7 @@ class HomeHeader extends StatefulWidget {
   State<HomeHeader> createState() => _HomeHeaderState();
 }
 
-class _HomeHeaderState extends State<HomeHeader> {
+class _HomeHeaderState extends State<HomeHeader> with RouteAware {
   bool _isNumericFormat = false;
   List<InAppNotification> _activeNotifications = [];
 
@@ -33,6 +34,29 @@ class _HomeHeaderState extends State<HomeHeader> {
   void initState() {
     super.initState();
     _loadNotifications();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final route = ModalRoute.of(context);
+    if (route is PageRoute) {
+      tarteel.routeObserver.subscribe(this, route);
+    }
+  }
+
+  @override
+  void dispose() {
+    tarteel.routeObserver.unsubscribe(this);
+    super.dispose();
+  }
+
+  @override
+  void didPopNext() {
+    _loadNotifications();
+    if (mounted) {
+      context.read<PrayerProvider>().initializeData();
+    }
   }
 
   Future<void> _loadNotifications() async {
@@ -266,36 +290,58 @@ class _HomeHeaderState extends State<HomeHeader> {
                         ),
                       ),
 
-                      Container(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 12.w,
-                          vertical: 6.h,
-                        ),
-                        decoration: BoxDecoration(
-                          // استخدام لون السطح مع شفافية ليتناسب مع الوضعين
-                          color: colorScheme.surface.withOpacity(0.30),
-                          borderRadius: BorderRadius.circular(30.r),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.location_on,
-                              size: 16.sp,
-                              color: Colors.white,
-                            ),
-                            SizedBox(width: 6.w),
-                            Text(
-                              prayerProvider.cityName.isNotEmpty
-                                  ? 'بتوقيت : ${prayerProvider.cityName}'
-                                  : prayerProvider.cityName,
-                              style: TextStyle(
+                      GestureDetector(
+                        onTap: () async {
+                          HapticFeedback.mediumImpact();
+                          await prayerProvider.updateLocationManually(context);
+                        },
+                        child: Container(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 12.w,
+                            vertical: 6.h,
+                          ),
+                          decoration: BoxDecoration(
+                            // استخدام لون السطح مع شفافية ليتناسب مع الوضعين
+                            color: colorScheme.surface.withOpacity(0.30),
+                            borderRadius: BorderRadius.circular(30.r),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              if (prayerProvider.isLoading)
+                                SizedBox(
+                                  width: 12.w,
+                                  height: 12.h,
+                                  child: const CircularProgressIndicator(
+                                    strokeWidth: 1.5,
+                                    color: Colors.white,
+                                  ),
+                                )
+                              else
+                                Icon(
+                                  Icons.refresh,
+                                  size: 13.sp,
+                                  color: Colors.white70,
+                                ),
+                              SizedBox(width: 5.w),
+                              Icon(
+                                Icons.location_on,
+                                size: 14.sp,
                                 color: Colors.white,
-                                fontSize: 12.sp,
-                                fontFamily: 'Cairo',
                               ),
-                            ),
-                          ],
+                              SizedBox(width: 5.w),
+                              Text(
+                                prayerProvider.cityName.isNotEmpty
+                                    ? 'بتوقيت : ${prayerProvider.cityName}'
+                                    : prayerProvider.cityName,
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 12.sp,
+                                  fontFamily: 'Cairo',
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ],
@@ -324,6 +370,7 @@ class _HomeHeaderState extends State<HomeHeader> {
     String twoDigits(int n) => n.toString().padLeft(2, "0");
     int hours = d.inHours;
     int minutes = d.inMinutes.remainder(60);
-    return "$hours:${twoDigits(minutes)}";
+    int seconds = d.inSeconds.remainder(60);
+    return "$hours:${twoDigits(minutes)}:${twoDigits(seconds)}";
   }
 }

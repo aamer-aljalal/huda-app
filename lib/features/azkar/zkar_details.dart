@@ -507,7 +507,7 @@ class _AzkarDetailsScreenState extends State<AzkarDetailsScreen>
             Text(
               'اضغط على الزر للتكرار والاحتساب',
               style: TextStyle(
-                fontSize: 12.sp,
+                fontSize: 7.sp,
                 color: Colors.grey.shade500,
                 fontWeight: FontWeight.w500,
               ),
@@ -523,7 +523,7 @@ class _AzkarDetailsScreenState extends State<AzkarDetailsScreen>
                 label: Text(
                   'بدء من جديد / إعادة تعيين',
                   style: TextStyle(
-                    fontSize: 13.sp,
+                    fontSize: 6.sp,
                     color: Colors.redAccent,
                     fontWeight: FontWeight.bold,
                     fontFamily: 'Cairo',
@@ -531,7 +531,7 @@ class _AzkarDetailsScreenState extends State<AzkarDetailsScreen>
                 ),
                 style: TextButton.styleFrom(
                   padding: EdgeInsets.symmetric(
-                    horizontal: 16.w,
+                    horizontal: 8.w,
                     vertical: 8.h,
                   ),
                   backgroundColor: Colors.redAccent.withOpacity(0.1),

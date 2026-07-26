@@ -92,7 +92,7 @@ class PrayerProvider extends ChangeNotifier {
     }
   }
 
-  /// التحقق من الموقع وعرض رسالة للمستخدم لتحديث إحداثيات تحديد المواقيت
+  /// التحقق من الموقع وعرض رسالة للمستخدم لتحديد إحداثيات تحديد المواقيت لأول مرة فقط
   Future<void> checkAndPromptLocation(BuildContext context) async {
     // تجنب تشغيل Geolocator على نظام الويندوز تفادياً لأي أعطال أثناء الاختبار
     if (defaultTargetPlatform == TargetPlatform.windows) {
@@ -105,29 +105,24 @@ class PrayerProvider extends ChangeNotifier {
           prefs.getBool('asked_location_permission') ?? false;
 
       if (!hasAskedPermissionBefore) {
-        // المرة الأولى: تنبيه المستخدم بلطف لأخذ إذن الموقع
+        // المرة الأولى فقط: تنبيه المستخدم بلطف لأخذ إذن الموقع
         if (context.mounted) {
           await _showLocationSetupDialog(context, isFirstTime: true);
-        }
-      } else {
-        // المرات اللاحقة: نتحقق هل مر 4 أيام على آخر تحديث؟
-        final lastUpdateStr = prefs.getString('last_location_update_time');
-        if (lastUpdateStr != null) {
-          final lastUpdate = DateTime.parse(lastUpdateStr);
-          final daysDifference = DateTime.now().difference(lastUpdate).inDays;
-
-          if (daysDifference >= 4) {
-            // نتحقق من توفر الإنترنت أولاً في الخلفية قبل مقاطعة المستخدم بسؤاله
-            final hasInternet = await _checkInternetConnection();
-            if (hasInternet && context.mounted) {
-              await _showLocationSetupDialog(context, isFirstTime: false);
-            }
-          }
         }
       }
     } catch (e) {
       debugPrint("Error in checkAndPromptLocation: $e");
     }
+  }
+
+  /// تحديث الموقع يدوياً بطلب الصلاحيات والـ GPS
+  Future<void> updateLocationManually(BuildContext context) async {
+    // تجنب تشغيل Geolocator على نظام الويندوز تفادياً لأي أعطال أثناء الاختبار
+    if (defaultTargetPlatform == TargetPlatform.windows) {
+      _showToast(context, 'تحديد الموقع غير مدعوم على نظام ويندوز');
+      return;
+    }
+    await _enableLocationAndFetch(context);
   }
 
   /// فحص وجود اتصال بالإنترنت بطريقة سريعة وآمنة
