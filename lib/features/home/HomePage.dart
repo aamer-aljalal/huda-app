@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:tarteel/core/dialogs/exit_confirmation_dialog.dart';
 import 'package:tarteel/features/home/data/home_actions.dart';
 import 'package:tarteel/features/home/widgets/home_header/home_header.dart';
+import 'package:tarteel/features/home/widgets/home_header/home_recent_actions.dart';
 import 'package:tarteel/core/widgets/grids/access_list_grid.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
@@ -46,7 +47,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     // تشغيل التحقق من صلاحيات الموقع وجلب الإحداثيات بطريقة متجاوبة وأنيقة
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
-        Provider.of<PrayerProvider>(context, listen: false).checkAndPromptLocation(context);
+        Provider.of<PrayerProvider>(
+          context,
+          listen: false,
+        ).checkAndPromptLocation(context);
       }
     });
   }
@@ -79,6 +83,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    const HomeRecentActions(),
                     AccessListGrid(
                       actions: HomeActions.quickActionsList,
                       controller: _gridAnimationController,

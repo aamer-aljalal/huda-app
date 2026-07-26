@@ -57,21 +57,21 @@ class HomeActions {
       title: 'الإحصائيات',
     ),
 
-    AccessListModel(
-      icon: Icons.explore_outlined,
-      route: AppRoutes.qibla,
-      title: 'البوصلة',
-    ),
+    // AccessListModel(
+    //   icon: Icons.explore_outlined,
+    //   route: AppRoutes.qibla,
+    //   title: 'البوصلة',
+    // ),
 
-    AccessListModel(
-      icon: Icons.settings_outlined,
-      route: AppRoutes.settings,
-      title: 'الإعدادات',
-    ),
-    AccessListModel(
-      icon: Icons.favorite_border,
-      route: AppRoutes.bookmarks,
-      title: 'المفضلة',
-    ),
+    // AccessListModel(
+    //   icon: Icons.settings_outlined,
+    //   route: AppRoutes.settings,
+    //   title: 'الإعدادات',
+    // ),
+    // AccessListModel(
+    //   icon: Icons.favorite_border,
+    //   route: AppRoutes.bookmarks,
+    //   title: 'المفضلة',
+    // ),
   ];
 }

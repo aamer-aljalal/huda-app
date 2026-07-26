@@ -262,7 +262,10 @@ class _HomeRecentActionsState extends State<HomeRecentActions> with RouteAware {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final brightness = MediaQuery.platformBrightnessOf(context);
+    final isDark = brightness == Brightness.dark;
 
     return FutureBuilder<List<RecentAction>>(
       future: _actionsFuture,
@@ -272,13 +275,24 @@ class _HomeRecentActionsState extends State<HomeRecentActions> with RouteAware {
         }
         final actions = snapshot.data!;
         return Container(
-          padding: EdgeInsets.symmetric(horizontal: 5.w),
+          margin: EdgeInsets.only(top: 6.h, bottom: 15.h),
+          padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 3.h),
           decoration: BoxDecoration(
-            color: colorScheme.surface.withValues(alpha: 0.15),
-            borderRadius: BorderRadius.circular(12.r),
+            color: colorScheme.surface,
+            borderRadius: BorderRadius.circular(10.r),
             border: Border.all(
-              color: colorScheme.onSurface.withValues(alpha: 0.1),
+              color: isDark
+                  ? AppColors.greenBorder.withOpacity(0.50)
+                  : AppColors.disabled,
+              width: 1.5.w,
             ),
+            boxShadow: [
+              BoxShadow(
+                color: theme.shadowColor.withValues(alpha: isDark ? 0.2 : 0.08),
+                blurRadius: 5,
+                offset: const Offset(0, 2),
+              ),
+            ],
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -298,6 +312,10 @@ class _HomeRecentActionsState extends State<HomeRecentActions> with RouteAware {
   }
 
   Widget _buildRecentButton(BuildContext context, RecentAction action) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final brightness = MediaQuery.platformBrightnessOf(context);
+    final isDark = brightness == Brightness.dark;
+
     IconData getIcon() {
       switch (action.category) {
         case 'quran':
@@ -331,55 +349,54 @@ class _HomeRecentActionsState extends State<HomeRecentActions> with RouteAware {
       //       return Colors.white;
       //   }
 
-      switch (action.category) {
-        case 'quran':
-          return Colors.white;
-        case 'azkar':
-          return Colors.white;
-        case 'hadith':
-          return Colors.white;
-        case 'names_of_allah':
-          return Colors.white;
-        default:
-          return Colors.white;
-      }
-
       // switch (action.category) {
       //   case 'quran':
-      //     return Colors.black;
+      //     return Colors.white;
       //   case 'azkar':
-      //     return Colors.black;
+      //     return Colors.white;
       //   case 'hadith':
-      //     return Colors.black;
+      //     return Colors.white;
       //   case 'names_of_allah':
-      //     return Colors.black;
+      //     return Colors.white;
       //   default:
-      //     return Colors.black;
+      //     return Colors.white;
       // }
+
+      switch (action.category) {
+        case 'quran':
+          return Colors.black;
+        case 'azkar':
+          return Colors.black;
+        case 'hadith':
+          return Colors.black;
+        case 'names_of_allah':
+          return Colors.black;
+        default:
+          return Colors.black;
+      }
     }
 
     return Expanded(
       child: InkWell(
         onTap: () => _handleRecentActionTap(context, action),
-        borderRadius: BorderRadius.circular(12.r),
+        borderRadius: BorderRadius.circular(8.r),
         child: Column(
-          // mainAxisSize: MainAxisSize.min,
           children: [
             Container(
               padding: EdgeInsets.all(4.w),
               decoration: BoxDecoration(
-                border: Border.all(color: AppColors.darkPrimaryText),
-
-                color: Theme.of(
-                  context,
-                ).colorScheme.surface.withValues(alpha: 0.25),
+                border: Border.all(
+                  color: isDark ? AppColors.goldAccent : AppColors.goldAccent,
+                ),
+                color: isDark
+                    ? AppColors.primary.withOpacity(0.25)
+                    : AppColors.primary.withOpacity(0.15),
                 shape: BoxShape.circle,
               ),
               child: Icon(
                 getIcon(),
                 size: 14.sp,
-                color: getCategoryColor(Theme.of(context).colorScheme),
-                // color: Colors.white,
+                color: isDark ? Colors.white : colorScheme.primary,
               ),
             ),
             SizedBox(height: 2.h),
@@ -389,8 +406,8 @@ class _HomeRecentActionsState extends State<HomeRecentActions> with RouteAware {
               overflow: TextOverflow.ellipsis,
               textAlign: TextAlign.center,
               style: TextStyle(
-                color: Colors.white,
-                fontSize: 6.sp,
+                color: colorScheme.onSurface,
+                fontSize: 6.5.sp,
                 fontWeight: FontWeight.bold,
                 fontFamily: 'Cairo',
               ),

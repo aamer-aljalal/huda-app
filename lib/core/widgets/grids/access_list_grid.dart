@@ -30,6 +30,7 @@ class AccessListGrid extends StatelessWidget {
     final brightness = MediaQuery.platformBrightnessOf(context);
 
     return GridView.builder(
+      padding: EdgeInsets.zero,
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(

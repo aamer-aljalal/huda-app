@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:tarteel/core/theme/app_colors.dart';
 import 'package:tarteel/features/home/widgets/home_header/home_mini_header.dart';
+import 'package:tarteel/features/home/widgets/home_header/home_header_quick_actions.dart';
 import 'package:tarteel/features/home/widgets/home_header/home_notifications_sheet.dart';
 import 'package:tarteel/features/home/widgets/home_header/home_prayer_card.dart';
 import 'package:tarteel/features/home/widgets/home_azkar_prompt_card.dart';
@@ -217,7 +218,7 @@ class _HomeHeaderState extends State<HomeHeader> with RouteAware {
             child: Padding(
               padding: EdgeInsets.only(
                 left: 10.w,
-                top: 5.h,
+                top: 10.h,
                 right: 10.w,
                 bottom: 16.h,
               ),
@@ -226,131 +227,37 @@ class _HomeHeaderState extends State<HomeHeader> with RouteAware {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   HomeMiniHeader(
-                    provider: prayerProvider,
-                    nextName: dynamicNextPrayer,
+                    hijriDate: _getHijriDate(_isNumericFormat),
+                    gregorianDate: _getGregorianDate(_isNumericFormat),
+                    onDateTap: () {
+                      setState(() {
+                        _isNumericFormat = !_isNumericFormat;
+                      });
+                      HapticFeedback.lightImpact();
+                    },
+                  ),
+
+                  // بطاقة أوقات الصلاة الأفقية (تحتوي على التوقيت المحلي ومؤشر الباقي للصلاة)
+                  HomePrayerCard(
+                    countdown: countdown,
+                    dynamicNextPrayer: dynamicNextPrayer,
+                    currentPrayerTimes: currentPrayerTimes,
+                    cityName: prayerProvider.cityName,
+                    isLoadingLocation: prayerProvider.isLoading,
+                    onUpdateLocation: () async {
+                      await prayerProvider.updateLocationManually(context);
+                    },
+                  ),
+
+                  // حاوية الأيقونات الأربعة في منتصف الترويسة (المفضلة، الإعدادات، القبلة، والتنبيهات)
+                  HomeHeaderQuickActions(
                     activeNotifications: _activeNotifications,
                     onNotificationTap: () {
                       _showNotificationsBottomSheet(context);
                     },
                   ),
 
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      GestureDetector(
-                        onTap: () {
-                          setState(() {
-                            _isNumericFormat = !_isNumericFormat;
-                          });
-                          HapticFeedback.lightImpact();
-                        },
-                        behavior: HitTestBehavior.opaque,
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.calendar_today,
-                              size: 14.sp,
-                              color: Colors.white,
-                            ),
-                            SizedBox(width: 6.w),
-                            Text(
-                              _getHijriDate(_isNumericFormat),
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 16.sp,
-                                fontFamily: 'Amiri',
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      GestureDetector(
-                        onTap: () {
-                          setState(() {
-                            _isNumericFormat = !_isNumericFormat;
-                          });
-                          HapticFeedback.lightImpact();
-                        },
-                        behavior: HitTestBehavior.opaque,
-                        child: Text(
-                          _getGregorianDate(_isNumericFormat),
-                          style: TextStyle(
-                            color: Colors.white70,
-                            fontSize: 18.sp,
-                            fontFamily: 'Amiri',
-                          ),
-                        ),
-                      ),
-
-                      GestureDetector(
-                        onTap: () async {
-                          HapticFeedback.mediumImpact();
-                          await prayerProvider.updateLocationManually(context);
-                        },
-                        child: Container(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: 12.w,
-                            vertical: 6.h,
-                          ),
-                          decoration: BoxDecoration(
-                            color: colorScheme.surface.withOpacity(0.30),
-                            borderRadius: BorderRadius.circular(30.r),
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              if (prayerProvider.isLoading)
-                                SizedBox(
-                                  width: 12.w,
-                                  height: 12.h,
-                                  child: const CircularProgressIndicator(
-                                    strokeWidth: 1.5,
-                                    color: Colors.white,
-                                  ),
-                                )
-                              else
-                                Icon(
-                                  Icons.refresh,
-                                  size: 13.sp,
-                                  color: Colors.white70,
-                                ),
-                              SizedBox(width: 5.w),
-                              Icon(
-                                Icons.location_on,
-                                size: 14.sp,
-                                color: Colors.white,
-                              ),
-                              SizedBox(width: 5.w),
-                              Text(
-                                prayerProvider.cityName.isNotEmpty
-                                    ? 'بتوقيت : ${prayerProvider.cityName}'
-                                    : prayerProvider.cityName,
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 12.sp,
-                                  fontFamily: 'Cairo',
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  // بطاقة أوقات الصلاة الأفقية
-                  HomePrayerCard(
-                    countdown: countdown,
-                    dynamicNextPrayer: dynamicNextPrayer,
-                    currentPrayerTimes: currentPrayerTimes,
-                  ),
-
-                  const HomeRecentActions(),
+                  // بطاقة تنبيه الأذكار (لا تحركها أبداً)
                   const HomeAzkarPromptCard(),
                 ],
               ),
