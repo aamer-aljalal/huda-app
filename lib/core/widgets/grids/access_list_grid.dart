@@ -1,7 +1,7 @@
 /// وصف الملف:
 /// هذا الملف يحتوي على عنصر `AccessListGrid` وهو عبارة عن شبكة عرض (Grid) مخصصة ومتجاوبة
 /// لعرض خيارات الوصول السريع للأقسام المختلفة في التطبيق (مثل القرآن، حصن المسلم، الأذكار، إلخ).
-/// 
+///
 /// عمل الملف:
 /// - استقبال قائمة من موديلات `AccessListModel` التي تحتوي على الأيقونة والعنوان ومسار الصفحة المحددة.
 /// - بناء وتنسيق العناصر بشكل شبكي يتناسب مع أحجام الشاشات المختلفة ودعم المظهرين (النهاري والليلي).
@@ -122,15 +122,15 @@ class AccessListGrid extends StatelessWidget {
                         padding: EdgeInsets.symmetric(horizontal: 7.w),
                         child: AutoSizeText(
                           item.title,
-                          maxLines: 3,
-                          minFontSize: 5,
-                          maxFontSize: 10,
+                          maxLines: 2,
+                          minFontSize: 9,
+                          maxFontSize: 13,
                           stepGranularity: 0.5,
                           overflow: TextOverflow.ellipsis,
                           textAlign: TextAlign.center,
                           style: Theme.of(context).textTheme.bodyMedium
                               ?.copyWith(
-                                fontSize: 14.sp,
+                                fontSize: 13.sp,
                                 color: Theme.of(context).colorScheme.onSurface,
                                 fontWeight: FontWeight.w600,
                                 fontFamily: 'Cairo',

@@ -201,33 +201,29 @@ class _HomeHeaderState extends State<HomeHeader> with RouteAware {
     final countdown = prayerProvider.timeUntilNextPrayer.inSeconds > 0
         ? _formatDuration(prayerProvider.timeUntilNextPrayer)
         : '--:--';
-    return SliverAppBar(
-      automaticallyImplyLeading: false,
-      toolbarHeight: 410.h,
 
-      pinned: false,
-      // pinned: true,
-      flexibleSpace: Container(
+    return SliverToBoxAdapter(
+      child: AnnotatedRegion<SystemUiOverlayStyle>(
+        value: SystemUiOverlayStyle.light,
         child: Container(
-          decoration: BoxDecoration(
-            image: const DecorationImage(
+          decoration: const BoxDecoration(
+            image: DecorationImage(
               image: AssetImage('assets/img/header_bg.png'),
               fit: BoxFit.cover,
             ),
-
-            // borderRadius: BorderRadius.vertical(bottom: Radius.circular(5.r)),
           ),
           child: SafeArea(
             bottom: false,
             child: Padding(
               padding: EdgeInsets.only(
                 left: 10.w,
-                top: 20.h,
+                top: 5.h,
                 right: 10.w,
-                bottom: 30.h,
+                bottom: 16.h,
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   HomeMiniHeader(
                     provider: prayerProvider,
@@ -302,7 +298,6 @@ class _HomeHeaderState extends State<HomeHeader> with RouteAware {
                             vertical: 6.h,
                           ),
                           decoration: BoxDecoration(
-                            // استخدام لون السطح مع شفافية ليتناسب مع الوضعين
                             color: colorScheme.surface.withOpacity(0.30),
                             borderRadius: BorderRadius.circular(30.r),
                           ),
@@ -363,8 +358,6 @@ class _HomeHeaderState extends State<HomeHeader> with RouteAware {
           ),
         ),
       ),
-
-      systemOverlayStyle: SystemUiOverlayStyle.light,
     );
   }
 
