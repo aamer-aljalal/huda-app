@@ -202,7 +202,7 @@ class _HomeHeaderState extends State<HomeHeader> with RouteAware {
         : '--:--';
     return SliverAppBar(
       automaticallyImplyLeading: false,
-      toolbarHeight: 380.h,
+      toolbarHeight: 390.h,
 
       pinned: false,
       // pinned: true,

@@ -1,3 +1,13 @@
+/// وصف الملف:
+/// هذا الملف يحتوي على عنصر `AccessListGrid` وهو عبارة عن شبكة عرض (Grid) مخصصة ومتجاوبة
+/// لعرض خيارات الوصول السريع للأقسام المختلفة في التطبيق (مثل القرآن، حصن المسلم، الأذكار، إلخ).
+/// 
+/// عمل الملف:
+/// - استقبال قائمة من موديلات `AccessListModel` التي تحتوي على الأيقونة والعنوان ومسار الصفحة المحددة.
+/// - بناء وتنسيق العناصر بشكل شبكي يتناسب مع أحجام الشاشات المختلفة ودعم المظهرين (النهاري والليلي).
+/// - تشغيل حركة دخول متحركة ومتدرجة لكل عنصر بشكل تصاعدي (Staggered Entrance Animation)
+///   مع حماية التطبيق من الانهيار عند وجود عدد كبير من العناصر عن طريق تحديد حد أقصى لتأخير الأنيميشن.
+
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
@@ -33,8 +43,10 @@ class AccessListGrid extends StatelessWidget {
       itemBuilder: (context, index) {
         final item = actions[index];
 
-        // 🔥 نفس فكرة صفحة الأذكار
-        final animationDelay = index * 0.05;
+        // 🛠️ حل مشكلة توقف التطبيق (Crash):
+        // نقوم بضرب مؤشر العنصر (index) في قيمة تأخير صغيرة، ونحد من قيمتها القصوى باستخدام clamp لتكون أقل من 1.0 دائماً (الحد الأقصى المسموح به في Interval هو 1.0).
+        // هذا يضمن تشغيل التدرج الحركي بشكل رائع للعناصر الأولى، ويمنع التطبيق من الانهيار مع القوائم الطويلة مثل فصول حصن المسلم.
+        final animationDelay = (index * 0.04).clamp(0.0, 0.95);
 
         final animation = CurvedAnimation(
           parent: controller,

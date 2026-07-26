@@ -13,7 +13,7 @@ class HomeActions {
       route: AppRoutes.quran,
       title: 'القرآن',
     ),
-    
+
     AccessListModel(
       icon: Icons.auto_awesome_outlined,
       route: AppRoutes.namesOfAllah,
@@ -50,16 +50,28 @@ class HomeActions {
       route: AppRoutes.adhanMuezzin,
       title: 'المؤذن',
     ),
-    // AccessListModel(
-    //   icon: Icons.explore_outlined,
-    //   route: AppRoutes.qibla,
-    //   title: 'البوصلة',
-    // ),
 
     AccessListModel(
       icon: Icons.analytics_outlined,
       route: AppRoutes.stats,
       title: 'الإحصائيات',
+    ),
+
+    AccessListModel(
+      icon: Icons.explore_outlined,
+      route: AppRoutes.qibla,
+      title: 'البوصلة',
+    ),
+
+    AccessListModel(
+      icon: Icons.settings_outlined,
+      route: AppRoutes.settings,
+      title: 'الإعدادات',
+    ),
+    AccessListModel(
+      icon: Icons.favorite_border,
+      route: AppRoutes.bookmarks,
+      title: 'المفضلة',
     ),
   ];
 }
