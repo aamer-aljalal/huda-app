@@ -30,7 +30,7 @@ class GeneralNotificationService {
   static const int idDailyContent = 8008;
   static const int idKhatmaReminder = 8020;
 
-  // Periodic Dhikr IDs (six times throughout the day)
+  // Legacy Periodic Dhikr IDs
   static const List<int> idsPeriodicDhikr = [8009, 8010, 8011, 8012, 8013, 8014];
 
   static Future<void> initialize() async {
@@ -136,18 +136,22 @@ class GeneralNotificationService {
     await initialize();
     final prefs = await SharedPreferences.getInstance();
 
-    // 1. Azkar (Morning, Evening, Sleep)
+    // 1. Cancel deleted legacy notifications
+    await _notifications.cancel(id: idSleepAzkar);
+    await _notifications.cancel(id: idFastingMonday);
+    await _notifications.cancel(id: idFastingThursday);
+    await _notifications.cancel(id: idDuha);
+    await _notifications.cancel(id: idQiyam);
+    await _notifications.cancel(id: idDailyContent);
+    for (final id in idsPeriodicDhikr) {
+      await _notifications.cancel(id: id);
+    }
+
+    // 2. Azkar (Morning, Evening)
     if (prefs.getBool('notifications_azkar') ?? true) {
       await scheduleAzkarNotifications();
     } else {
       await cancelAzkarNotifications();
-    }
-
-    // 2. Periodic Dhikr Reminders
-    if (prefs.getBool('notifications_custom') ?? false) {
-      await schedulePeriodicDhikrs();
-    } else {
-      await cancelPeriodicDhikrs();
     }
 
     // 3. Friday Reminder
@@ -155,35 +159,6 @@ class GeneralNotificationService {
       await scheduleFridayReminder();
     } else {
       await _notifications.cancel(id: idFridayKahf);
-    }
-
-    // 4. Fasting Reminders
-    if (prefs.getBool('notifications_fasting') ?? false) {
-      await scheduleFastingReminders();
-    } else {
-      await _notifications.cancel(id: idFastingMonday);
-      await _notifications.cancel(id: idFastingThursday);
-    }
-
-    // 5. Duha Prayer
-    if (prefs.getBool('notifications_duha') ?? false) {
-      await scheduleDuhaReminder();
-    } else {
-      await _notifications.cancel(id: idDuha);
-    }
-
-    // 6. Qiyam Al-Layl
-    if (prefs.getBool('notifications_qiyam') ?? false) {
-      await scheduleQiyamReminder();
-    } else {
-      await _notifications.cancel(id: idQiyam);
-    }
-
-    // 7. Daily Verse & Hadith
-    if (prefs.getBool('notifications_daily_content') ?? true) {
-      await scheduleDailyContentReminder();
-    } else {
-      await _notifications.cancel(id: idDailyContent);
     }
   }
 
@@ -195,7 +170,7 @@ class GeneralNotificationService {
     const androidDetails = AndroidNotificationDetails(
       'azkar_reminders_channel',
       'تذكيرات الأذكار والسنن',
-      channelDescription: 'تنبيهات يومية لقراءة أذكار الصباح والمساء والنوم',
+      channelDescription: 'تنبيهات يومية لقراءة أذكار الصباح والمساء',
       importance: Importance.max,
       priority: Priority.high,
       playSound: true,
@@ -229,17 +204,6 @@ class GeneralNotificationService {
       details: const NotificationDetails(android: androidDetails, iOS: darwinDetails),
       payload: 'azkar_أذكار المساء',
     );
-
-    // Sleep Azkar (10:00 PM)
-    await _scheduleDailyTime(
-      id: idSleepAzkar,
-      title: 'أذكار النوم وآدابه 🛌',
-      body: 'تحصن بآية الكرسي والمعوذات واقرأ أذكار النوم لنوم هادئ وحماية ربانية.',
-      hour: 22,
-      minute: 0,
-      details: const NotificationDetails(android: androidDetails, iOS: darwinDetails),
-      payload: 'azkar_أذكار النوم',
-    );
   }
 
   static Future<void> cancelAzkarNotifications() async {
@@ -248,59 +212,7 @@ class GeneralNotificationService {
     await _notifications.cancel(id: idSleepAzkar);
   }
 
-  // ==================== 2. Periodic Dhikrs ====================
-
-  static Future<void> schedulePeriodicDhikrs() async {
-    await cancelPeriodicDhikrs();
-
-    const androidDetails = AndroidNotificationDetails(
-      'periodic_dhikrs_channel',
-      'تذكير الأذكار الدوري المخصص',
-      channelDescription: 'تنبيهات دورية بالاستغفار والصلاة على النبي على مدار اليوم',
-      importance: Importance.defaultImportance,
-      priority: Priority.defaultPriority,
-      playSound: true,
-      category: AndroidNotificationCategory.reminder,
-    );
-
-    const darwinDetails = DarwinNotificationDetails(
-      presentAlert: true,
-      presentBadge: true,
-      presentSound: true,
-    );
-
-    final details = const NotificationDetails(android: androidDetails, iOS: darwinDetails);
-
-    // Schedule 6 distinct reminders spread across the day
-    final times = [
-      _DhikrTime(9, 0, 'أستغفر الله العظيم وأتوب إليه', '«من لزم الاستغفار جعل الله له من كل هم فرجاً»'),
-      _DhikrTime(11, 0, 'اللهم صلِّ وسلِّم على نبينا محمد  ', '«من صلَّى عليَّ صلاة واحدة صلَّى الله عليه بها عشراً»'),
-      _DhikrTime(13, 0, 'سبحان الله وبحمده، سبحان الله العظيم ', '«كلمتان خفيفتان على اللسان، ثقيلتان في الميزان»'),
-      _DhikrTime(15, 0, 'لا حول ولا قوة إلا بالله العلي العظيم ', '«كنز من كنوز الجنة.. دواء لتسعة وتسعين داء»'),
-      _DhikrTime(19, 0, 'لا إله إلا الله وحده لا شريك له ', '«له الملك وله الحمد وهو على كل شيء قدير»'),
-      _DhikrTime(21, 0, 'اللهم صلِّ وسلِّم على نبينا محمد  ', 'أكثروا من الصلاة على الحبيب المصطفى'),
-    ];
-
-    for (var i = 0; i < times.length; i++) {
-      final t = times[i];
-      await _scheduleDailyTime(
-        id: idsPeriodicDhikr[i],
-        title: t.title,
-        body: t.body,
-        hour: t.hour,
-        minute: t.minute,
-        details: details,
-      );
-    }
-  }
-
-  static Future<void> cancelPeriodicDhikrs() async {
-    for (final id in idsPeriodicDhikr) {
-      await _notifications.cancel(id: id);
-    }
-  }
-
-  // ==================== 3. Friday Kahf ====================
+  // ==================== 2. Friday Kahf ====================
 
   static Future<void> scheduleFridayReminder() async {
     await _notifications.cancel(id: idFridayKahf);
@@ -330,142 +242,6 @@ class GeneralNotificationService {
       minute: 0,
       details: const NotificationDetails(android: androidDetails, iOS: darwinDetails),
       payload: 'surah_kahf',
-    );
-  }
-
-  // ==================== 4. Fasting Reminders ====================
-
-  static Future<void> scheduleFastingReminders() async {
-    await _notifications.cancel(id: idFastingMonday);
-    await _notifications.cancel(id: idFastingThursday);
-
-    const androidDetails = AndroidNotificationDetails(
-      'fasting_channel',
-      'تنبيهات الصيام',
-      channelDescription: 'تذكير بصيام الاثنين والخميس والأيام البيض',
-      importance: Importance.max,
-      priority: Priority.high,
-      playSound: true,
-    );
-
-    const darwinDetails = DarwinNotificationDetails(
-      presentAlert: true,
-      presentBadge: true,
-      presentSound: true,
-    );
-
-    final details = const NotificationDetails(android: androidDetails, iOS: darwinDetails);
-
-    // Fasting Monday: Schedule on Sunday evening (8:00 PM)
-    await _scheduleWeeklyDayAndTime(
-      id: idFastingMonday,
-      title: 'تذكير بصيام الاثنين غداً 🌙',
-      body: 'تُرفع الأعمال غداً الاثنين.. فكن من الصائمين لتنال أجر صيام التطوع والسنن المأثورة.',
-      dayOfWeek: DateTime.sunday,
-      hour: 20,
-      minute: 0,
-      details: details,
-    );
-
-    // Fasting Thursday: Schedule on Wednesday evening (8:00 PM)
-    await _scheduleWeeklyDayAndTime(
-      id: idFastingThursday,
-      title: 'تذكير بصيام الخميس غداً 🌙',
-      body: 'صيام يوم في سبيل الله يبعد وجهك عن النار سبعين خريفاً.. لا تدع صيام الخميس يفوتك.',
-      dayOfWeek: DateTime.wednesday,
-      hour: 20,
-      minute: 0,
-      details: details,
-    );
-  }
-
-  // ==================== 5. Duha Reminder ====================
-
-  static Future<void> scheduleDuhaReminder() async {
-    await _notifications.cancel(id: idDuha);
-
-    const androidDetails = AndroidNotificationDetails(
-      'duha_channel',
-      'صلاة الضحى',
-      channelDescription: 'تذكير بصلاة الضحى اليومية',
-      importance: Importance.high,
-      priority: Priority.high,
-      playSound: true,
-    );
-
-    const darwinDetails = DarwinNotificationDetails(
-      presentAlert: true,
-      presentBadge: true,
-      presentSound: true,
-    );
-
-    await _scheduleDailyTime(
-      id: idDuha,
-      title: 'صلاة الضحى صلاة الأوابين ☀️',
-      body: 'تصدق عن مفاصل بدنك الـ ٣٦٠ بركعتين من صلاة الضحى اليوم، لا تحرم نفسك أجرها الوفير.',
-      hour: 9,
-      minute: 30,
-      details: const NotificationDetails(android: androidDetails, iOS: darwinDetails),
-    );
-  }
-
-  // ==================== 6. Qiyam Al-Layl ====================
-
-  static Future<void> scheduleQiyamReminder() async {
-    await _notifications.cancel(id: idQiyam);
-
-    const androidDetails = AndroidNotificationDetails(
-      'qiyam_channel',
-      'قيام الليل والوتر',
-      channelDescription: 'تذكير بقيام الليل والوتر في الثلث الأخير',
-      importance: Importance.max,
-      priority: Priority.high,
-      playSound: true,
-    );
-
-    const darwinDetails = DarwinNotificationDetails(
-      presentAlert: true,
-      presentBadge: true,
-      presentSound: true,
-    );
-
-    await _scheduleDailyTime(
-      id: idQiyam,
-      title: 'شرف المؤمن قيام الليل والوتر 🌌',
-      body: 'ينزل ربنا تبارك وتعالى كل ليلة إلى السماء الدنيا فيقول: هل من داعٍ فأستجيب له؟ هل من مستغفر فأغفر له؟',
-      hour: 2,
-      minute: 0,
-      details: const NotificationDetails(android: androidDetails, iOS: darwinDetails),
-    );
-  }
-
-  // ==================== 7. Daily Content ====================
-
-  static Future<void> scheduleDailyContentReminder() async {
-    await _notifications.cancel(id: idDailyContent);
-
-    const androidDetails = AndroidNotificationDetails(
-      'daily_content_channel',
-      'آية وحديث اليوم',
-      channelDescription: 'تنبيه يومي بالقرآن والحديث الشريف',
-      importance: Importance.high,
-      priority: Priority.high,
-      playSound: true,
-    );
-
-    const darwinDetails = DarwinNotificationDetails(
-      presentAlert: true,
-      presentBadge: true,
-      presentSound: true,
-    );
-
-    await _scheduleDailyTime(
-      id: idDailyContent,
-      title: 'نور لقلبك: آية وحديث اليوم 📖',
-      body: 'تأمل في كلام الله العظيم وسنة رسوله المصطفى ﷺ لتنير يومك وتسعد قلبك بالبركة.',
-      hour: 12,
-      minute: 30,
-      details: const NotificationDetails(android: androidDetails, iOS: darwinDetails),
     );
   }
 
@@ -585,13 +361,4 @@ class GeneralNotificationService {
     await initialize();
     await _notifications.cancel(id: idKhatmaReminder);
   }
-}
-
-class _DhikrTime {
-  final int hour;
-  final int minute;
-  final String title;
-  final String body;
-
-  _DhikrTime(this.hour, this.minute, this.title, this.body);
 }
