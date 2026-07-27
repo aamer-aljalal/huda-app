@@ -6,9 +6,13 @@ class MushafTopBar extends StatelessWidget {
   const MushafTopBar({
     super.key,
     required this.surah,
+    this.isPageView = false,
+    this.onToggleReadingMode,
   });
 
   final QuranSurah surah;
+  final bool isPageView;
+  final VoidCallback? onToggleReadingMode;
 
   @override
   Widget build(BuildContext context) {
@@ -26,7 +30,39 @@ class MushafTopBar extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Expanded(child: _metaText(surah.revelationPlace)),
+          Expanded(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                if (onToggleReadingMode != null) ...[
+                  Tooltip(
+                    message: isPageView
+                        ? 'التغيير إلى القائمة المتصلة'
+                        : 'التغيير إلى عرض الصفحات',
+                    child: Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: onToggleReadingMode,
+                        borderRadius: BorderRadius.circular(20.r),
+                        child: Padding(
+                          padding: EdgeInsets.all(4.w),
+                          child: Icon(
+                            isPageView
+                                ? Icons.format_list_bulleted_rounded
+                                : Icons.auto_stories_rounded,
+                            color: const Color(0xFFEABB11),
+                            size: 20.sp,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  SizedBox(width: 2.w),
+                ],
+                Flexible(child: _metaText(surah.revelationPlace)),
+              ],
+            ),
+          ),
           _divider(),
           Expanded(
             flex: 2,

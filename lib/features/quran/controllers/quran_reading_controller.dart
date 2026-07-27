@@ -10,6 +10,48 @@ import 'package:tarteel/features/quran/services/quran_service.dart';
 
 class QuranReadingController {
   static const String savedAyahsKey = 'saved_quran_ayahs';
+  static const String readingModeKey = 'quran_reading_mode'; // 'list' or 'page'
+
+  static Future<String> getReadingMode() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(readingModeKey) ?? 'list';
+  }
+
+  static Future<void> setReadingMode(String mode) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(readingModeKey, mode);
+  }
+
+  static List<List<QuranAyah>> splitIntoPages(List<QuranAyah> ayahs) {
+    if (ayahs.isEmpty) return [[]];
+
+    final pages = <List<QuranAyah>>[];
+    var currentPage = <QuranAyah>[];
+    int currentWords = 0;
+
+    for (final ayah in ayahs) {
+      final wordsCount = ayah.text.trim().split(RegExp(r'\s+')).length;
+      final isFirstPage = pages.isEmpty;
+      // 50 words for Page 1 (due to Basmala space), 75 words for subsequent pages
+      final maxWordsForPage = isFirstPage ? 50 : 75;
+
+      if (currentPage.isNotEmpty &&
+          (currentWords + wordsCount > maxWordsForPage)) {
+        pages.add(currentPage);
+        currentPage = <QuranAyah>[ayah];
+        currentWords = wordsCount;
+      } else {
+        currentPage.add(ayah);
+        currentWords += wordsCount;
+      }
+    }
+
+    if (currentPage.isNotEmpty) {
+      pages.add(currentPage);
+    }
+
+    return pages;
+  }
 
   static Future<void> saveRecentAction({
     required QuranSurah surah,

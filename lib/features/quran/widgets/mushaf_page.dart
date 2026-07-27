@@ -73,13 +73,13 @@ class _MushafPageState extends State<MushafPage> {
                           color: const Color(0xFF1E1A12),
                           fontSize: textScale.scale(18.sp),
                           fontWeight: FontWeight.w900,
-                          height: 0.5.h,
+                          height: 0.9.h,
                           fontFamily: 'Amiri',
                         ),
                       ),
                     ),
                   ],
-                  SizedBox(height: 40.h),
+                  SizedBox(height: 25.h),
                 ],
                 ValueListenableBuilder<QuranAyah?>(
                   valueListenable: widget.pressedAyahNotifier,
@@ -90,8 +90,8 @@ class _MushafPageState extends State<MushafPage> {
                       text: TextSpan(
                         style: TextStyle(
                           color: const Color(0xFF1A1710),
-                          fontSize: textScale.scale(20.sp),
-                          height: 2.05,
+                          fontSize: textScale.scale(19.sp),
+                          height: 2,
                           fontWeight: FontWeight.w500,
                           fontFamily: 'Amiri',
                         ),

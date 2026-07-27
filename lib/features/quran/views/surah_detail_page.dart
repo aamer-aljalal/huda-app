@@ -7,6 +7,7 @@ import 'package:tarteel/features/quran/widgets/ayah_actions_sheet.dart';
 import 'package:tarteel/features/quran/widgets/ayah_interpretation_sheet.dart';
 import 'package:tarteel/features/quran/widgets/mushaf_page.dart';
 import 'package:tarteel/features/quran/widgets/reading_modes/quran_continuous_scroll_view.dart';
+import 'package:tarteel/features/quran/widgets/reading_modes/quran_page_view.dart';
 import 'package:tarteel/core/services/in_app_notification_service.dart';
 
 class SurahDetailPage extends StatefulWidget {
@@ -30,8 +31,10 @@ class SurahDetailPage extends StatefulWidget {
 }
 
 class _SurahDetailPageState extends State<SurahDetailPage> {
-  late final List<List<QuranAyah>> _pages;
-  late final List<GlobalKey> _pageKeys;
+  late final List<List<QuranAyah>> _continuousPages;
+  List<List<QuranAyah>> _paginatedPages = [];
+  late List<List<QuranAyah>> _pages;
+  late List<GlobalKey> _pageKeys;
   late final GlobalKey _centerSliverKey;
   int _currentPage = 0;
   int _centerPage = 0;
@@ -40,6 +43,8 @@ class _SurahDetailPageState extends State<SurahDetailPage> {
   final ValueNotifier<QuranAyah?> _pressedAyahNotifier = ValueNotifier(null);
 
   final ScrollController _scrollController = ScrollController();
+  final PageController _pageController = PageController();
+  bool _isPageView = false;
   double _initialScrollOffset = 0.0;
   bool _hasBookmarkedInThisSession = false;
   final GlobalKey _initialAyahKey = GlobalKey();
@@ -48,7 +53,9 @@ class _SurahDetailPageState extends State<SurahDetailPage> {
   @override
   void initState() {
     super.initState();
-    _pages = _splitIntoMushafPages(widget.ayahs);
+    _continuousPages = [widget.ayahs];
+    _paginatedPages = QuranReadingController.splitIntoPages(widget.ayahs);
+    _pages = _continuousPages;
     _pageKeys = List.generate(_pages.length, (_) => GlobalKey());
     _centerSliverKey = GlobalKey();
 
@@ -73,6 +80,7 @@ class _SurahDetailPageState extends State<SurahDetailPage> {
     _currentPage = _centerPage;
 
     _loadAllSurahs();
+    _loadReadingModePreference();
 
     if (widget.surah.number == 18) {
       InAppNotificationService.markCompleted('surah_kahf');
@@ -95,6 +103,26 @@ class _SurahDetailPageState extends State<SurahDetailPage> {
         );
       }
     });
+  }
+
+  Future<void> _loadReadingModePreference() async {
+    final mode = await QuranReadingController.getReadingMode();
+    if (mounted) {
+      setState(() {
+        _isPageView = mode == 'page';
+        _pages = _isPageView ? _paginatedPages : _continuousPages;
+        _pageKeys = List.generate(_pages.length, (_) => GlobalKey());
+      });
+    }
+  }
+
+  void _toggleReadingMode() {
+    setState(() {
+      _isPageView = !_isPageView;
+      _pages = _isPageView ? _paginatedPages : _continuousPages;
+      _pageKeys = List.generate(_pages.length, (_) => GlobalKey());
+    });
+    QuranReadingController.setReadingMode(_isPageView ? 'page' : 'list');
   }
 
   Future<void> _loadAllSurahs() async {
@@ -206,6 +234,7 @@ class _SurahDetailPageState extends State<SurahDetailPage> {
   void dispose() {
     _pressedAyahNotifier.dispose();
     _scrollController.dispose();
+    _pageController.dispose();
     super.dispose();
   }
 
@@ -261,10 +290,6 @@ class _SurahDetailPageState extends State<SurahDetailPage> {
     } catch (_) {}
   }
 
-  List<List<QuranAyah>> _splitIntoMushafPages(List<QuranAyah> ayahs) {
-    return [ayahs];
-  }
-
   Future<bool> _onWillPop() async {
     if (!widget.isKhatmaSession || _hasBookmarkedInThisSession) return true;
 
@@ -295,10 +320,14 @@ class _SurahDetailPageState extends State<SurahDetailPage> {
           body: SafeArea(
             child: Column(
               children: [
-                MushafTopBar(surah: widget.surah),
+                MushafTopBar(
+                  surah: widget.surah,
+                  isPageView: _isPageView,
+                  onToggleReadingMode: _toggleReadingMode,
+                ),
                 Expanded(
                   child: Container(
-                    padding: EdgeInsets.only(top: 60.h, bottom: 60.h),
+                    padding: EdgeInsets.only(top: 80.h, bottom: 40.h),
                     decoration: const BoxDecoration(
                       image: DecorationImage(
                         image: AssetImage('assets/img/surah_detail_green.png'),
@@ -309,6 +338,17 @@ class _SurahDetailPageState extends State<SurahDetailPage> {
                       padding: EdgeInsets.only(right: 18.w, left: 18.w),
                       child: _isLoading
                           ? const Center(child: CircularProgressIndicator())
+                          : _isPageView
+                          ? QuranPageView(
+                              pageController: _pageController,
+                              totalPages: _pages.length,
+                              buildPageSliver: _buildPageSliver,
+                              onPageChanged: (index) {
+                                setState(() {
+                                  _currentPage = index;
+                                });
+                              },
+                            )
                           : QuranContinuousScrollView(
                               scrollController: _scrollController,
                               centerSliverKey: _centerSliverKey,
