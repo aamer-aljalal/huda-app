@@ -3,12 +3,18 @@ import 'package:flutter/material.dart';
 
 class AyahNumber extends StatelessWidget {
   final int number;
-  const AyahNumber({super.key, required this.number});
+  final double fontSize;
+
+  const AyahNumber({super.key, required this.number, this.fontSize = 24.0});
+
   @override
   Widget build(BuildContext context) {
+    // 24.0 is the new default base font size
+    final scale = fontSize / 24.0;
+
     return Container(
-      width: 46.w,
-      height: 46.w,
+      width: (50 * scale).w,
+      height: (50 * scale).w,
       alignment: Alignment.center,
       margin: EdgeInsets.symmetric(horizontal: 2.w),
       // use provided image as background for the ayah number
@@ -22,8 +28,8 @@ class AyahNumber extends StatelessWidget {
         '$number',
         textAlign: TextAlign.center,
         style: TextStyle(
-          color: Color.fromARGB(255, 254, 255, 255),
-          fontSize: 10.sp,
+          color: const Color.fromARGB(255, 254, 255, 255),
+          fontSize: (9 * scale).sp,
           fontWeight: FontWeight.w800,
           height: 1,
         ),

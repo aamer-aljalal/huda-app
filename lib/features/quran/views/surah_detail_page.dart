@@ -53,7 +53,7 @@ class _SurahDetailPageState extends State<SurahDetailPage> {
 
   double? _lastScreenWidth;
   double? _lastScreenHeight;
-  double _fontSize = 19.0;
+  double _fontSize = 24.0;
 
   @override
   void initState() {
@@ -113,7 +113,7 @@ class _SurahDetailPageState extends State<SurahDetailPage> {
 
   Future<void> _loadFontSizePreference() async {
     final prefs = await SharedPreferences.getInstance();
-    final double savedSize = prefs.getDouble('quran_font_size') ?? 19.0;
+    final double savedSize = prefs.getDouble('quran_font_size') ?? 24.0;
     if (mounted) {
       setState(() {
         _fontSize = savedSize;

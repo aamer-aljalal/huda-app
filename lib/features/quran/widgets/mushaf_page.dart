@@ -203,7 +203,10 @@ class _MushafPageState extends State<MushafPage> {
               HapticFeedback.mediumImpact();
               widget.onAyahLongPress(ayah);
             },
-            child: AyahNumber(number: ayah.verse),
+            child: AyahNumber(
+              number: ayah.verse,
+              fontSize: widget.fontSize,
+            ),
           ),
         ),
       );
