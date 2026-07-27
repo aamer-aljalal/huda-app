@@ -56,7 +56,7 @@ class _QuranPageViewState extends State<QuranPageView> {
           '${_currentPage + 1}',
           style: TextStyle(
             color: Colors.black,
-            fontSize: 12.sp,
+            fontSize: 14.sp,
             fontWeight: FontWeight.w700,
           ),
         ),

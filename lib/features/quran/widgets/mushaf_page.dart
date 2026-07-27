@@ -50,12 +50,12 @@ class _MushafPageState extends State<MushafPage> {
   Widget build(BuildContext context) {
     final textScale = MediaQuery.textScalerOf(context);
     final screenWidth = MediaQuery.of(context).size.width;
-    final contentWidth = screenWidth - 20.w;
+    final contentWidth = screenWidth;
 
     return Container(
       width: double.infinity,
       color: Colors.transparent,
-      padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 0),
+      padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 10.h),
       child: FittedBox(
         fit: BoxFit.scaleDown,
         alignment: Alignment.topCenter,
@@ -108,7 +108,8 @@ class _MushafPageState extends State<MushafPage> {
                       },
                     ),
                     if (widget.isLastPage &&
-                        (widget.prevSurah != null || widget.nextSurah != null)) ...[
+                        (widget.prevSurah != null ||
+                            widget.nextSurah != null)) ...[
                       SizedBox(height: 32.h),
                       Container(
                         width: 120.w,
@@ -127,8 +128,9 @@ class _MushafPageState extends State<MushafPage> {
                                   title: 'السورة السابقة',
                                   surahName: widget.prevSurah!.nameArabic,
                                   isNext: false,
-                                  onTap: () =>
-                                      widget.onNavigate(widget.prevSurah!.number),
+                                  onTap: () => widget.onNavigate(
+                                    widget.prevSurah!.number,
+                                  ),
                                 ),
                               ),
                             ),
@@ -140,8 +142,9 @@ class _MushafPageState extends State<MushafPage> {
                                   title: 'السورة التالية',
                                   surahName: widget.nextSurah!.nameArabic,
                                   isNext: true,
-                                  onTap: () =>
-                                      widget.onNavigate(widget.nextSurah!.number),
+                                  onTap: () => widget.onNavigate(
+                                    widget.nextSurah!.number,
+                                  ),
                                 ),
                               ),
                             ),
