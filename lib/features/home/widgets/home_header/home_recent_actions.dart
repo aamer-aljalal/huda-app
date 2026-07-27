@@ -275,7 +275,7 @@ class _HomeRecentActionsState extends State<HomeRecentActions> with RouteAware {
         }
         final actions = snapshot.data!;
         return Container(
-          margin: EdgeInsets.only(top: 6.h, bottom: 15.h),
+          margin: EdgeInsets.only(bottom: 15.h),
           padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 3.h),
           decoration: BoxDecoration(
             color: colorScheme.surface,

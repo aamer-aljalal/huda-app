@@ -289,6 +289,7 @@ class AdhanNotificationService {
         debugPrint(
           'Native Adhan scheduled successfully for $prayerName at $scheduledTime',
         );
+
         return; // ننهي الدالة لكي لا تتم جدولة إشعار مكرر عبر flutter_local_notifications
       } else {
         debugPrint(

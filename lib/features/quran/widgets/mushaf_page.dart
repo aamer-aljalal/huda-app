@@ -49,103 +49,112 @@ class _MushafPageState extends State<MushafPage> {
   @override
   Widget build(BuildContext context) {
     final textScale = MediaQuery.textScalerOf(context);
+    final screenWidth = MediaQuery.of(context).size.width;
+    final contentWidth = screenWidth - 20.w;
 
     return Container(
       width: double.infinity,
       color: Colors.transparent,
       padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 0),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.start,
-        children: [
-          Align(
-            alignment: Alignment.topCenter,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                if (widget.isFirstPage) ...[
-                  if (_showBasmala) ...[
-                    Padding(
-                      padding: const EdgeInsets.only(top: 10),
-                      child: Text(
-                        'بِسۡمِ ٱللَّهِ ٱلرَّحۡمَٰنِ ٱلرَّحِيمِ',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: const Color(0xFF1E1A12),
-                          fontSize: textScale.scale(18.sp),
-                          fontWeight: FontWeight.w900,
-                          height: 0.9.h,
-                          fontFamily: 'Amiri',
-                        ),
-                      ),
-                    ),
-                  ],
-                  SizedBox(height: 25.h),
-                ],
-                ValueListenableBuilder<QuranAyah?>(
-                  valueListenable: widget.pressedAyahNotifier,
-                  builder: (context, pressedAyah, child) {
-                    return RichText(
-                      textDirection: TextDirection.rtl,
-                      textAlign: TextAlign.justify,
-                      text: TextSpan(
-                        style: TextStyle(
-                          color: const Color(0xFF1A1710),
-                          fontSize: textScale.scale(19.sp),
-                          height: 2,
-                          fontWeight: FontWeight.w500,
-                          fontFamily: 'Amiri',
-                        ),
-                        children: _buildAyahSpans(context, pressedAyah),
-                      ),
-                    );
-                  },
-                ),
-                if (widget.isLastPage &&
-                    (widget.prevSurah != null || widget.nextSurah != null)) ...[
-                  SizedBox(height: 32.h),
-                  Container(
-                    width: 120.w,
-                    height: 1.h,
-                    color: const Color(0xFF1E1A12).withValues(alpha: 0.15),
-                  ),
-                  SizedBox(height: 24.h),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      if (widget.prevSurah != null)
-                        Expanded(
-                          child: Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 6.w),
-                            child: SurahNavigationCard(
-                              title: 'السورة السابقة',
-                              surahName: widget.prevSurah!.nameArabic,
-                              isNext: false,
-                              onTap: () =>
-                                  widget.onNavigate(widget.prevSurah!.number),
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        alignment: Alignment.topCenter,
+        child: SizedBox(
+          width: contentWidth,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.start,
+            children: [
+              Align(
+                alignment: Alignment.topCenter,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    if (widget.isFirstPage) ...[
+                      if (_showBasmala) ...[
+                        Padding(
+                          padding: const EdgeInsets.only(top: 10),
+                          child: Text(
+                            'بِسۡمِ ٱللَّهِ ٱلرَّحۡمَٰنِ ٱلرَّحِيمِ',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: const Color(0xFF1E1A12),
+                              fontSize: textScale.scale(18.sp),
+                              fontWeight: FontWeight.w900,
+                              height: 0.9.h,
+                              fontFamily: 'Amiri',
                             ),
                           ),
                         ),
-                      if (widget.nextSurah != null)
-                        Expanded(
-                          child: Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 6.w),
-                            child: SurahNavigationCard(
-                              title: 'السورة التالية',
-                              surahName: widget.nextSurah!.nameArabic,
-                              isNext: true,
-                              onTap: () =>
-                                  widget.onNavigate(widget.nextSurah!.number),
-                            ),
-                          ),
-                        ),
+                      ],
+                      SizedBox(height: 25.h),
                     ],
-                  ),
-                  SizedBox(height: 16.h),
-                ],
-              ],
-            ),
+                    ValueListenableBuilder<QuranAyah?>(
+                      valueListenable: widget.pressedAyahNotifier,
+                      builder: (context, pressedAyah, child) {
+                        return RichText(
+                          textDirection: TextDirection.rtl,
+                          textAlign: TextAlign.justify,
+                          text: TextSpan(
+                            style: TextStyle(
+                              color: const Color(0xFF1A1710),
+                              fontSize: textScale.scale(19.sp),
+                              height: 2,
+                              fontWeight: FontWeight.w500,
+                              fontFamily: 'Amiri',
+                            ),
+                            children: _buildAyahSpans(context, pressedAyah),
+                          ),
+                        );
+                      },
+                    ),
+                    if (widget.isLastPage &&
+                        (widget.prevSurah != null || widget.nextSurah != null)) ...[
+                      SizedBox(height: 32.h),
+                      Container(
+                        width: 120.w,
+                        height: 1.h,
+                        color: const Color(0xFF1E1A12).withValues(alpha: 0.15),
+                      ),
+                      SizedBox(height: 24.h),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          if (widget.prevSurah != null)
+                            Expanded(
+                              child: Padding(
+                                padding: EdgeInsets.symmetric(horizontal: 6.w),
+                                child: SurahNavigationCard(
+                                  title: 'السورة السابقة',
+                                  surahName: widget.prevSurah!.nameArabic,
+                                  isNext: false,
+                                  onTap: () =>
+                                      widget.onNavigate(widget.prevSurah!.number),
+                                ),
+                              ),
+                            ),
+                          if (widget.nextSurah != null)
+                            Expanded(
+                              child: Padding(
+                                padding: EdgeInsets.symmetric(horizontal: 6.w),
+                                child: SurahNavigationCard(
+                                  title: 'السورة التالية',
+                                  surahName: widget.nextSurah!.nameArabic,
+                                  isNext: true,
+                                  onTap: () =>
+                                      widget.onNavigate(widget.nextSurah!.number),
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                      SizedBox(height: 16.h),
+                    ],
+                  ],
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }

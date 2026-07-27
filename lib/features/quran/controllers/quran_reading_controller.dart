@@ -14,7 +14,7 @@ class QuranReadingController {
 
   static Future<String> getReadingMode() async {
     final prefs = await SharedPreferences.getInstance();
-    return prefs.getString(readingModeKey) ?? 'list';
+    return prefs.getString(readingModeKey) ?? 'page';
   }
 
   static Future<void> setReadingMode(String mode) async {

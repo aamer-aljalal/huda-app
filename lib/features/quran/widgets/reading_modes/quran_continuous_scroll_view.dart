@@ -30,7 +30,7 @@ class QuranContinuousScrollView extends StatelessWidget {
       child: CustomScrollView(
         controller: scrollController,
         center: centerSliverKey,
-        physics: const BouncingScrollPhysics(),
+        physics: const ClampingScrollPhysics(),
         slivers: [
           if (centerPage > 0)
             SliverList(

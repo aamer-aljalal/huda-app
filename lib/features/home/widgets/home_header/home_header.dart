@@ -207,6 +207,7 @@ class _HomeHeaderState extends State<HomeHeader> with RouteAware {
       child: AnnotatedRegion<SystemUiOverlayStyle>(
         value: SystemUiOverlayStyle.light,
         child: Container(
+          margin: EdgeInsets.only(bottom: 20.h),
           decoration: const BoxDecoration(
             image: DecorationImage(
               image: AssetImage('assets/img/header_bg.png'),

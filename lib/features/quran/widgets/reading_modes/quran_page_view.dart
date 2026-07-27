@@ -38,7 +38,7 @@ class _QuranPageViewState extends State<QuranPageView> {
           child: PageView.builder(
             controller: widget.pageController,
             itemCount: widget.totalPages,
-            physics: const BouncingScrollPhysics(),
+            physics: const ClampingScrollPhysics(),
             onPageChanged: (index) {
               setState(() {
                 _currentPage = index;
@@ -46,10 +46,7 @@ class _QuranPageViewState extends State<QuranPageView> {
               widget.onPageChanged(index);
             },
             itemBuilder: (context, index) {
-              return SingleChildScrollView(
-                physics: const BouncingScrollPhysics(),
-                child: widget.buildPageSliver(index),
-              );
+              return widget.buildPageSliver(index);
             },
           ),
         ),
@@ -61,7 +58,6 @@ class _QuranPageViewState extends State<QuranPageView> {
             color: Colors.black,
             fontSize: 12.sp,
             fontWeight: FontWeight.w700,
-            // fontFamily: 'Cairo',
           ),
         ),
       ],
