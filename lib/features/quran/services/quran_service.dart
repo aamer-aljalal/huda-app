@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:isolate';
 
 import 'package:flutter/services.dart';
 import 'package:tarteel/core/helpers/arabic_search_helper.dart';
@@ -53,6 +54,14 @@ class QuranService {
   static Map<String, String>? _interpretations;
   static List<SearchableAyah>? _searchableAyahs;
 
+  static Future<void> preloadQuran() async {
+    if (_quran != null) return;
+    try {
+      final raw = await rootBundle.loadString('assets/json/quran.json');
+      _quran = await Isolate.run(() => jsonDecode(raw) as Map<String, dynamic>);
+    } catch (_) {}
+  }
+
   static Future<List<QuranSurah>> loadSurahs() async {
     if (_surahs != null) return _surahs!;
 
@@ -78,9 +87,10 @@ class QuranService {
   }
 
   static Future<List<QuranAyah>> loadAyahs(int surahNumber) async {
-    _quran ??=
-        jsonDecode(await rootBundle.loadString('assets/json/quran.json'))
-            as Map<String, dynamic>;
+    if (_quran == null) {
+      final raw = await rootBundle.loadString('assets/json/quran.json');
+      _quran = await Isolate.run(() => jsonDecode(raw) as Map<String, dynamic>);
+    }
 
     final rawAyahs = (_quran!['$surahNumber'] as List<dynamic>? ?? []);
 
@@ -100,9 +110,10 @@ class QuranService {
     final surahs = await loadSurahs();
     final List<SearchableAyah> results = [];
 
-    _quran ??=
-        jsonDecode(await rootBundle.loadString('assets/json/quran.json'))
-            as Map<String, dynamic>;
+    if (_quran == null) {
+      final raw = await rootBundle.loadString('assets/json/quran.json');
+      _quran = await Isolate.run(() => jsonDecode(raw) as Map<String, dynamic>);
+    }
 
     for (final surah in surahs) {
       final rawAyahs = (_quran!['${surah.number}'] as List<dynamic>? ?? []);

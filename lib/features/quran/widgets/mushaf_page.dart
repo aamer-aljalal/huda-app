@@ -21,6 +21,7 @@ class MushafPage extends StatefulWidget {
     required this.onNavigate,
     required this.pressedAyahNotifier,
     required this.ayahKeys,
+    required this.fontSize,
     this.initialAyah,
     this.initialAyahKey,
   });
@@ -36,6 +37,7 @@ class MushafPage extends StatefulWidget {
   final ValueChanged<int> onNavigate;
   final ValueNotifier<QuranAyah?> pressedAyahNotifier;
   final Map<int, GlobalKey> ayahKeys;
+  final double fontSize;
   final int? initialAyah;
   final GlobalKey? initialAyahKey;
 
@@ -97,7 +99,7 @@ class _MushafPageState extends State<MushafPage> {
                           text: TextSpan(
                             style: TextStyle(
                               color: const Color(0xFF1A1710),
-                              fontSize: textScale.scale(19.sp),
+                              fontSize: textScale.scale(widget.fontSize.sp),
                               height: 2,
                               fontWeight: FontWeight.w500,
                               fontFamily: 'Amiri',

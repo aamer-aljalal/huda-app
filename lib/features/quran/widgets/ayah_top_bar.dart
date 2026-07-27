@@ -12,6 +12,8 @@ class MushafTopBar extends StatelessWidget {
     required this.onReadingModeChanged,
     required this.allSurahs,
     required this.onNavigateToSurah,
+    required this.fontSize,
+    required this.onFontSizeChanged,
   });
 
   final QuranSurah surah;
@@ -19,6 +21,8 @@ class MushafTopBar extends StatelessWidget {
   final ValueChanged<bool> onReadingModeChanged;
   final List<QuranSurah> allSurahs;
   final Function(int surahNumber) onNavigateToSurah;
+  final double fontSize;
+  final ValueChanged<double> onFontSizeChanged;
 
   void _showReadingSettings(BuildContext context) {
     showModalBottomSheet(
@@ -28,6 +32,8 @@ class MushafTopBar extends StatelessWidget {
         return ReadingSettingsSheet(
           isPageView: isPageView,
           onReadingModeChanged: onReadingModeChanged,
+          initialFontSize: fontSize,
+          onFontSizeChanged: onFontSizeChanged,
         );
       },
     );
@@ -148,15 +154,32 @@ class MushafTopBar extends StatelessWidget {
   }
 }
 
-class ReadingSettingsSheet extends StatelessWidget {
+class ReadingSettingsSheet extends StatefulWidget {
   final bool isPageView;
   final ValueChanged<bool> onReadingModeChanged;
+  final double initialFontSize;
+  final ValueChanged<double> onFontSizeChanged;
 
   const ReadingSettingsSheet({
     super.key,
     required this.isPageView,
     required this.onReadingModeChanged,
+    required this.initialFontSize,
+    required this.onFontSizeChanged,
   });
+
+  @override
+  State<ReadingSettingsSheet> createState() => _ReadingSettingsSheetState();
+}
+
+class _ReadingSettingsSheetState extends State<ReadingSettingsSheet> {
+  late double _currentFontSize;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentFontSize = widget.initialFontSize;
+  }
 
   Widget _buildSearchCard(BuildContext context) {
     final theme = Theme.of(context);
@@ -189,7 +212,7 @@ class ReadingSettingsSheet extends StatelessWidget {
               size: 24.sp,
             ),
             SizedBox(width: 16.w),
-            Expanded( 
+            Expanded(
               child: Text(
                 'البحث عن آية في المصحف',
                 style: TextStyle(
@@ -247,19 +270,103 @@ class ReadingSettingsSheet extends StatelessWidget {
               ),
             ),
             SizedBox(height: 16.h),
-            // Text(
-            //   'خيارات عرض المصحف',
-            //   textAlign: TextAlign.center,
-            //   style: TextStyle(
-            //     fontSize: 16.sp,
-            //     fontWeight: FontWeight.bold,
-            //     fontFamily: 'Cairo',
-            //     color: isDark ? Colors.white : AppColors.primary,
-            //   ),
-            // ),
-
-            // Search option at the top
             _buildSearchCard(context),
+            SizedBox(height: 16.h),
+            Row(
+              children: [
+                Expanded(
+                  child: Divider(
+                    color: isDark ? Colors.white24 : Colors.grey.shade300,
+                    thickness: 1,
+                  ),
+                ),
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 10.w),
+                  child: Text(
+                    'حجم الخط',
+                    style: TextStyle(
+                      fontSize: 13.sp,
+                      fontWeight: FontWeight.bold,
+                      fontFamily: 'Cairo',
+                      color: isDark ? Colors.white70 : Colors.grey.shade700,
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: Divider(
+                    color: isDark ? Colors.white24 : Colors.grey.shade300,
+                    thickness: 1,
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 12.h),
+            Container(
+              padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+              decoration: BoxDecoration(
+                color: isDark ? Colors.black12 : Colors.grey.shade50,
+                border: Border.all(
+                  color: isDark ? Colors.white10 : Colors.grey.shade200,
+                  width: 1.5,
+                ),
+                borderRadius: BorderRadius.circular(12.r),
+              ),
+              child: Row(
+                children: [
+                  Text(
+                    'أ',
+                    style: TextStyle(
+                      fontSize: 14.sp,
+                      fontFamily: 'Amiri',
+                      fontWeight: FontWeight.bold,
+                      color: isDark ? Colors.white54 : Colors.black45,
+                    ),
+                  ),
+                  Expanded(
+                    child: SliderTheme(
+                      data: SliderThemeData(
+                        activeTrackColor: AppColors.goldAccent,
+                        inactiveTrackColor: isDark
+                            ? Colors.white12
+                            : Colors.grey.shade200,
+                        thumbColor: AppColors.goldAccent,
+                        overlayColor: AppColors.goldAccent.withValues(
+                          alpha: 0.2,
+                        ),
+                        valueIndicatorColor: AppColors.primary,
+                        valueIndicatorTextStyle: const TextStyle(
+                          color: Colors.white,
+                          fontFamily: 'Cairo',
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      child: Slider(
+                        value: _currentFontSize,
+                        min: 16.0,
+                        max: 32.0,
+                        divisions: 8,
+                        label: '${_currentFontSize.toInt()}',
+                        onChanged: (newSize) {
+                          setState(() {
+                            _currentFontSize = newSize;
+                          });
+                          widget.onFontSizeChanged(newSize);
+                        },
+                      ),
+                    ),
+                  ),
+                  Text(
+                    'أ',
+                    style: TextStyle(
+                      fontSize: 24.sp,
+                      fontFamily: 'Amiri',
+                      fontWeight: FontWeight.bold,
+                      color: isDark ? Colors.white : Colors.black87,
+                    ),
+                  ),
+                ],
+              ),
+            ),
             SizedBox(height: 16.h),
             Row(
               children: [
@@ -297,9 +404,9 @@ class ReadingSettingsSheet extends StatelessWidget {
                     context: context,
                     title: 'صفحات',
                     icon: Icons.auto_stories_rounded,
-                    isActive: isPageView,
+                    isActive: widget.isPageView,
                     onTap: () {
-                      onReadingModeChanged(true);
+                      widget.onReadingModeChanged(true);
                       Navigator.pop(context);
                     },
                   ),
@@ -310,9 +417,9 @@ class ReadingSettingsSheet extends StatelessWidget {
                     context: context,
                     title: 'قائمة متصلة',
                     icon: Icons.format_list_bulleted_rounded,
-                    isActive: !isPageView,
+                    isActive: !widget.isPageView,
                     onTap: () {
-                      onReadingModeChanged(false);
+                      widget.onReadingModeChanged(false);
                       Navigator.pop(context);
                     },
                   ),

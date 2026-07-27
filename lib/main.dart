@@ -9,6 +9,7 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'core/theme/app_theme.dart';
+import 'package:tarteel/features/quran/services/quran_service.dart';
 
 import 'package:provider/provider.dart';
 import 'package:tarteel/core/providers/prayer_provider.dart';
@@ -17,6 +18,9 @@ import 'package:tarteel/core/providers/theme_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  // Kick off Quran text preloading in the background (asynchronous, non-blocking)
+  QuranService.preloadQuran();
+
   await initializeDateFormatting('ar', null);
   await Hive.initFlutter();
 

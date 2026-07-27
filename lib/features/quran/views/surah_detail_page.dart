@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tarteel/features/quran/controllers/quran_reading_controller.dart';
 import 'package:tarteel/features/quran/services/quran_service.dart';
 import 'package:tarteel/features/quran/widgets/ayah_top_bar.dart';
@@ -52,12 +53,13 @@ class _SurahDetailPageState extends State<SurahDetailPage> {
 
   double? _lastScreenWidth;
   double? _lastScreenHeight;
+  double _fontSize = 19.0;
 
   @override
   void initState() {
     super.initState();
     _continuousPages = [widget.ayahs];
-    _paginatedPages = QuranReadingController.splitIntoPages(widget.ayahs);
+    _paginatedPages = [];
     _pages = _continuousPages;
     _pageKeys = List.generate(_pages.length, (_) => GlobalKey());
     _centerSliverKey = GlobalKey();
@@ -84,6 +86,7 @@ class _SurahDetailPageState extends State<SurahDetailPage> {
 
     _loadAllSurahs();
     _loadReadingModePreference();
+    _loadFontSizePreference();
 
     if (widget.surah.number == 18) {
       InAppNotificationService.markCompleted('surah_kahf');
@@ -108,6 +111,32 @@ class _SurahDetailPageState extends State<SurahDetailPage> {
     });
   }
 
+  Future<void> _loadFontSizePreference() async {
+    final prefs = await SharedPreferences.getInstance();
+    final double savedSize = prefs.getDouble('quran_font_size') ?? 19.0;
+    if (mounted) {
+      setState(() {
+        _fontSize = savedSize;
+      });
+      if (_lastScreenWidth != null && _lastScreenHeight != null) {
+        _calculateDynamicPages(_lastScreenWidth!, _lastScreenHeight!);
+      }
+    }
+  }
+
+  Future<void> _setFontSize(double size) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setDouble('quran_font_size', size);
+    if (mounted) {
+      setState(() {
+        _fontSize = size;
+      });
+      if (_lastScreenWidth != null && _lastScreenHeight != null) {
+        _calculateDynamicPages(_lastScreenWidth!, _lastScreenHeight!);
+      }
+    }
+  }
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -128,7 +157,7 @@ class _SurahDetailPageState extends State<SurahDetailPage> {
 
     final scaleX = screenWidth / 375.0;
 
-    final fontSize = 19.0 * scaleX * textScale;
+    final fontSize = _fontSize * scaleX * textScale;
     final lineHeight = fontSize * 2.0;
 
     final scaleY = screenHeight / 812.0;
@@ -439,6 +468,7 @@ class _SurahDetailPageState extends State<SurahDetailPage> {
       initialAyah: widget.initialAyah,
       initialAyahKey: _initialAyahKey,
       ayahKeys: _ayahKeys,
+      fontSize: _fontSize,
     );
   }
 
@@ -511,6 +541,8 @@ class _SurahDetailPageState extends State<SurahDetailPage> {
                   onReadingModeChanged: _setReadingMode,
                   allSurahs: _allSurahs,
                   onNavigateToSurah: _navigateToSurah,
+                  fontSize: _fontSize,
+                  onFontSizeChanged: _setFontSize,
                 ),
                 Expanded(
                   child: Container(
