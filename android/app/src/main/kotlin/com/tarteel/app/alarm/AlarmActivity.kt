@@ -412,6 +412,55 @@ class AlarmActivity : Activity() {
         ).toInt()
     }
 
+    override fun dispatchKeyEvent(event: android.view.KeyEvent): Boolean {
+        if (event.action == android.view.KeyEvent.ACTION_DOWN) {
+            val keyCode = event.keyCode
+            if (keyCode == android.view.KeyEvent.KEYCODE_VOLUME_UP ||
+                keyCode == android.view.KeyEvent.KEYCODE_VOLUME_DOWN ||
+                keyCode == android.view.KeyEvent.KEYCODE_VOLUME_MUTE ||
+                keyCode == android.view.KeyEvent.KEYCODE_POWER ||
+                keyCode == android.view.KeyEvent.KEYCODE_CAMERA ||
+                keyCode == android.view.KeyEvent.KEYCODE_HEADSETHOOK) {
+                Log.d("AlarmActivity", "تم رصد ضغطة زر الجانب/الصوت ($keyCode)، جاري إيقاف الأذان وإغلاق الواجهة...")
+                sendActionToService(AlarmForegroundService.ACTION_STOP)
+                finish()
+                return true
+            }
+        }
+        return super.dispatchKeyEvent(event)
+    }
+
+    override fun onKeyDown(keyCode: Int, event: android.view.KeyEvent?): Boolean {
+        when (keyCode) {
+            android.view.KeyEvent.KEYCODE_VOLUME_UP,
+            android.view.KeyEvent.KEYCODE_VOLUME_DOWN,
+            android.view.KeyEvent.KEYCODE_VOLUME_MUTE,
+            android.view.KeyEvent.KEYCODE_POWER,
+            android.view.KeyEvent.KEYCODE_CAMERA,
+            android.view.KeyEvent.KEYCODE_HEADSETHOOK -> {
+                Log.d("AlarmActivity", "تم رصد ضغطة زر في onKeyDown ($keyCode)، جاري إيقاف الأذان فوراً...")
+                sendActionToService(AlarmForegroundService.ACTION_STOP)
+                finish()
+                return true
+            }
+        }
+        return super.onKeyDown(keyCode, event)
+    }
+
+    override fun onUserLeaveHint() {
+        super.onUserLeaveHint()
+        Log.d("AlarmActivity", "المستخدم يغادر واجهة الرنين (onUserLeaveHint)، إيقاف الأذان فوراً...")
+        sendActionToService(AlarmForegroundService.ACTION_STOP)
+        finish()
+    }
+
+    override fun onStop() {
+        super.onStop()
+        // عند إغلاق الشاشة (الضغط على زر الطاقة/القفل) أو التحول لتطبيق آخر، يتم إيقاف الأذان فوراً وبشكل حتمي
+        Log.d("AlarmActivity", "تم إيقاف الواجهة (onStop - إغلاق الشاشة أو ضغط زر الطاقة)، إيقاف الأذان فوراً...")
+        sendActionToService(AlarmForegroundService.ACTION_STOP)
+    }
+
     override fun onBackPressed() {
         // لا نفعل شيئاً؛ إجباري التفاعل مع الأزرار للسلامة
     }

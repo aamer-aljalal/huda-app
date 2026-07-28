@@ -7,10 +7,14 @@ import android.app.PendingIntent
 import android.app.Service
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.ServiceInfo
 import android.media.AudioAttributes
+import android.media.AudioFocusRequest
 import android.media.AudioManager
 import android.media.MediaPlayer
+import android.media.session.MediaSession
+import android.media.session.PlaybackState
 import android.os.Build
 import android.os.IBinder
 import android.os.VibrationEffect
@@ -35,6 +39,10 @@ class AlarmForegroundService : Service() {
     private var currentAlarmData: AlarmData? = null
     private var isMuted = false
     private var originalAlarmVolume: Int? = null
+    private var powerButtonReceiver: android.content.BroadcastReceiver? = null
+    private var alarmStartTime: Long = 0
+    private var audioFocusRequest: AudioFocusRequest? = null
+    private var mediaSession: MediaSession? = null
 
     companion object {
         private const val TAG = "AlarmService"
@@ -124,6 +132,12 @@ class AlarmForegroundService : Service() {
     private fun startAlarm(alarmData: AlarmData) {
         currentAlarmData = alarmData
         Log.d(TAG, "بدء رنين المنبه: ${alarmData.title}")
+
+        // تفعيل الخاصية الافتراضية المباشرة بالنظام (AudioFocus & MediaSession) لصيد أزرار الهاردوير وطاقة الهاتف تلقائياً
+        setupNativeAudioSystem()
+
+        // تفعيل مراقبة أزرار الطاقة والصوت بشكل إجباري ومطلق عند بدء أي تنبيه أو اختبار
+        registerPowerButtonReceiver()
 
         // نقوم أولاً بإيقاف وتفريغ أي مشغل أو هزاز نشط لتفادي تداخل الأصوات وتراكمها
         try {
@@ -362,6 +376,8 @@ class AlarmForegroundService : Service() {
      */
     private fun stopAlarm() {
         Log.d(TAG, "إيقاف المنبه بالكامل وإنهاء الخدمة")
+        unregisterPowerButtonReceiver()
+        releaseNativeAudioSystem()
         try {
             mediaPlayer?.stop()
             mediaPlayer?.release()
@@ -391,6 +407,101 @@ class AlarmForegroundService : Service() {
         stopForeground(true)
         // إيقاف الخدمة الحالية
         stopSelf()
+    }
+
+    /**
+     * إعداد واستغلال الميزة الهاردويرية الافتراضية للنظام (AudioFocus & MediaSession)
+     * والتي تضمن قيام نظام أندرويد (سامسونج وغيرها) بكتم الأذان تلقائياً عند الضغط على أي زر هاردوير.
+     */
+    private fun setupNativeAudioSystem() {
+        val audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
+
+        val focusChangeListener = AudioManager.OnAudioFocusChangeListener { focusChange ->
+            Log.d(TAG, "حدث تغيّر في تركيز الصوت بالنظام AudioFocus: $focusChange")
+            if (focusChange == AudioManager.AUDIOFOCUS_LOSS ||
+                focusChange == AudioManager.AUDIOFOCUS_LOSS_TRANSIENT ||
+                focusChange == AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK) {
+                Log.d(TAG, "تم فقدان تركيز الصوت من النظام (ضغطة زر الطاقة/أزرار الصوت الجانبية)، إيقاف الأذان فوراً...")
+                stopAlarm()
+            }
+        }
+
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                val audioAttributes = AudioAttributes.Builder()
+                    .setUsage(AudioAttributes.USAGE_ALARM)
+                    .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                    .build()
+
+                audioFocusRequest = AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN_TRANSIENT)
+                    .setAudioAttributes(audioAttributes)
+                    .setAcceptsDelayedFocusGain(false)
+                    .setOnAudioFocusChangeListener(focusChangeListener)
+                    .build()
+
+                audioManager.requestAudioFocus(audioFocusRequest!!)
+            } else {
+                @Suppress("DEPRECATION")
+                audioManager.requestAudioFocus(
+                    focusChangeListener,
+                    AudioManager.STREAM_ALARM,
+                    AudioManager.AUDIOFOCUS_GAIN_TRANSIENT
+                )
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "فشل طلب AudioFocus الافتراضي: ${e.message}")
+        }
+
+        try {
+            mediaSession = MediaSession(this, "AdhanMediaSession").apply {
+                setCallback(object : MediaSession.Callback() {
+                    override fun onMediaButtonEvent(mediaButtonIntent: Intent): Boolean {
+                        Log.d(TAG, "تم استقبال نية أزرار الهاردوير الافتراضية عبر MediaSession: $mediaButtonIntent")
+                        stopAlarm()
+                        return true
+                    }
+                    override fun onPause() {
+                        Log.d(TAG, "تم استقبال أمر Pause افتراضي من النظام")
+                        stopAlarm()
+                    }
+                    override fun onStop() {
+                        Log.d(TAG, "تم استقبال أمر Stop افتراضي من النظام")
+                        stopAlarm()
+                    }
+                })
+                val state = PlaybackState.Builder()
+                    .setActions(PlaybackState.ACTION_PLAY or PlaybackState.ACTION_PAUSE or PlaybackState.ACTION_STOP)
+                    .setState(PlaybackState.STATE_PLAYING, PlaybackState.PLAYBACK_POSITION_UNKNOWN, 1.0f)
+                    .build()
+                setPlaybackState(state)
+                isActive = true
+            }
+            Log.d(TAG, "تم تفعيل MediaSession الافتراضية بنجاح لصيد مفاتيح النظام")
+        } catch (e: Exception) {
+            Log.e(TAG, "فشل تهيئة MediaSession: ${e.message}")
+        }
+    }
+
+    private fun releaseNativeAudioSystem() {
+        try {
+            val audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                audioFocusRequest?.let { audioManager.abandonAudioFocusRequest(it) }
+                audioFocusRequest = null
+            } else {
+                @Suppress("DEPRECATION")
+                audioManager.abandonAudioFocus(null)
+            }
+
+            mediaSession?.let {
+                it.isActive = false
+                it.release()
+                mediaSession = null
+            }
+            Log.d(TAG, "تم تحرير ميزات النظام الافتراضية AudioFocus & MediaSession بنجاح")
+        } catch (e: Exception) {
+            Log.e(TAG, "خطأ أثناء تحرير ميزات الصوت الافتراضية: ${e.message}")
+        }
     }
 
     /**
@@ -453,6 +564,70 @@ class AlarmForegroundService : Service() {
             Log.d(TAG, "تحديث حالة الاهتزاز تجريبياً لحظياً إلى: $vibrate")
         } catch (e: Exception) {
             Log.e(TAG, "فشل تحديث الاهتزاز لحظياً: ${e.message}")
+        }
+    }
+
+    private fun registerPowerButtonReceiver() {
+        try {
+            unregisterPowerButtonReceiver()
+            alarmStartTime = System.currentTimeMillis()
+            powerButtonReceiver = object : android.content.BroadcastReceiver() {
+                override fun onReceive(context: Context?, intent: Intent?) {
+                    val action = intent?.action
+                    val elapsed = System.currentTimeMillis() - alarmStartTime
+                    
+                    Log.d(TAG, "رصد حدث زر النظام أو الشاشة: $action بعد $elapsed م.ث")
+
+                    // عند الضغط على زر الطاقة لغلق الشاشة أو إغلاق الحوارات، نوقف الصوت فوراً وبدون أي انتظار
+                    if (action == Intent.ACTION_SCREEN_OFF || action == Intent.ACTION_CLOSE_SYSTEM_DIALOGS) {
+                        Log.d(TAG, "تم رصد ضغطة زر الطاقة الجانبي/قفل الشاشة، إيقاف الأذان فوراً...")
+                        stopAlarm()
+                        return
+                    }
+                    
+                    // أما عند الضغط لفتح الشاشة أو ضغطة أزرار الصوت، نتجاهل أول 250 م.ث فقط
+                    if (elapsed > 250 && (action == Intent.ACTION_SCREEN_ON || 
+                                          action == Intent.ACTION_USER_PRESENT || 
+                                          action == "android.media.VOLUME_CHANGED_ACTION" ||
+                                          action == "android.media.STREAM_MUTE_CHANGED_ACTION")) {
+                        Log.d(TAG, "تم رصد تفاعل المستخدم بالزر ($action بعد $elapsed م.ث)، جاري إيقاف الأذان...")
+                        stopAlarm()
+                    }
+                }
+            }
+            val filter = android.content.IntentFilter().apply {
+                addAction(Intent.ACTION_SCREEN_OFF)
+                addAction(Intent.ACTION_SCREEN_ON)
+                addAction(Intent.ACTION_USER_PRESENT)
+                addAction(Intent.ACTION_CLOSE_SYSTEM_DIALOGS)
+                addAction("android.media.VOLUME_CHANGED_ACTION")
+                addAction("android.media.STREAM_MUTE_CHANGED_ACTION")
+                priority = IntentFilter.SYSTEM_HIGH_PRIORITY
+            }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                try {
+                    registerReceiver(powerButtonReceiver, filter, Context.RECEIVER_NOT_EXPORTED)
+                } catch (e: Exception) {
+                    registerReceiver(powerButtonReceiver, filter, Context.RECEIVER_EXPORTED)
+                }
+            } else {
+                registerReceiver(powerButtonReceiver, filter)
+            }
+            Log.d(TAG, "تم بنجاح تسجيل مراقب زر الطاقة الجانبي وأزرار الصوت (Samsung One UI Compatible)")
+        } catch (e: Exception) {
+            Log.e(TAG, "فشل تسجيل مراقب زر القفل: ${e.message}")
+        }
+    }
+
+    private fun unregisterPowerButtonReceiver() {
+        try {
+            powerButtonReceiver?.let {
+                unregisterReceiver(it)
+                powerButtonReceiver = null
+                Log.d(TAG, "تم إلغاء تسجيل مراقب زر الطاقة/القفل")
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "خطأ في إلغاء تسجيل مراقب زر القفل: ${e.message}")
         }
     }
 

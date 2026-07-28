@@ -21,7 +21,6 @@ void main() async {
   await initializeDateFormatting('ar', null);
   await Hive.initFlutter();
 
-
   await HiveDatabase.init();
   await AdhanNotificationService.initialize();
   await GeneralNotificationService.scheduleAllEnabledNotifications();

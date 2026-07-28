@@ -17,26 +17,42 @@ class AdhanSettingsPage extends StatefulWidget {
   State<AdhanSettingsPage> createState() => _AdhanSettingsPageState();
 }
 
-class _AdhanSettingsPageState extends State<AdhanSettingsPage> {
+class _AdhanSettingsPageState extends State<AdhanSettingsPage> with WidgetsBindingObserver {
   bool _soundEnabled = true;
   AdhanMuezzin? _activeMuezzin;
   bool _hapticFeedback = true;
   double _adhanVolume = 1.0;
   bool _vibrationEnabled = true;
+  bool _stopOnPowerButton = true;
   bool _isTestingAdhan = false;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _loadSettings();
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     if (_isTestingAdhan) {
       NativeAlarmService.stopActiveAlarm();
     }
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // إيقاف وكتم أي صوت أذان فوراً عند إغلاق الشاشة (الضغط على زر الطاقة الجانبي)
+    if (_stopOnPowerButton && (state == AppLifecycleState.paused || state == AppLifecycleState.inactive || state == AppLifecycleState.hidden)) {
+      NativeAlarmService.stopActiveAlarm();
+      if (mounted) {
+        setState(() {
+          _isTestingAdhan = false;
+        });
+      }
+    }
   }
 
   Future<void> _loadSettings() async {
@@ -52,6 +68,7 @@ class _AdhanSettingsPageState extends State<AdhanSettingsPage> {
       _hapticFeedback = prefs.getBool('haptic_feedback') ?? true;
       _adhanVolume = prefs.getDouble('adhan_volume') ?? 1.0;
       _vibrationEnabled = prefs.getBool('adhan_vibration_enabled') ?? true;
+      _stopOnPowerButton = prefs.getBool('stop_on_power_button') ?? true;
     });
   }
 
@@ -109,6 +126,15 @@ class _AdhanSettingsPageState extends State<AdhanSettingsPage> {
       final prayerProvider = context.read<PrayerProvider>();
       await prayerProvider.scheduleAdhanNotifications();
     }
+  }
+
+  Future<void> _updateStopOnPowerButton(bool val) async {
+    if (_hapticFeedback) HapticFeedback.lightImpact();
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('stop_on_power_button', val);
+    setState(() {
+      _stopOnPowerButton = val;
+    });
   }
 
   Future<void> _toggleTestAdhan() async {
@@ -364,6 +390,16 @@ class _AdhanSettingsPageState extends State<AdhanSettingsPage> {
                   icon: Icons.notifications_active_outlined,
                   onChanged: (value) => _updateSoundEnabled(value),
                   iconColor: Colors.teal,
+                ),
+                const Divider(height: 1, indent: 60, endIndent: 20),
+                _buildSwitchTile(
+                  title: 'إيقاف الأذان بزر الطاقة/القفل',
+                  subtitle:
+                      'إيقاف وكتم صوت الأذان فوراً عند الضغط على زر طاقة أو قفل الهاتف',
+                  value: _stopOnPowerButton,
+                  icon: Icons.power_settings_new_rounded,
+                  onChanged: (value) => _updateStopOnPowerButton(value),
+                  iconColor: Colors.deepOrange,
                 ),
                 if (_soundEnabled) ...[
                   const Divider(height: 1, indent: 60, endIndent: 20),

@@ -5,6 +5,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:provider/provider.dart';
+import 'package:tarteel/core/providers/theme_provider.dart';
 import 'package:tarteel/core/services/in_app_notification_service.dart';
 import 'package:tarteel/core/theme/app_colors.dart';
 import 'package:tarteel/routes/AppRoutes.dart';
@@ -22,6 +24,7 @@ class HomeHeaderQuickActions extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Container(
       margin: EdgeInsets.only(top: 2.h, bottom: 2.h),
@@ -50,6 +53,7 @@ class HomeHeaderQuickActions extends StatelessWidget {
               Navigator.pushNamed(context, AppRoutes.settings);
             },
           ),
+
           _buildActionButton(
             context: context,
             icon: Icons.explore_outlined,
@@ -97,6 +101,18 @@ class HomeHeaderQuickActions extends StatelessWidget {
                   ),
                 ),
             ],
+          ),
+          _buildActionButton(
+            context: context,
+            icon: isDark ? Icons.nights_stay_outlined : Icons.wb_sunny_outlined,
+            onPressed: () async {
+              HapticFeedback.lightImpact();
+              final newTheme = isDark ? 'نهاري' : 'ليلي';
+              await Provider.of<ThemeProvider>(
+                context,
+                listen: false,
+              ).updateTheme(newTheme);
+            },
           ),
         ],
       ),
