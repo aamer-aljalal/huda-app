@@ -31,6 +31,14 @@ class _AdhanSettingsPageState extends State<AdhanSettingsPage> {
     _loadSettings();
   }
 
+  @override
+  void dispose() {
+    if (_isTestingAdhan) {
+      NativeAlarmService.stopActiveAlarm();
+    }
+    super.dispose();
+  }
+
   Future<void> _loadSettings() async {
     final notificationsEnabled =
         await AdhanNotificationService.arePrayerNotificationsEnabled();
@@ -70,6 +78,15 @@ class _AdhanSettingsPageState extends State<AdhanSettingsPage> {
     setState(() {
       _adhanVolume = val;
     });
+    // إيقاف الصوت التجريبي فوراً عند رفع الإصبع عن شريط التمرير
+    if (_isTestingAdhan) {
+      await NativeAlarmService.stopActiveAlarm();
+      if (mounted) {
+        setState(() {
+          _isTestingAdhan = false;
+        });
+      }
+    }
     // إعادة جدولة المنبهات بالصوت الجديد
     if (mounted) {
       final prayerProvider = context.read<PrayerProvider>();

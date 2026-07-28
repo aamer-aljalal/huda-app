@@ -289,8 +289,10 @@ class AdhanNotificationService {
         //  تحذير مهم للاختبار: هذه الدالة تعمل داخل حلقة تكرار لجدولة 225 صلاة (45 يوماً).
         // لا تضع هنا DateTime.now().add(Duration(seconds: 30)) وإلا سيعمل 225 منبه في نفس الثانية!
         // لتجربة الأذان المجدول بأمان بعد 30 ثانية، استخدم دالة: testScheduleAdhanInSeconds(30)
-        scheduledTime: id == 9000 ? DateTime.now().add(const Duration(seconds: 30)) : scheduledTime,
-        // scheduledTime: scheduledTime,
+        // scheduledTime: id == 9000
+        //     ? DateTime.now().add(const Duration(seconds: 30))
+        //     : scheduledTime,
+        scheduledTime: scheduledTime,
         vibrate: vibrateEnabled,
         fullScreen: true,
         volume: volumeLevel,

@@ -512,8 +512,9 @@ class _AzkarDetailsScreenState extends State<AzkarDetailsScreen>
                 fontWeight: FontWeight.w500,
               ),
             ),
-            if (_hasStartedReciting) ...[
-              SizedBox(height: 12.h),
+            if (!_hasStartedReciting) ...[
+              SizedBox(height: 46.h),
+            ] else ...{
               TextButton.icon(
                 onPressed: _showResetCategoryDialog,
                 icon: const Icon(
@@ -523,24 +524,20 @@ class _AzkarDetailsScreenState extends State<AzkarDetailsScreen>
                 label: Text(
                   'بدء من جديد / إعادة تعيين',
                   style: TextStyle(
-                    fontSize: 6.sp,
+                    fontSize: 5.sp,
                     color: Colors.redAccent,
                     fontWeight: FontWeight.bold,
                     fontFamily: 'Cairo',
                   ),
                 ),
-                style: TextButton.styleFrom(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: 8.w,
-                    vertical: 8.h,
-                  ),
-                  backgroundColor: Colors.redAccent.withOpacity(0.1),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12.r),
-                  ),
-                ),
+                // style: TextButton.styleFrom(
+                //   // backgroundColor: Colors.redAccent.withOpacity(0.1),
+                //   // shape: RoundedRectangleBorder(
+                //   //   borderRadius: BorderRadius.circular(12.r),
+                //   // ),
+                // ),
               ),
-            ],
+            },
             SizedBox(height: 20.h),
           ],
         ),

@@ -89,6 +89,15 @@ class _AdhanMuezzinScreenState extends State<AdhanMuezzinScreen> {
     setState(() {
       _adhanVolume = val;
     });
+    // إيقاف الصوت التجريبي فوراً عند إفلات الإصبع عن شريط التمرير
+    if (_isTestingAdhan) {
+      await NativeAlarmService.stopActiveAlarm();
+      if (mounted) {
+        setState(() {
+          _isTestingAdhan = false;
+        });
+      }
+    }
     if (mounted) {
       final prayerProvider = context.read<PrayerProvider>();
       await prayerProvider.scheduleAdhanNotifications();
@@ -250,6 +259,22 @@ class _AdhanMuezzinScreenState extends State<AdhanMuezzinScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              _buildSwitchTile(
+                title: 'تشغيل الأذان التلقائي',
+                subtitle: 'تنبيه بصوت المؤذن عند دخول وقت الصلاة',
+                value: _soundEnabled,
+                icon: Icons.notifications_active_outlined,
+                onChanged: (value) => _updateSoundEnabled(value),
+                iconColor: Colors.teal,
+              ),
+              _buildSwitchTile(
+                title: 'الاهتزاز مع الأذان',
+                subtitle: 'تفعيل اهتزاز الهاتف عند تشغيل الأذان',
+                value: _vibrationEnabled,
+                icon: Icons.vibration_rounded,
+                onChanged: (value) => _updateVibrationEnabled(value),
+                iconColor: Colors.blueGrey,
+              ),
               // 1. بطاقة إعدادات الأذان والصوت والاهتزاز الموحدة
               if (_soundEnabled) ...[
                 SizedBox(height: 24.h),
@@ -291,11 +316,11 @@ class _AdhanMuezzinScreenState extends State<AdhanMuezzinScreen> {
                   final isPlaying = _playingMuezzinId == muezzin.id;
 
                   return Container(
-                    margin: EdgeInsets.only(bottom: 12.h),
-                    padding: EdgeInsets.all(14.w),
+                    margin: EdgeInsets.only(bottom: 8.h),
+                    padding: EdgeInsets.all(8.w),
                     decoration: BoxDecoration(
                       color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
-                      borderRadius: BorderRadius.circular(20.r),
+                      borderRadius: BorderRadius.circular(10.r),
                       border: Border.all(
                         color: isSelected
                             ? AppColors.primary
@@ -317,8 +342,8 @@ class _AdhanMuezzinScreenState extends State<AdhanMuezzinScreen> {
                     child: Row(
                       children: [
                         Container(
-                          width: 40.w,
-                          height: 40.w,
+                          width: 30.w,
+                          height: 30.w,
                           decoration: BoxDecoration(
                             color: isSelected
                                 ? AppColors.primary.withValues(alpha: 0.1)
@@ -336,7 +361,7 @@ class _AdhanMuezzinScreenState extends State<AdhanMuezzinScreen> {
                                 : (isDark
                                       ? Colors.grey.shade400
                                       : Colors.grey.shade600),
-                            size: 20.sp,
+                            size: 15.sp,
                           ),
                         ),
                         SizedBox(width: 12.w),
@@ -350,7 +375,7 @@ class _AdhanMuezzinScreenState extends State<AdhanMuezzinScreen> {
                                   ? FontWeight.bold
                                   : FontWeight.w600,
                               color: isSelected ? AppColors.primary : null,
-                              fontSize: 14.sp,
+                              fontSize: 11.sp,
                             ),
                           ),
                         ),
@@ -384,13 +409,13 @@ class _AdhanMuezzinScreenState extends State<AdhanMuezzinScreen> {
                             backgroundColor: AppColors.primary,
                             padding: EdgeInsets.symmetric(horizontal: 14.w),
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10.r),
+                              borderRadius: BorderRadius.circular(8.r),
                             ),
                           ),
                           child: _isSaving && isSelected
                               ? SizedBox(
-                                  width: 14.w,
-                                  height: 14.w,
+                                  width: 10.w,
+                                  height: 10.w,
                                   child: const CircularProgressIndicator(
                                     strokeWidth: 2,
                                     color: Colors.white,
@@ -399,7 +424,7 @@ class _AdhanMuezzinScreenState extends State<AdhanMuezzinScreen> {
                               : Text(
                                   isSelected ? 'مختار' : 'تفعيل',
                                   style: TextStyle(
-                                    fontSize: 12.sp,
+                                    fontSize: 10.sp,
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
@@ -413,7 +438,7 @@ class _AdhanMuezzinScreenState extends State<AdhanMuezzinScreen> {
                 width: double.infinity,
                 decoration: BoxDecoration(
                   color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
-                  borderRadius: BorderRadius.circular(24.r),
+                  borderRadius: BorderRadius.circular(12.r),
                   boxShadow: [
                     BoxShadow(
                       color: isDark
@@ -432,29 +457,11 @@ class _AdhanMuezzinScreenState extends State<AdhanMuezzinScreen> {
                 ),
                 child: Column(
                   children: [
-                    _buildSwitchTile(
-                      title: 'تشغيل الأذان التلقائي',
-                      subtitle: 'تنبيه بصوت المؤذن عند دخول وقت الصلاة',
-                      value: _soundEnabled,
-                      icon: Icons.notifications_active_outlined,
-                      onChanged: (value) => _updateSoundEnabled(value),
-                      iconColor: Colors.teal,
-                    ),
                     if (_soundEnabled) ...[
-                      const Divider(height: 1, indent: 64, endIndent: 20),
-                      _buildSwitchTile(
-                        title: 'الاهتزاز مع الأذان',
-                        subtitle: 'تفعيل اهتزاز الهاتف عند تشغيل الأذان',
-                        value: _vibrationEnabled,
-                        icon: Icons.vibration_rounded,
-                        onChanged: (value) => _updateVibrationEnabled(value),
-                        iconColor: Colors.blueGrey,
-                      ),
-                      const Divider(height: 1, indent: 64, endIndent: 20),
                       Padding(
                         padding: EdgeInsets.symmetric(
-                          horizontal: 16.w,
-                          vertical: 12.h,
+                          horizontal: 10.w,
+                          vertical: 10.h,
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -493,7 +500,7 @@ class _AdhanMuezzinScreenState extends State<AdhanMuezzinScreen> {
                                 ),
                               ],
                             ),
-                            SizedBox(height: 8.h),
+                            // SizedBox(height: 8.h),
                             Slider(
                               value: _adhanVolume,
                               min: 0.0,
@@ -520,22 +527,21 @@ class _AdhanMuezzinScreenState extends State<AdhanMuezzinScreen> {
                           ],
                         ),
                       ),
-                      const Divider(height: 1, indent: 20, endIndent: 20),
                       Padding(
                         padding: EdgeInsets.symmetric(
-                          horizontal: 16.w,
+                          horizontal: 8.w,
                           vertical: 8.h,
                         ),
                         child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Expanded(
                               child: Text(
                                 _isTestingAdhan
                                     ? 'جاري تشغيل الأذان التجريبي...'
-                                    : 'اختبر صوت ورنين الأذان الأصلي',
+                                    : '',
                                 style: TextStyle(
-                                  fontSize: 12.sp,
+                                  fontSize: 8.sp,
                                   fontWeight: FontWeight.w500,
                                   color: _isTestingAdhan
                                       ? Colors.red
@@ -559,6 +565,7 @@ class _AdhanMuezzinScreenState extends State<AdhanMuezzinScreen> {
                                 style: const TextStyle(
                                   fontWeight: FontWeight.bold,
                                   color: Colors.white,
+                                  fontSize: 12,
                                 ),
                               ),
                               style: ElevatedButton.styleFrom(
@@ -566,7 +573,7 @@ class _AdhanMuezzinScreenState extends State<AdhanMuezzinScreen> {
                                     ? Colors.red.shade600
                                     : AppColors.primary,
                                 shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12.r),
+                                  borderRadius: BorderRadius.circular(8.r),
                                 ),
                                 padding: EdgeInsets.symmetric(
                                   horizontal: 16.w,
@@ -581,14 +588,14 @@ class _AdhanMuezzinScreenState extends State<AdhanMuezzinScreen> {
                   ],
                 ),
               ),
-              SizedBox(height: 20.h),
+              SizedBox(height: 10.h),
 
               // 4. صندوق معلومات الموعد التلقائي المحدث
               Container(
                 padding: EdgeInsets.all(16.w),
                 decoration: BoxDecoration(
                   color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
-                  borderRadius: BorderRadius.circular(20.r),
+                  borderRadius: BorderRadius.circular(15.r),
                   border: Border.all(
                     color: AppColors.primary.withValues(alpha: 0.15),
                   ),
@@ -631,12 +638,12 @@ class _AdhanMuezzinScreenState extends State<AdhanMuezzinScreen> {
   }) {
     final effectiveIconColor = iconColor ?? AppColors.primary;
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+      padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 5.h),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Container(
-            padding: EdgeInsets.all(10.w),
+            padding: EdgeInsets.all(8.w),
             decoration: BoxDecoration(
               color: effectiveIconColor.withValues(alpha: 0.1),
               shape: BoxShape.circle,
@@ -652,7 +659,7 @@ class _AdhanMuezzinScreenState extends State<AdhanMuezzinScreen> {
                 Text(
                   title,
                   style: TextStyle(
-                    fontSize: 13.5.sp,
+                    fontSize: 10.sp,
                     fontWeight: FontWeight.w700,
                     height: 1.2,
                   ),
