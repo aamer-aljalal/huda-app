@@ -29,11 +29,14 @@ class _HadithScreenState extends State<HadithScreen> {
   Set<int> _favoriteNumbers = {};
   bool _isLoading = true;
   String? _errorMessage;
+  double _hadithFontSize = 18.0;
+  bool _showingFavoritesOnly = false;
 
   @override
   void initState() {
     super.initState();
     _loadHadiths();
+    _loadHadithFontSize();
     _searchController.addListener(_filterHadiths);
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -42,6 +45,155 @@ class _HadithScreenState extends State<HadithScreen> {
         _openHadithByNumber(args);
       }
     });
+  }
+
+  Future<void> _loadHadithFontSize() async {
+    final prefs = await SharedPreferences.getInstance();
+    final double savedSize = prefs.getDouble('hadith_font_size') ?? 18.0;
+    if (mounted) {
+      setState(() {
+        _hadithFontSize = savedSize;
+      });
+    }
+  }
+
+  Future<void> _setHadithFontSize(double size) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setDouble('hadith_font_size', size);
+    if (mounted) {
+      setState(() {
+        _hadithFontSize = size;
+      });
+    }
+  }
+
+  void _showTextSettings(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setStateSheet) {
+            return Directionality(
+              textDirection: TextDirection.rtl,
+              child: Container(
+                padding: EdgeInsets.fromLTRB(
+                  16.w,
+                  16.h,
+                  16.w,
+                  24.h + MediaQuery.of(context).padding.bottom,
+                ),
+                decoration: BoxDecoration(
+                  color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.15),
+                      blurRadius: 10,
+                      offset: const Offset(0, -2),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Center(
+                      child: Container(
+                        width: 40.w,
+                        height: 4.h,
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade400,
+                          borderRadius: BorderRadius.circular(2.r),
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: 16.h),
+                    Text(
+                      'إعدادات حجم خط الأحاديث',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 15.sp,
+                        fontWeight: FontWeight.bold,
+                        fontFamily: 'Cairo',
+                        color: AppColors.primary,
+                      ),
+                    ),
+                    SizedBox(height: 16.h),
+                    Container(
+                      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+                      decoration: BoxDecoration(
+                        color: isDark ? Colors.black12 : Colors.grey.shade50,
+                        border: Border.all(
+                          color: isDark ? Colors.white10 : Colors.grey.shade200,
+                          width: 1.5,
+                        ),
+                        borderRadius: BorderRadius.circular(12.r),
+                      ),
+                      child: Row(
+                        children: [
+                          Text(
+                            'أ',
+                            style: TextStyle(
+                              fontSize: 14.sp,
+                              fontFamily: 'Amiri',
+                              fontWeight: FontWeight.bold,
+                              color: isDark ? Colors.white54 : Colors.black45,
+                            ),
+                          ),
+                          Expanded(
+                            child: SliderTheme(
+                              data: SliderThemeData(
+                                activeTrackColor: AppColors.goldAccent,
+                                inactiveTrackColor:
+                                    isDark ? Colors.white12 : Colors.grey.shade200,
+                                thumbColor: AppColors.goldAccent,
+                                overlayColor: AppColors.goldAccent.withValues(alpha: 0.2),
+                                valueIndicatorColor: AppColors.primary,
+                                valueIndicatorTextStyle: const TextStyle(
+                                  color: Colors.white,
+                                  fontFamily: 'Cairo',
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              child: Slider(
+                                value: _hadithFontSize,
+                                min: 14.0,
+                                max: 28.0,
+                                divisions: 7,
+                                label: '${_hadithFontSize.toInt()}',
+                                onChanged: (newSize) {
+                                  setStateSheet(() {
+                                    _hadithFontSize = newSize;
+                                  });
+                                },
+                                onChangeEnd: (newSize) {
+                                  _setHadithFontSize(newSize);
+                                },
+                              ),
+                            ),
+                          ),
+                          Text(
+                            'أ',
+                            style: TextStyle(
+                              fontSize: 24.sp,
+                              fontFamily: 'Amiri',
+                              fontWeight: FontWeight.bold,
+                              color: isDark ? Colors.white : Colors.black87,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
   }
 
   void _openHadithByNumber(int number) {
@@ -100,7 +252,11 @@ class _HadithScreenState extends State<HadithScreen> {
 
   void _filterHadiths() {
     final query = _searchController.text;
+    if (_showingFavoritesOnly && query.isEmpty) {
+      return;
+    }
     setState(() {
+      _showingFavoritesOnly = false;
       _filteredHadiths = _allHadiths
           .where((hadith) => hadith.matches(query))
           .toList(growable: false);
@@ -142,12 +298,17 @@ class _HadithScreenState extends State<HadithScreen> {
     _showHadithDetails(random);
   }
 
-  void _showFavoritesOnly() {
+  void _toggleFavoritesView() {
     setState(() {
-      _searchController.clear();
-      _filteredHadiths = _allHadiths
-          .where((hadith) => _favoriteNumbers.contains(hadith.number))
-          .toList(growable: false);
+      _showingFavoritesOnly = !_showingFavoritesOnly;
+      if (_showingFavoritesOnly) {
+        _searchController.clear();
+        _filteredHadiths = _allHadiths
+            .where((hadith) => _favoriteNumbers.contains(hadith.number))
+            .toList(growable: false);
+      } else {
+        _filteredHadiths = _allHadiths;
+      }
     });
 
     if (_scrollController.hasClients) {
@@ -188,6 +349,7 @@ class _HadithScreenState extends State<HadithScreen> {
                     _showHadithDetails(hadith);
                   });
                 },
+                fontSize: _hadithFontSize,
               );
             },
           ),
@@ -225,14 +387,22 @@ class _HadithScreenState extends State<HadithScreen> {
           searchHint: 'ابحث في الأحاديث أو الشروحات...',
           actions: [
             IconButton(
+              tooltip: 'إعدادات الخط',
+              icon: const Icon(Icons.format_size_rounded),
+              onPressed: _isLoading ? null : () => _showTextSettings(context),
+            ),
+            IconButton(
               tooltip: 'حديث عشوائي مبارك',
               icon: const Icon(Icons.shuffle_rounded),
               onPressed: _isLoading ? null : _openRandomHadith,
             ),
             IconButton(
-              tooltip: 'الأحاديث المحفوظة',
-              icon: const Icon(Icons.star_rounded),
-              onPressed: _isLoading ? null : _showFavoritesOnly,
+              tooltip: _showingFavoritesOnly ? 'عرض كل الأحاديث' : 'الأحاديث المحفوظة',
+              icon: Icon(
+                _showingFavoritesOnly ? Icons.star_rounded : Icons.star_outline_rounded,
+                color: _showingFavoritesOnly ? Colors.amber : null,
+              ),
+              onPressed: _isLoading ? null : _toggleFavoritesView,
             ),
           ],
         ),
@@ -293,6 +463,7 @@ class _HadithScreenState extends State<HadithScreen> {
                       onTap: () => _showHadithDetails(hadith),
                       onCopy: () => _copyHadith(hadith),
                       onFavorite: () => _toggleFavorite(hadith),
+                      fontSize: _hadithFontSize,
                     );
                   },
                 ),
@@ -372,6 +543,7 @@ class _HadithCard extends StatelessWidget {
     required this.onTap,
     required this.onCopy,
     required this.onFavorite,
+    required this.fontSize,
   });
 
   final HadithModel hadith;
@@ -379,12 +551,14 @@ class _HadithCard extends StatelessWidget {
   final VoidCallback onTap;
   final VoidCallback onCopy;
   final VoidCallback onFavorite;
+  final double fontSize;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
+    final scale = fontSize / 18.0;
 
     return Padding(
       padding: EdgeInsets.only(bottom: 12.h),
@@ -417,7 +591,7 @@ class _HadithCard extends StatelessWidget {
                     Expanded(
                       child: ResponsiveText(
                         content: hadith.shortTitle,
-                        fontSize: 13,
+                        fontSize: 13 * scale,
                         fontWeight: FontWeight.w900,
                         color: AppColors.primary,
                         fontFamily: 'Cairo',
@@ -447,7 +621,7 @@ class _HadithCard extends StatelessWidget {
                   content: hadith.textOnly,
                   maxLines: 4,
                   textAlign: TextAlign.right,
-                  fontSize: 20,
+                  fontSize: 20 * scale,
                   height: 1.8,
                   color: isDark ? Colors.white70 : Colors.black87,
                   fontWeight: FontWeight.w500,
@@ -525,6 +699,7 @@ class _HadithDetailsSheet extends StatelessWidget {
     required this.controller,
     required this.onCopy,
     required this.onFavorite,
+    required this.fontSize,
   });
 
   final HadithModel hadith;
@@ -532,12 +707,14 @@ class _HadithDetailsSheet extends StatelessWidget {
   final ScrollController controller;
   final VoidCallback onCopy;
   final VoidCallback onFavorite;
+  final double fontSize;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final cardBg = isDark ? const Color(0xFF2C2C2C) : Colors.grey.shade50;
+    final scale = fontSize / 18.0;
 
     return Container(
       decoration: BoxDecoration(
@@ -643,7 +820,7 @@ class _HadithDetailsSheet extends StatelessWidget {
                       ResponsiveText(
                         content: hadith.textOnly,
                         textAlign: TextAlign.justify,
-                        fontSize: 16,
+                        fontSize: 16 * scale,
                         height: 1.9,
                         fontWeight: FontWeight.w500,
                         color: isDark ? Colors.white : Colors.black87,
@@ -691,7 +868,7 @@ class _HadithDetailsSheet extends StatelessWidget {
                         ResponsiveText(
                           content: hadith.description,
                           textAlign: TextAlign.justify,
-                          fontSize: 13,
+                          fontSize: 13 * scale,
                           height: 1.7,
                           fontWeight: FontWeight.w500,
                           color: isDark ? Colors.white70 : Colors.black87,

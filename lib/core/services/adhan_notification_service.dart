@@ -93,18 +93,13 @@ class AdhanNotificationService {
     tz.initializeTimeZones();
     await _configureLocalTimezone();
 
-    // إعدادات التهيئة الخاصة بنظام الأندرويد (تحديد أيقونة الإشعار الافتراضية)
+    // إعدادات التهيئة الخاصة بنظام الأندرويد
     const androidSettings = AndroidInitializationSettings(
       '@mipmap/ic_launcher',
     );
 
-    // إعدادات التهيئة الخاصة بنظام الـ iOS
-    const darwinSettings = DarwinInitializationSettings();
-
     const initializationSettings = InitializationSettings(
       android: androidSettings,
-      iOS: darwinSettings,
-      macOS: darwinSettings,
     );
 
     try {
@@ -119,7 +114,7 @@ class AdhanNotificationService {
     _initialized = true;
   }
 
-  /// تحديد المنطقة الزمنية الحالية للهاتف، مع وضع الرياض كافتياطي في حال الفشل
+  /// تحديد المنطقة الزمنية الحالية للهاتف، مع وضع الرياض كافتراضي في حال الفشل
   static Future<void> _configureLocalTimezone() async {
     try {
       final localTimezone = await FlutterTimezone.getLocalTimezone();
@@ -131,7 +126,7 @@ class AdhanNotificationService {
     }
   }
 
-  /// طلب الأذونات الخاصة بالإشعارات والمنبه الدقيق من نظامي التشغيل
+  /// طلب الأذونات الخاصة بالإشعارات والمنبه الدقيق من نظام تشغيل أندرويد
   static Future<void> _requestPermissions() async {
     final androidPlugin = _notifications
         .resolvePlatformSpecificImplementation<
@@ -143,13 +138,6 @@ class AdhanNotificationService {
 
     // طلب إذن جدولة منبهات دقيقة بالثانية (ضروري جداً لتشغيل الأذان في وقته تماماً)
     await androidPlugin?.requestExactAlarmsPermission();
-
-    // طلب أذونات الإشعارات لنظام iOS (تنبيه، شارة، صوت مخصص)
-    await _notifications
-        .resolvePlatformSpecificImplementation<
-          IOSFlutterLocalNotificationsPlugin
-        >()
-        ?.requestPermissions(alert: true, badge: true, sound: true);
   }
 
   /// التحقق من حالة تفعيل إشعارات الأذان من إعدادات التطبيق
@@ -198,22 +186,10 @@ class AdhanNotificationService {
     final selected = await selectedMuezzin();
     final now = DateTime.now();
 
-    // حساب مواقيت اليوم
-    final today = PrayerTimes(
-      coordinates,
-      DateComponents.from(now),
-      calculationParameters,
-    );
+    // جدولة الصلوات لمدة 45 يوماً متلفة ومتتابعة للمستقبل (حوالي 225 صلاة) ليعمل الأذان دون توقف حتى لو اغلق التطبيق
+    const int totalDaysToSchedule = 45;
+    int notificationOffset = 0;
 
-    // حساب مواقيت الغد (تستخدم في حال مرت الصلاة اليوم)
-    final tomorrowDate = now.add(const Duration(days: 1));
-    final tomorrow = PrayerTimes(
-      coordinates,
-      DateComponents.from(tomorrowDate),
-      calculationParameters,
-    );
-
-    // قائمة الصلوات المطلوب جدولتها
     final prayers = <Prayer>[
       Prayer.fajr,
       Prayer.dhuhr,
@@ -222,32 +198,36 @@ class AdhanNotificationService {
       Prayer.isha,
     ];
 
-    for (var index = 0; index < prayers.length; index++) {
-      final prayer = prayers[index];
-      final todayTime = today.timeForPrayer(prayer);
-
-      // إذا كان وقت الصلاة اليوم قد مضى، نقوم بجدولتها لوقت الغد
-      final scheduledTime = todayTime != null && todayTime.isAfter(now)
-          ? todayTime
-          : tomorrow.timeForPrayer(prayer);
-
-      if (scheduledTime == null) continue;
-
-      // جدولة منبه الصلاة
-      await _scheduleSingleAdhan(
-        id: _notificationBaseId + index,
-        prayerName: _prayerName(prayer),
-        scheduledTime: scheduledTime,
-        muezzin: selected,
+    for (int day = 0; day < totalDaysToSchedule; day++) {
+      final targetDate = now.add(Duration(days: day));
+      final dayPrayerTimes = PrayerTimes(
+        coordinates,
+        DateComponents.from(targetDate),
+        calculationParameters,
       );
+
+      for (final prayer in prayers) {
+        final prayerTime = dayPrayerTimes.timeForPrayer(prayer);
+        // نتخطى الصلوات التي مضى وقتها بالفعل في اليوم الحالي
+        if (prayerTime == null || prayerTime.isBefore(now)) continue;
+
+        await _scheduleSingleAdhan(
+          id: _notificationBaseId + notificationOffset,
+          prayerName: _prayerName(prayer),
+          scheduledTime: prayerTime,
+          muezzin: selected,
+        );
+        notificationOffset++;
+      }
     }
   }
 
-  /// إلغاء كافة إشعارات الأذان الخمسة المجدولة في النظام
+  /// إلغاء كافة إشعارات الأذان المجدولة في النظام
   static Future<void> cancelPrayerAdhan() async {
     if (!_notificationsAvailable) return;
 
-    for (var index = 0; index < 5; index++) {
+    // مسح نطاق كامل يغطي كافة الـ 300 إشعار المحتمله المجدولة للأذان
+    for (var index = 0; index < 300; index++) {
       await _notifications.cancel(id: _notificationBaseId + index);
     }
 
@@ -257,6 +237,35 @@ class AdhanNotificationService {
     }
   }
 
+  /// دالة مخصصة لاختبار المنبه بعد מספר من الثواني بأمان دون تداخل الصلوات
+  static Future<void> testScheduleAdhanInSeconds(
+    int seconds, {
+    String prayerName = 'المغرب',
+  }) async {
+    final selected = await selectedMuezzin();
+    final targetTime = DateTime.now().add(Duration(seconds: seconds));
+
+    final prefs = await SharedPreferences.getInstance();
+    final vibrateEnabled = prefs.getBool('adhan_vibration_enabled') ?? true;
+    final volumeLevel = prefs.getDouble('adhan_volume') ?? 1.0;
+
+    debugPrint('بدء الجدولة الاختبارية لصلاة $prayerName بعد $seconds ثانية');
+
+    await NativeAlarmService.scheduleAlarm(
+      id: 'adhan_test_timer',
+      type: 'ADHAN',
+      title: 'حان الآن موعد صلاة $prayerName',
+      subtitle: 'أذان بصوت المؤذن ${selected.name} (تجريب)',
+      audioFile: selected.rawResourceName,
+      audioSource: 'RAW_RESOURCE',
+      scheduledTime: targetTime,
+      vibrate: vibrateEnabled,
+      fullScreen: true,
+      volume: volumeLevel,
+      loopAudio: false,
+    );
+  }
+
   /// جدولة إشعار/منبه فردي لصلاة معينة بصوت المؤذن المحدد
   static Future<void> _scheduleSingleAdhan({
     required int id,
@@ -264,7 +273,7 @@ class AdhanNotificationService {
     required DateTime scheduledTime,
     required AdhanMuezzin muezzin,
   }) async {
-    // 1. إذا كان الهاتف أندرويد، نجدول المنبه الأصلي فورا
+    // 1. جدولة المنبه الأصلي لنظام الأندرويد فوراً (الخدمة الأساسية الحصرية للتطبيق)
     if (Platform.isAndroid) {
       final prefs = await SharedPreferences.getInstance();
       final vibrateEnabled = prefs.getBool('adhan_vibration_enabled') ?? true;
@@ -277,8 +286,11 @@ class AdhanNotificationService {
         subtitle: 'أذان بصوت المؤذن ${muezzin.name}',
         audioFile: muezzin.rawResourceName,
         audioSource: 'RAW_RESOURCE',
-        scheduledTime: scheduledTime,
-        // scheduledTime: DateTime.now().add(const Duration(seconds: 30)),
+        //  تحذير مهم للاختبار: هذه الدالة تعمل داخل حلقة تكرار لجدولة 225 صلاة (45 يوماً).
+        // لا تضع هنا DateTime.now().add(Duration(seconds: 30)) وإلا سيعمل 225 منبه في نفس الثانية!
+        // لتجربة الأذان المجدول بأمان بعد 30 ثانية، استخدم دالة: testScheduleAdhanInSeconds(30)
+        scheduledTime: id == 9000 ? DateTime.now().add(const Duration(seconds: 30)) : scheduledTime,
+        // scheduledTime: scheduledTime,
         vibrate: vibrateEnabled,
         fullScreen: true,
         volume: volumeLevel,
@@ -298,8 +310,7 @@ class AdhanNotificationService {
       }
     }
 
-    // 2. الدعم البديل للـ iOS أو في حال فشل الأندرويد الأصلي
-    // 💡 تم إضافة الحاق '_v4' لاسم معرف القناة (channelId) لحل مشكلة كاش الأندرويد.
+    // 2. الدعم البديل في حال تعذر تشغيل المنبه الأصلي
     final channelId = 'adhan_${muezzin.rawResourceName}_channel_v4';
 
     final androidDetails = AndroidNotificationDetails(
@@ -314,25 +325,13 @@ class AdhanNotificationService {
       visibility: NotificationVisibility.public,
     );
 
-    // تفاصيل إعدادات الـ iOS (تم تحديد الصوت بصيغة .m4a ليعمل بشكل صحيح)
-    final darwinDetails = DarwinNotificationDetails(
-      presentAlert: true,
-      presentBadge: true,
-      presentSound: true,
-      sound: '${muezzin.rawResourceName}.m4a',
-    );
-
     try {
       await _notifications.zonedSchedule(
         id: id,
         title: 'حان الآن موعد صلاة $prayerName',
         body: 'الله أكبر',
         scheduledDate: tz.TZDateTime.from(scheduledTime, tz.local),
-        notificationDetails: NotificationDetails(
-          android: androidDetails,
-          iOS: darwinDetails,
-          macOS: darwinDetails,
-        ),
+        notificationDetails: NotificationDetails(android: androidDetails),
         androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
       );
     } catch (e) {
@@ -343,11 +342,7 @@ class AdhanNotificationService {
           title: 'حان الآن موعد صلاة $prayerName',
           body: 'الله أكبر',
           scheduledDate: tz.TZDateTime.from(scheduledTime, tz.local),
-          notificationDetails: NotificationDetails(
-            android: androidDetails,
-            iOS: darwinDetails,
-            macOS: darwinDetails,
-          ),
+          notificationDetails: NotificationDetails(android: androidDetails),
           androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
         );
       } catch (innerError) {

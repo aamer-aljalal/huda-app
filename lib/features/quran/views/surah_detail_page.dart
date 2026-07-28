@@ -53,7 +53,7 @@ class _SurahDetailPageState extends State<SurahDetailPage> {
 
   double? _lastScreenWidth;
   double? _lastScreenHeight;
-  double _fontSize = 24.0;
+  double _fontSize = 22.0;
 
   @override
   void initState() {

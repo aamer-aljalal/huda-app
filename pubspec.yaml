@@ -129,7 +129,8 @@ flutter:
 flutter_launcher_icons:
   android: true
   ios: true
-  image_path: "assets/img/icon/app.jpg"
+
+  image_path: "assets/img/icon/tarteel.png"
+  adaptive_icon_foreground: "assets/img/icon/tarteel.png"
   adaptive_icon_background: "#FFFFFF"
-  adaptive_icon_foreground: "assets/img/icon/app.jpg"
-  adaptive_icon_foreground_inset: 7
+  adaptive_icon_foreground_inset: 20

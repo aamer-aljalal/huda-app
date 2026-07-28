@@ -18,23 +18,9 @@ import 'package:tarteel/core/providers/theme_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  // Kick off Quran text preloading in the background (asynchronous, non-blocking)
-  QuranService.preloadQuran();
-
   await initializeDateFormatting('ar', null);
   await Hive.initFlutter();
 
-  // await Hive.deleteBoxFromDisk('dhikrBox');
-  // final prefs = await SharedPreferences.getInstance();
-  // await prefs.remove(
-  //   'home_azkar_prompt_أذكار الصباح_${DateTime.now().year}-${DateTime.now().month}-${DateTime.now().day}',
-  // );
-  // await prefs.remove(
-  //   'home_azkar_prompt_أذكار المساء_${DateTime.now().year}-${DateTime.now().month}-${DateTime.now().day}',
-  // );
-  // await prefs.remove(
-  //   'home_azkar_prompt_أذكار النوم_${DateTime.now().year}-${DateTime.now().month}-${DateTime.now().day}',
-  // );
 
   await HiveDatabase.init();
   await AdhanNotificationService.initialize();
@@ -42,6 +28,9 @@ void main() async {
 
   final themeProvider = ThemeProvider();
   await themeProvider.initialize();
+
+  // Kick off Quran text preloading asynchronously after all core plugins are ready
+  Future.microtask(() => QuranService.preloadQuran());
 
   runApp(
     MultiProvider(

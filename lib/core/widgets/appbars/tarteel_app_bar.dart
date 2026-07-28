@@ -215,6 +215,14 @@ class tarteelAppBar extends StatelessWidget implements PreferredSizeWidget {
         padding: EdgeInsets.only(top: 22.h),
         child: effectiveLeading,
       ),
+      actions: actions != null
+          ? actions!
+              .map((action) => Padding(
+                    padding: EdgeInsets.only(top: 20.h),
+                    child: action,
+                  ))
+              .toList()
+          : null,
       centerTitle: centerTitle,
       elevation: elevation,
       backgroundColor: Colors.transparent,

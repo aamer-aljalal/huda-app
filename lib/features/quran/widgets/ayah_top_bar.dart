@@ -350,6 +350,8 @@ class _ReadingSettingsSheetState extends State<ReadingSettingsSheet> {
                           setState(() {
                             _currentFontSize = newSize;
                           });
+                        },
+                        onChangeEnd: (newSize) {
                           widget.onFontSizeChanged(newSize);
                         },
                       ),

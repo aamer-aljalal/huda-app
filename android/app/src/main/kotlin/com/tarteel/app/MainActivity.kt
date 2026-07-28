@@ -16,12 +16,8 @@ import com.tarteel.app.alarm.AlarmBridge
  */
 class MainActivity : FlutterActivity() {
 
-    /**
-     * دالة تهيئة محرك فلاتر؛ هنا نقوم بربط قنوات الاتصال الأصلية.
-     */
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
-        
         // تسجيل وتفعيل جسر المنبهات الموحد للبدء بالاستماع للأوامر من فلاتر
         AlarmBridge.registerWith(flutterEngine.dartExecutor.binaryMessenger, this)
     }

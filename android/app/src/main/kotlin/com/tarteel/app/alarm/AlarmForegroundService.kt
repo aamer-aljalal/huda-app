@@ -204,6 +204,14 @@ class AlarmForegroundService : Service() {
             } else {
                 startForeground(NOTIFICATION_ID, notification)
             }
+
+            // إطلاق شاشة الأذان مباشرة من داخل الخدمة الأمامية لضمان ظهورها بملء الشاشة فوق قفل هواتف سامسونج (Android 14)
+            try {
+                startActivity(fullScreenIntent)
+                Log.d(TAG, "تم إرسال أمر فتح AlarmActivity مباشرة من الخدمة الأمامية فوق قفل الشاشة")
+            } catch (e: Exception) {
+                Log.e(TAG, "تعذر إطلاق AlarmActivity مباشرة: ${e.message}")
+            }
         }
 
         // 6. تشغيل الهزاز إذا كان مفعلاً
@@ -235,45 +243,78 @@ class AlarmForegroundService : Service() {
             .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
             .build()
 
-        // 8. تشغيل ملف الصوت المخصص باستخدام MediaPlayer
+        // 8. تشغيل ملف الصوت المخصص باستخدام MediaPlayer مع ثلاث طبقات احتياطية لضمان عمل الصوت في أنظمة سامسونج (Android 14+)
         try {
-            // البحث عن ملف الصوت المخصص في مجلد res/raw
-            val resourceId = resources.getIdentifier(alarmData.audioFile, "raw", packageName)
+            // تنظيف اسم الملف من أي امتداد لضمان التوافق الكامل مع R.raw
+            val cleanResourceName = alarmData.audioFile.removeSuffix(".m4a").removeSuffix(".mp3").removeSuffix(".wav").trim()
+            val resourceId = resources.getIdentifier(cleanResourceName, "raw", packageName)
             
-            mediaPlayer = if (resourceId != 0) {
-                // إنشاء المشغل بملف الأذان المخصص مع تحديد خصائص الصوت
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                    MediaPlayer.create(this, resourceId, audioAttributes, 0)
-                } else {
-                    MediaPlayer.create(this, resourceId).apply {
-                        @Suppress("DEPRECATION")
-                        setAudioStreamType(AudioManager.STREAM_ALARM)
+            val player = MediaPlayer()
+            player.setAudioAttributes(audioAttributes)
+            
+            var sourceLoaded = false
+            
+            // المحاولة الأولى: عبر openRawResourceFd
+            if (resourceId != 0 && !sourceLoaded) {
+                try {
+                    val afd = resources.openRawResourceFd(resourceId)
+                    if (afd != null) {
+                        player.setDataSource(afd.fileDescriptor, afd.startOffset, afd.length)
+                        afd.close()
+                        sourceLoaded = true
+                        Log.d(TAG, "تم تحميل صوت الأذان $cleanResourceName بنجاح عبر openRawResourceFd")
                     }
+                } catch (ex: Exception) {
+                    Log.e(TAG, "المحاولة الأولى (openRawResourceFd) لم تفلح، جاري الانتقال للمحاولة الثانية: ${ex.message}")
                 }
-            } else {
-                // إذا لم يتم العثور على الملف المخصص، نستخدم نغمة المنبه الافتراضية للنظام لتفادي السكوت
+            }
+            
+            // المحاولة الثانية: عبر معرف الـ URI القياسي لموارد الأندرويد (تتفادى ضغط الملفات في التصدير)
+            if (resourceId != 0 && !sourceLoaded) {
+                try {
+                    val resourceUri = android.net.Uri.parse("android.resource://$packageName/$resourceId")
+                    player.setDataSource(this, resourceUri)
+                    sourceLoaded = true
+                    Log.d(TAG, "تم تحميل صوت الأذان بنجاح عبر Android Resource URI لهواتف سامسونج")
+                } catch (ex: Exception) {
+                    Log.e(TAG, "المحاولة الثانية (Resource URI) لم تفلح، جاري الانتقال للمحاولة الثالثة: ${ex.message}")
+                }
+            }
+            
+            // المحاولة الثالثة: القراءة مباشرة من مسار أصول فلاتر (Flutter Assets) كطبقة أمان إضافية
+            if (!sourceLoaded) {
+                try {
+                    val assetFd = assets.openFd("flutter_assets/assets/audio/adhan/$cleanResourceName.m4a")
+                    player.setDataSource(assetFd.fileDescriptor, assetFd.startOffset, assetFd.length)
+                    assetFd.close()
+                    sourceLoaded = true
+                    Log.d(TAG, "تم تحميل صوت الأذان بنجاح من أصول فلاتر مباشرة (Flutter Assets)")
+                } catch (ex: Exception) {
+                    Log.e(TAG, "المحاولة الثالثة (Flutter Assets) لم تفلح: ${ex.message}")
+                }
+            }
+            
+            // إذا فشلت كافة الطبقات الثلاث، نلجأ للمنبه الافتراضي للنظام
+            if (!sourceLoaded) {
+                Log.w(TAG, "استخدام منبه النظام الافتراضي لعدم تمكن النظام من قراءة الصوت المخصص: $cleanResourceName")
                 val defaultUri = android.media.RingtoneManager.getDefaultUri(android.media.RingtoneManager.TYPE_ALARM)
-                MediaPlayer().apply {
-                    setAudioAttributes(audioAttributes)
-                    setDataSource(this@AlarmForegroundService, defaultUri)
-                    prepare()
+                player.setDataSource(this, defaultUri)
+            }
+            
+            player.prepare()
+            player.isLooping = alarmData.loopAudio
+            player.setVolume(alarmData.volume, alarmData.volume)
+            player.start()
+
+            // مستمع لإنهاء الصوت لإغلاق الخدمة تلقائياً إذا كان التكرار معطلاً
+            if (!alarmData.loopAudio) {
+                player.setOnCompletionListener {
+                    stopAlarm()
                 }
             }
-
-            mediaPlayer?.apply {
-                isLooping = alarmData.loopAudio
-                setVolume(alarmData.volume, alarmData.volume)
-                start()
-
-                // مستمع لإنهاء الصوت لإغلاق الخدمة تلقائياً إذا كان التكرار معطلاً
-                if (!alarmData.loopAudio) {
-                    setOnCompletionListener {
-                        stopAlarm()
-                    }
-                }
-            }
+            mediaPlayer = player
         } catch (e: Exception) {
-            Log.e(TAG, "فشل تشغيل مشغل الصوت: ${e.message}")
+            Log.e(TAG, "فشل كامل في تشغيل مشغل الصوت: ${e.message}", e)
         }
     }
 
